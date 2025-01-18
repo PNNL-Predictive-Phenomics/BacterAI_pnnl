@@ -8,7 +8,7 @@ import shutil
 import numpy as np
 import pandas as pd
 
-from constants import *
+# from constants import *
 from models import GPRModel, NeuralNetModel, ModelType
 from plot import plot_redos as plot_redos_, plot_results
 from scripts.size_n_to_m_conversion import fill_new_ingredients
@@ -355,6 +355,7 @@ def main(args):
 
     GROW_THRESHOLD = config["grow_threshold"]
     EXPT_FOLDER = config["experiment_path"]
+    INGREDIENTS_FILE = config["ingredients_list"]
     NICKNAME = f"{config['nickname']}R{NEW_ROUND_N}"
     BATCH_SIZE = config["batch_size"]
     TIMEOUT_MIN = config["timeout_min"]
@@ -367,20 +368,16 @@ def main(args):
     TRANSFER_MODEL_FOLDER = config.get("transfer_model_folder", None)
     N_REDOS = config.get("redo_size", None)
     REDO_THRESHOLD = config.get("redo_threshold", None)
-    AAS_ONLY = config.get("aas_only", True)
+    AAS_ONLY = config.get("aas_only", False)
     TRANSFER_DATA_DIR = config.get("transfer_model_dir", None)
     SEPARATE_REDOS = config.get("separate_redos", False)
 
-    if AAS_ONLY:
-        INGREDIENTS = AA_SHORT
-        TEMPEST_INGREDIENTS = AA_NAMES_TEMPEST
-    elif not AAS_ONLY and NEW_ROUND_N > 2:
-        INGREDIENTS = AA_SHORT + BASE_NAMES
-        TEMPEST_INGREDIENTS = AA_NAMES_TEMPEST + BASE_NAMES_TEMPEST
-    elif not AAS_ONLY and NEW_ROUND_N <= 2:
-        INGREDIENTS = BASE_NAMES
-        TEMPEST_INGREDIENTS = BASE_NAMES_TEMPEST
-
+     # Load the ingredients list
+    with open(INGREDIENTS_FILE, "r") as f:
+        ingredients_json = json.load(f)["ingredients"]
+    
+    ingredients_pd = pd.DataFrame(ingredients_json)
+    INGREDIENTS = ingredients_pd["INGREDIENT"]
     n_ingredients = len(INGREDIENTS)
 
     tl_transition_round = False
