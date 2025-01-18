@@ -391,7 +391,11 @@ def main(args):
         print(
             f"Using transfer learning (model method) from '{TRANSFER_MODEL_FOLDER}' model."
         )
-        transfer_model = NeuralNetModel.load_trained_models(TRANSFER_MODEL_FOLDER)
+        if MODEL_TYPE == ModelType.GPR:
+          # Note: I still need to define a python-based GPR class in models.py
+          transfer_model = GRP.load_trained_models(TRANSFER_MODEL_FOLDER)
+        elif MODEL_TYPE == modelType.NEURAL_NET
+          transfer_model = NeuralNetModel.load_trained_models(TRANSFER_MODEL_FOLDER)
 
     date = datetime.datetime.now().isoformat().replace(":", ".")
     prev_round_folder = (
