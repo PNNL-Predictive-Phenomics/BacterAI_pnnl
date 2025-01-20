@@ -4,14 +4,14 @@ import time
 import numpy as np
 import pandas as pd
 
-from constants import *
+# from constants import *
 
 
 def seed_numpy_state(seed):
     return np.random.RandomState(np.random.MT19937(np.random.SeedSequence(seed)))
 
 
-def process_mapped_data(path, ingredients=AA_SHORT):
+def process_mapped_data(path, ingredients):
     """Processes DeepPhenotyping data. It normalizes the
     change in OD (delta OD) to their plate controls' mean delta OD.
     """
