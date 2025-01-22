@@ -459,9 +459,9 @@ def main(args):
         SIMULATION_TYPE = [SimType.RANDOM]
 
         data = pd.DataFrame(np.hstack((X_train, y_train.reshape(-1, 1))))
-        # col_names = ingredients_map
-        # col_names[n_ingredients] = "y_pred"
-        # data.rename(columns = col_names)
+        col_names = ingredients_map
+        col_names[n_ingredients] = "y_train"
+        data.rename(columns = col_names)
         
         random_data_filename = (
             f"random_train_kickstart_{'aas' if AAS_ONLY else 'others'}.csv"
