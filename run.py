@@ -431,6 +431,8 @@ def main(args):
         #   1) Use random data to train the model.
         #   2) Compute a new batch using the RANDOM policy
         #   3) The random data doesn't get used for training in future rounds
+        
+        # Note from BWS: this process shouldn't interfere with Plackett-Burman initializing, can be left as-is
 
         # Create random binary inputs of shape (1000, n_ingredients) and assign random fitness [0, 1]
         n_examples = 1000
@@ -561,7 +563,59 @@ def main(args):
             is_redo=True,
         )
         redo_experiments = None
-
+        
+    # CREATE THE BATCHES ##################################
+    
+    # do the Plackett-Burman intializing
+    if NEW_ROUND_N == 1:
+      
+        # create the "batch" pd.DataFrame, with a column for each ingredient
+        # each row is a separate experiment where only one variable is manipulated at a time
+        ingredients_pd.loc[ingredients_pd.TYPE == "quantitative", "N_STATES"] = 3
+        total_runs = np.sum(ingredients_pd.astype({"N_STATES" : "int64"})["N_STATES"])
+        batch = np.tile(np.array(ingredients_pd["NOMINAL_VALUE"]), (total_runs, 1))
+        batch = pd.DataFrame(batch, columns = ingredients_pd["INGREDIENT"])
+        
+        # keep track of which variable is being modified
+        batch["modify"] = (ingredients_pd["INGREDIENT"].loc[ingredients_pd.index.repeat(ingredients_pd['N_STATES'])]
+                                                       .reset_index(drop=True))
+                                                       
+        # for each ingredient, modify the column values to the corresponding number of options
+        for ingt in INGREDIENTS:
+            ingt_type = ingredients_pd[ingredients_pd.INGREDIENT == ingt].TYPE.iloc[0]
+            
+            if ingt_type == "binary":
+                switch_vals = [0.0, 1.0]
+                
+            elif ingt_type == "semi-quantitative":
+                n_states = ingredients_pd[ingredients_pd.INGREDIENT == ingt].N_STATES.iloc[0]
+                switch_vals = np.linspace(0, 1, num = np.int64(n_states))
+                
+            else:
+                switch_vals = np.linspace(1/2, 2/3, num = 3)
+                
+            row_select = batch["modify"] == ingt
+            batch.loc[row_select, ingt] = switch_vals
+              
+        batch["type"] = "n/a"
+        batch["direction"] = 2
+        batch["frontier_type"] = False
+        batch["growth_pred"] = terminating_growths
+        batch["var"] = terminating_variances
+        batch["is_redo"] = False
+        batch["round"] = new_round_n
+        
+        batch_used = set()
+        
+        metrics = {
+          "k_history": "n/a",
+          "count_history": "n/a",
+          "k_avg": "n/a",
+          "count_avg": "n/a",
+          "total_loops_count": "n/a",
+          "time_to_finish_sec": "n/a",
+        }
+  
     if DIRECTION == SimDirection.DOWN:
         starting_media = np.ones(n_ingredients)
         direction = SimDirection.DOWN
@@ -574,8 +628,8 @@ def main(args):
         starting_media = np.ones(n_ingredients)
         direction = SimDirection.DOWN
         batch_size = BATCH_SIZE // 2
-
-    # Create the batches
+    
+    # Create batches 
     all_metrics = {}
     batch, batch_used, metrics = make_batch(
         model,
@@ -595,6 +649,7 @@ def main(args):
     all_metrics[direction.name] = metrics
 
     ###### UP DIRECTION (used only when direction is BOTH) #####
+    # IN THIS CASE, THE PRECEDING BATCH WAS PRE-SET TO HALF-SIZE AND WILL BE CONCATENATED WITH THIS BATCH
     if DIRECTION == SimDirection.BOTH:
         direction = SimDirection.UP
         starting_media = np.zeros(n_ingredients)
@@ -614,7 +669,7 @@ def main(args):
         )
         batch = pd.concat((batch, batch2), ignore_index=True)
         all_metrics[direction.name] = metrics
-    #############################################################
+      #############################################################
 
     # Output run metrics
     run_metrics_path = os.path.join(new_round_folder, "run_metrics.json")
