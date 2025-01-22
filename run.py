@@ -377,7 +377,8 @@ def main(args):
         ingredients_json = json.load(f)["ingredients"]
     
     ingredients_pd = pd.DataFrame(ingredients_json)
-    INGREDIENTS = ingredients_pd["INGREDIENT"]
+    INGREDIENTS = ingredients_pd["INGREDIENT"].tolist()
+    ingredients_map = dict(zip(INGREDIENTS.index, INGREDIENTS))
     n_ingredients = len(INGREDIENTS)
 
     tl_transition_round = False
@@ -458,6 +459,10 @@ def main(args):
         SIMULATION_TYPE = [SimType.RANDOM]
 
         data = pd.DataFrame(np.hstack((X_train, y_train.reshape(-1, 1))))
+        # col_names = ingredients_map
+        # col_names[n_ingredients] = "y_pred"
+        # data.rename(columns = col_names)
+        
         random_data_filename = (
             f"random_train_kickstart_{'aas' if AAS_ONLY else 'others'}.csv"
         )
@@ -473,9 +478,9 @@ def main(args):
     # (which has only non-AA ingredient inputs) with the transfer data of the AA-only
     # experiment (file located at TRANSFER_DATA_DIR) in the following way:
     if tl_transition_round:
-        INGREDIENTS = AA_SHORT + BASE_NAMES
-        TEMPEST_INGREDIENTS = AA_NAMES_TEMPEST + BASE_NAMES_TEMPEST
-        n_ingredients = len(INGREDIENTS)
+        # INGREDIENTS = AA_SHORT + BASE_NAMES
+        # TEMPEST_INGREDIENTS = AA_NAMES_TEMPEST + BASE_NAMES_TEMPEST
+        # n_ingredients = len(INGREDIENTS)
 
         # Load transfer data
         if "train_pred" not in TRANSFER_DATA_DIR:
@@ -566,8 +571,8 @@ def main(args):
         
     # CREATE THE BATCHES ##################################
     
-    # do the Plackett-Burman intializing
-    if NEW_ROUND_N == 1:
+    # for first batch: do the Plackett-Burman intializing if we have no transfer learning whatsoever
+    if NEW_ROUND_N == 1 and if TRANSFER_DATA_DIR is None and if TRANSFER_MODEL_FOLDER is None:
       
         # create the "batch" pd.DataFrame, with a column for each ingredient
         # each row is a separate experiment where only one variable is manipulated at a time
@@ -600,10 +605,10 @@ def main(args):
         batch["type"] = "n/a"
         batch["direction"] = 2
         batch["frontier_type"] = False
-        batch["growth_pred"] = terminating_growths
-        batch["var"] = terminating_variances
+        batch["growth_pred"] = 1
+        batch["var"] = 0
         batch["is_redo"] = False
-        batch["round"] = new_round_n
+        batch["round"] = 1
         
         batch_used = set()
         
@@ -615,45 +620,30 @@ def main(args):
           "total_loops_count": "n/a",
           "time_to_finish_sec": "n/a",
         }
-  
-    if DIRECTION == SimDirection.DOWN:
-        starting_media = np.ones(n_ingredients)
-        direction = SimDirection.DOWN
-        batch_size = BATCH_SIZE
-    elif DIRECTION == SimDirection.UP:
-        starting_media = np.zeros(n_ingredients)
-        direction = SimDirection.UP
-        batch_size = BATCH_SIZE
-    elif DIRECTION == SimDirection.BOTH:
-        starting_media = np.ones(n_ingredients)
-        direction = SimDirection.DOWN
-        batch_size = BATCH_SIZE // 2
-    
-    # Create batches 
-    all_metrics = {}
-    batch, batch_used, metrics = make_batch(
-        model,
-        starting_media,
-        new_round_n=NEW_ROUND_N,
-        batch_size=batch_size,
-        sim_types=SIMULATION_TYPE,
-        rollout_trajectories=N_ROLLOUTS,
-        threshold=GROW_THRESHOLD,
-        timeout=60 * TIMEOUT_MIN,
-        unique=USE_UNIQUE,
-        direction=direction,
-        go_beyond_frontier=BEYOND_FRONTIER,
-        used_experiments=used_experiments,
-        redo_experiments=redo_experiments,
-    )
-    all_metrics[direction.name] = metrics
+        
+        all_metrics = {}
+        direction = SimDirection.BOTH
+        all_metrics[direction.name] = metrics
+        
+    # For rounds > 1 or if we have transfer learning, run simulations to make new batches
+    else: 
 
-    ###### UP DIRECTION (used only when direction is BOTH) #####
-    # IN THIS CASE, THE PRECEDING BATCH WAS PRE-SET TO HALF-SIZE AND WILL BE CONCATENATED WITH THIS BATCH
-    if DIRECTION == SimDirection.BOTH:
-        direction = SimDirection.UP
-        starting_media = np.zeros(n_ingredients)
-        batch2, _, metrics = make_batch(
+        if DIRECTION == SimDirection.DOWN:
+            starting_media = np.ones(n_ingredients)
+            direction = SimDirection.DOWN
+            batch_size = BATCH_SIZE
+        elif DIRECTION == SimDirection.UP:
+            starting_media = np.zeros(n_ingredients)
+            direction = SimDirection.UP
+            batch_size = BATCH_SIZE
+        elif DIRECTION == SimDirection.BOTH:
+            starting_media = np.ones(n_ingredients)
+            direction = SimDirection.DOWN
+            batch_size = BATCH_SIZE // 2
+        
+        # Create batches 
+        all_metrics = {}
+        batch, batch_used, metrics = make_batch(
             model,
             starting_media,
             new_round_n=NEW_ROUND_N,
@@ -665,19 +655,43 @@ def main(args):
             unique=USE_UNIQUE,
             direction=direction,
             go_beyond_frontier=BEYOND_FRONTIER,
-            used_experiments=batch_used,
+            used_experiments=used_experiments,
+            redo_experiments=redo_experiments,
         )
-        batch = pd.concat((batch, batch2), ignore_index=True)
         all_metrics[direction.name] = metrics
-      #############################################################
+    
+        ###### UP DIRECTION (used only when direction is BOTH) #####
+        # IN THIS CASE, THE PRECEDING BATCH WAS PRE-SET TO HALF-SIZE AND WILL BE CONCATENATED WITH THIS BATCH
+        if DIRECTION == SimDirection.BOTH:
+            direction = SimDirection.UP
+            starting_media = np.zeros(n_ingredients)
+            batch2, _, metrics = make_batch(
+                model,
+                starting_media,
+                new_round_n=NEW_ROUND_N,
+                batch_size=batch_size,
+                sim_types=SIMULATION_TYPE,
+                rollout_trajectories=N_ROLLOUTS,
+                threshold=GROW_THRESHOLD,
+                timeout=60 * TIMEOUT_MIN,
+                unique=USE_UNIQUE,
+                direction=direction,
+                go_beyond_frontier=BEYOND_FRONTIER,
+                used_experiments=batch_used,
+            )
+            batch = pd.concat((batch, batch2), ignore_index=True)
+            all_metrics[direction.name] = metrics
+          #############################################################
+          
+        model.close()
 
+    
     # Output run metrics
     run_metrics_path = os.path.join(new_round_folder, "run_metrics.json")
     with open(run_metrics_path, "w") as f:
         json.dump(all_metrics, f, indent=4)
 
-    model.close()
-    export_to_dp_batch(new_round_folder, batch, TEMPEST_INGREDIENTS, date, NICKNAME)
+    export_to_dp_batch(new_round_folder, batch, INGREDIENTS, date, NICKNAME)
 
 
 if __name__ == "__main__":
