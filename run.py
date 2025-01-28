@@ -355,7 +355,7 @@ def main(args):
 
     GROW_THRESHOLD = config["grow_threshold"]
     EXPT_FOLDER = config["experiment_path"]
-    INGREDIENTS_FILE = config["ingredients_list"]
+    INGREDIENTS_FILE = config.get("ingredients_file", None)
     NICKNAME = f"{config['nickname']}R{NEW_ROUND_N}"
     BATCH_SIZE = config["batch_size"]
     TIMEOUT_MIN = config["timeout_min"]
@@ -372,13 +372,17 @@ def main(args):
     TRANSFER_DATA_DIR = config.get("transfer_model_dir", None)
     SEPARATE_REDOS = config.get("separate_redos", False)
 
-     # Load the ingredients list
-    with open(INGREDIENTS_FILE, "r") as f:
-        ingredients_json = json.load(f)["ingredients"]
+    # Load the ingredients list
+    if INGREDIENTS_FILE is not None:
+        ingredients_full_path = os.path.join(EXPT_FOLDER, INGREDIENTS_FILE)
+        with open(ingredients_full_path, "r") as f:
+            ingredients_json = json.load(f)
     
-    ingredients_pd = pd.DataFrame(ingredients_json)
-    INGREDIENTS = ingredients_pd["INGREDIENT"].tolist()
-    ingredients_map = dict(zip(INGREDIENTS.index, INGREDIENTS))
+        ingredients_pd = pd.json_normalize(ingredients_json["ingredients"])
+        INGREDIENTS = ingredients_pd["INGREDIENT"]
+        ingredients_map = dict(zip(INGREDIENTS.index, INGREDIENTS))
+        INGREDIENTS = INGREDIENTS.tolist()
+    
     n_ingredients = len(INGREDIENTS)
 
     tl_transition_round = False
@@ -395,7 +399,7 @@ def main(args):
         if MODEL_TYPE == ModelType.GPR:
           # Note: I still need to define a python-based GPR class in models.py
           transfer_model = GRP.load_trained_models(TRANSFER_MODEL_FOLDER)
-        elif MODEL_TYPE == modelType.NEURAL_NET
+        elif MODEL_TYPE == modelType.NEURAL_NET:
           transfer_model = NeuralNetModel.load_trained_models(TRANSFER_MODEL_FOLDER)
 
     date = datetime.datetime.now().isoformat().replace(":", ".")
@@ -572,7 +576,7 @@ def main(args):
     # CREATE THE BATCHES ##################################
     
     # for first batch: do the Plackett-Burman intializing if we have no transfer learning whatsoever
-    if NEW_ROUND_N == 1 and if TRANSFER_DATA_DIR is None and if TRANSFER_MODEL_FOLDER is None:
+    if NEW_ROUND_N == 1 and TRANSFER_DATA_DIR is None and TRANSFER_MODEL_FOLDER is None:
       
         # create the "batch" pd.DataFrame, with a column for each ingredient
         # each row is a separate experiment where only one variable is manipulated at a time
