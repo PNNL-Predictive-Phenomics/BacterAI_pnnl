@@ -371,6 +371,7 @@ def main(args):
     AAS_ONLY = config.get("aas_only", False)
     TRANSFER_DATA_DIR = config.get("transfer_model_dir", None)
     SEPARATE_REDOS = config.get("separate_redos", False)
+    N_BAGS = config.get("n_bags", 25)
 
     # Load the ingredients list
     if INGREDIENTS_FILE is not None:
@@ -553,7 +554,7 @@ def main(args):
             X_train,
             y_train,
             n_ingredients=n_ingredients,
-            n_bags=config["n_bags"],
+            n_bags=N_BAGS,
             bag_proportion=1.0,
             epochs=50,
             batch_size=360,
