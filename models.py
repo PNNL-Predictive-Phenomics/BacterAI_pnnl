@@ -3,13 +3,14 @@ from enum import Enum
 import os
 
 import numpy as np
-import rpy2.robjects as robjects
-import rpy2.robjects.numpy2ri as rpyn
-from rpy2.robjects.packages import STAP
+# import rpy2.robjects as robjects
+# import rpy2.robjects.numpy2ri as rpyn
+# from rpy2.robjects.packages import STAP
 import torch
 
-from constants import *
+# from constants import *
 import net
+import gpr
 
 
 class ModelType(Enum):
@@ -44,40 +45,41 @@ class Model(ABC):
 
 class GPRModel(Model):
     def __init__(self):
-        self.activate_R()
+        # self.activate_R()
         self.is_trained = False
         super().__init__(self, ModelType.GPR)
 
-    def train(self, X_train, y_train):
-        X_trainR = robjects.r.matrix(
-            X_train, nrow=X_train.shape[0], ncol=X_train.shape[1]
-        )
-        y_trainR = robjects.r.matrix(y_train, nrow=y_train.shape[0], ncol=1)
-        self.model = self.gpr_lib.train_new_GP(X_trainR, y_trainR)
+    def train(self, X_train, y_train, **kwargs):
+        # X_trainR = robjects.r.matrix(
+        #     X_train, nrow=X_train.shape[0], ncol=X_train.shape[1]
+        # )
+        # y_trainR = robjects.r.matrix(y_train, nrow=y_train.shape[0], ncol=1)
+        # self.model = self.gpr_lib.train_new_GP(X_trainR, y_trainR)
+        self.model = gpr.train_new_GP(X_train, y_train, **kwargs)
         self.is_trained = True
 
     def evaluate(self, X, clip=True, n=1):
-        X_evalR = robjects.r.matrix(X, nrow=X.shape[0], ncol=X.shape[1])
+        # X_evalR = robjects.r.matrix(X, nrow=X.shape[0], ncol=X.shape[1])
         if not self.is_trained:
             raise Exception("GPR model needs to be trained before evaluating.")
 
-        resultR = self.gpr_lib.sample_GP(self.model, X_evalR, n)
-        result = np.array(resultR)
+        result = gpr.sample_GP(self.model, X, n)
+        result = np.array(result)
         if clip:
             result = np.clip(result, 0, 1)
         samples, variances = result[:, 0], result[:, 1]
         return samples, variances
 
-    def activate_R(self):
-        with open("gpr_lib.R", "r") as f:
-            s = f.read()
-            self.gpr_lib = STAP(s, "gpr_lib")
-            robjects.r("Sys.setenv(MKL_DEBUG_CPU_TYPE = '5')")
-        rpyn.activate()
+    # def activate_R(self):
+    #     with open("gpr_lib.R", "r") as f:
+    #         s = f.read()
+    #         self.gpr_lib = STAP(s, "gpr_lib")
+    #         robjects.r("Sys.setenv(MKL_DEBUG_CPU_TYPE = '5')")
+    #     rpyn.activate()
 
-    def close(self):
-        # Clean up R's GPR model object
-        self.gpr_lib.delete_GP(self.model)
+    # def close(self):
+    #     # Clean up R's GPR model object
+    #     self.gpr_lib.delete_GP(self.model)
 
 
 class NeuralNetModel(Model):
