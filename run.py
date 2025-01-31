@@ -533,6 +533,14 @@ def main(args):
         # Train GPR Model
         model = GPRModel()
         model.train(X_train, y_train)
+        # save GPR model
+        model_path_folder = os.path.join(EXPT_FOLDER, "gpr_models")
+        if not os.path.exists(model_path_folder):
+            os.makedirs(model_path_folder)
+
+        model_path = os.path.join(model_path_folder, f"gpr_model_R{NEW_ROUND_N}_{date}.pkl")
+        torch.save(model, model_path)
+        
     elif TRANSFER_MODEL_FOLDER and NEW_ROUND_N == 1:
         # Use purely pre-trained NN model for 1st round
         models_folder = os.path.join(new_round_folder, f"nn_models")

@@ -49,7 +49,8 @@ def train_new_GP(X, y, d=0.1, g=0.1, max_iter=100, lr=0.1, verbosity=2):
             print(f'Iter {i + 1}/{max_iter} - Loss: {loss.item()}')
         optimizer.step()  # Update model parameters
         
-    # save model?
+    # save model? 
+    # Right now, the code to save GPR model object is in run.py within main() function
     
     return model, likelihood
 
