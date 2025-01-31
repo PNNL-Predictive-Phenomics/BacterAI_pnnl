@@ -44,10 +44,16 @@ class Model(ABC):
 
 
 class GPRModel(Model):
-    def __init__(self):
+    def __init__(self, model_path):
         # self.activate_R()
+        self.model = []
+        self.model_path = model_path
         self.is_trained = False
         super().__init__(self, ModelType.GPR)
+        
+    def check_path(self):
+        if not os.path.exists(self.model_path):
+            os.makedirs(self.model_path)
 
     def train(self, X_train, y_train, **kwargs):
         # X_trainR = robjects.r.matrix(
@@ -55,7 +61,8 @@ class GPRModel(Model):
         # )
         # y_trainR = robjects.r.matrix(y_train, nrow=y_train.shape[0], ncol=1)
         # self.model = self.gpr_lib.train_new_GP(X_trainR, y_trainR)
-        self.model = gpr.train_new_GP(X_train, y_train, **kwargs)
+        self.check_path()
+        self.model = gpr.train_new_GP(X_train, y_train, self.model_path, **kwargs)
         self.is_trained = True
 
     def evaluate(self, X, clip=True, n=1):

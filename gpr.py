@@ -1,7 +1,9 @@
+import os
 import torch
 import gpytorch
 import numpy as np
 
+from sklearn.metrics import mean_squared_error  # Importing mean_squared_error
 from scipy.stats import multivariate_normal
 
 # Code built from generative AI, based on operations and parameters from gpr_lib.R
@@ -19,7 +21,7 @@ class ExactGPModel(gpytorch.models.ExactGP):
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
 
-def train_new_GP(X, y, d=0.1, g=0.1, max_iter=100, lr=0.1, verbosity=2):
+def train_new_GP(X, y, model_path, d=0.1, g=0.1, max_iter=100, lr=0.1, verbosity=2):
     # Convert data to tensors
     train_x = torch.tensor(X, dtype=torch.float32)
     train_y = torch.tensor(y, dtype=torch.float32)
@@ -45,12 +47,23 @@ def train_new_GP(X, y, d=0.1, g=0.1, max_iter=100, lr=0.1, verbosity=2):
         output = model(train_x)
         loss = -mll(output, train_y)  # Calculate loss
         loss.backward()  # Backprop gradients
-        if verbosity > 1:
-            print(f'Iter {i + 1}/{max_iter} - Loss: {loss.item()}')
         optimizer.step()  # Update model parameters
+        model.train()
+        likelihood.train()
         
-    # save model? 
-    # Right now, the code to save GPR model object is in run.py within main() function
+        if verbosity > 1:
+            print(f'Iter {i + 1}/{max_iter} | Train loss: {loss.item():.4f}')
+    
+    # Final MSE calculation after training completes
+    with torch.no_grad(), gpytorch.settings.fast_pred_var(), gpytorch.settings.debug(False):
+        model.eval()
+        likelihood.eval()
+        y_pred = model(train_x).mean
+        final_mse = mean_squared_error(train_y.numpy(), y_pred.numpy())
+    print(f'Final MSE: {final_mse:.4f}')
+    
+    torch.save(model.state_dict(), os.path.join(model_path, "gpr_model.pth"))
+    torch.save(likelihood.state_dict(), os.path.join(model_path, "gpr_likelihood.pth"))
     
     return model, likelihood
 

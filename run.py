@@ -399,7 +399,7 @@ def main(args):
         )
         if MODEL_TYPE == ModelType.GPR:
           # Note: I still need to define a python-based GPR class in models.py
-          transfer_model = GRP.load_trained_models(TRANSFER_MODEL_FOLDER)
+          transfer_model = GPR.load_trained_models(TRANSFER_MODEL_FOLDER)
         elif MODEL_TYPE == modelType.NEURAL_NET:
           transfer_model = NeuralNetModel.load_trained_models(TRANSFER_MODEL_FOLDER)
 
@@ -531,15 +531,9 @@ def main(args):
     # Train the models on the data from all previous rounds (excluding Round 1)
     if MODEL_TYPE == ModelType.GPR:
         # Train GPR Model
-        model = GPRModel()
+        models_folder = os.path.join(new_round_folder, f"gpr_model")
+        model = GPRModel(models_folder)
         model.train(X_train, y_train)
-        # save GPR model
-        model_path_folder = os.path.join(EXPT_FOLDER, "gpr_models")
-        if not os.path.exists(model_path_folder):
-            os.makedirs(model_path_folder)
-
-        model_path = os.path.join(model_path_folder, f"gpr_model_R{NEW_ROUND_N}_{date}.pkl")
-        torch.save(model, model_path)
         
     elif TRANSFER_MODEL_FOLDER and NEW_ROUND_N == 1:
         # Use purely pre-trained NN model for 1st round
