@@ -380,6 +380,20 @@ def main(args):
             ingredients_json = json.load(f)
     
         ingredients_pd = pd.json_normalize(ingredients_json["ingredients"])
+
+        # Remove entries in the ingredients not relevant to the BacterAI logical loop
+
+        # 1) remove grouped reagents which together create a single condition
+        ingredients_pd = ingredients_pd[~(ingredients_pd.INGREDIENT.str.contains("\\:\\:"))]
+
+        # 2) remove any other "ingredient" that is invariant -- where the MIN_VALUE and MAX_VALUE are the same
+        # e.g., if you want your strain(s) to always be present and not subject to BacterAI, make those two values equal
+        # e.g., your fill ingredient (media or water) that you're using to bring all wells up to the same volume
+        ingredients_pd = ingredients_pd[~(ingredients_pd["MIN_VALUE"] == ingredients_pd["MAX_VALUE"])]
+
+        # re-index
+        ingredients_pd = ingredients_pd.reset_index(drop=True)
+        
         INGREDIENTS = ingredients_pd["INGREDIENT"]
         ingredients_map = dict(zip(INGREDIENTS.index, INGREDIENTS))
         INGREDIENTS = INGREDIENTS.tolist()
