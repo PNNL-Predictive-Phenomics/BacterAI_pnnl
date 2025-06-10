@@ -37,16 +37,7 @@ def main(path, date, round_number, signal, feature):
     plate_maps_path = os.path.join(experiment_request_path, "plate_maps")
     
     round_folder = os.path.join(path, f"Round{round_number}")
-    round_files = os.listdir(round_folder)
-    for f in round_files:
-        fl = f.lower()
-        if "batch_meta" in fl and "results" not in fl:
-            batch_path = os.path.join(round_folder, f)
-            
-    batch_meta = pd.read_csv(batch_path)
-    ingred_names = batch_meta.columns.tolist()
-    cols_to_rm = ['type', 'direction', 'frontier_type', 'growth_pred', 'var', 'is_redo', 'round']
-    ingred_names = [x for x in ingred_names if x not in cols_to_rm]
+           
 
     instructions = [d for d in os.listdir(plate_maps_path) if os.path.isdir(os.path.join(plate_maps_path, d))]
     
@@ -70,9 +61,7 @@ def main(path, date, round_number, signal, feature):
 
         exception_file = [f for f in os.listdir(data_path) if fid in f and "exception" in f][0]
         exceptions = pd.read_csv(os.path.join(data_path, exception_file)) if exception_file else None
-        
-        if exceptions is not None:
-            exceptions.loc[:, 'dispense'] = 'bad'
+       
 
         biotek_file = [f for f in os.listdir(data_path) if fid in f and f.endswith('.xlsx')]
         if len(biotek_file) == 1:
@@ -94,8 +83,9 @@ def main(path, date, round_number, signal, feature):
         else:
             final_df['file_id'] = fid
             if exceptions is not None:
-                final_df = pd.merge(final_df, exceptions[['Destination Well', 'dispense']], left_on='well', right_on = 'Destination Well', how='left')
-                # final_df = final_df.drop(['Destination Well'])
+                final_df['bad'] = final_df['well'].isin(exceptions['Destination Well']).astype(int)
+            else:
+                final_df['bad'] = 0
             
             final_dfs.append(final_df)        
        
@@ -109,12 +99,7 @@ def main(path, date, round_number, signal, feature):
     # extract experiment number and fill controls with 9999 so they won't match to experiment request df
     result['experiment_number'] = result['solution_id'].str.extract(r'expt(\d+)').fillna(value = 10000).astype(int) - 1
     
-    batch_meta['experiment_number'] = batch_meta.index
-    batch_meta = batch_meta.drop(['type', 'direction', 'frontier_type', 'growth_pred', 'var', 'is_redo', 'round'], axis = 1)
-    
-    result = pd.merge(result, batch_meta, on = 'experiment_number', how = 'left')
-    
-    names_to_keep = ingred_names + ['y', 'dispense', 'plate_control', 'plate_blank', 'parent_plate']
+    names_to_keep = ['y', 'bad', 'plate_control', 'plate_blank', 'parent_plate', 'experiment_number', 'strain', 'environment']
     result = result[names_to_keep]
 
     out_file = 'mapped_data_' + date + '_biotek_' + feature + '_data.csv'

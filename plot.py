@@ -109,7 +109,8 @@ def plot_results(folder, results, threshold):
         axs[row_idx, 0].legend(
             [f"{g.title()}" for g in present_groups] + ["Model Prediction"]
         )
-        axs[row_idx, 0].set_title(f"Experiment Results - {frontier_type.title()}")
+        #axs[row_idx, 0].set_title(f"Experiment Results - {frontier_type.title()}")
+        axs[row_idx, 0].set_title(f"Experiment Results - {frontier_type}")
 
         width = 0.25
         legend_labels = []
@@ -142,7 +143,8 @@ def plot_results(folder, results, threshold):
                     color=color,
                 )
 
-        axs[row_idx, 1].set_title(f"Depth - {frontier_type.title()}")
+        #axs[row_idx, 1].set_title(f"Depth - {frontier_type.title()}")
+        axs[row_idx, 1].set_title(f"Depth - {frontier_type}")
         axs[row_idx, 1].set_xlabel("Depth (n_removed)")
         axs[row_idx, 1].set_ylabel("Count")
         axs[row_idx, 1].set_xticks(np.arange(0, 21) + 2 * width / 2)

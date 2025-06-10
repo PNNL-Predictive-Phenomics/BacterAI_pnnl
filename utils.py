@@ -4,7 +4,7 @@ import time
 import numpy as np
 import pandas as pd
 
-# from constants import *
+from constants import *
 
 
 def seed_numpy_state(seed):
@@ -19,23 +19,20 @@ def process_mapped_data(path, ingredients):
     n_ingredients = len(ingredients)
     data = pd.read_csv(path, index_col=None).fillna("")
     if "bad" not in data.columns:
-        data["bad"] = False
+        data["bad"] = 0
         print("Added 'bad' column")
 
     data = normalize_ingredient_names(data)
     plate_control_indexes = data[data["plate_control"]].index
     plate_blank_indexes = data[data["plate_blank"]].index
 
-    data["delta_od"] = data["final_od"] - data["initial_od"]
-
-    leave_out_cols = [c for c in data.columns if "leave_out" in c]
-
-    plate_controls = data.loc[plate_control_indexes, :].drop(columns=leave_out_cols)
-    plate_blanks = data.loc[plate_blank_indexes, :].drop(columns=leave_out_cols)
+    plate_controls = data.loc[plate_control_indexes, :]
+    plate_blanks = data.loc[plate_blank_indexes, :]
+    # plate_blanks is not used here, do we want to subtract plate_blank?
     plate_control_means = (
-        plate_controls.groupby("parent_plate").mean().to_dict()["delta_od"]
+        plate_controls.groupby("parent_plate").mean().to_dict()["y"]
     )
-    data["fitness"] = data["delta_od"] / data["parent_plate"].replace(
+    data["fitness"] = data["y"] / data["parent_plate"].replace(
         plate_control_means
     )
 
@@ -44,33 +41,8 @@ def process_mapped_data(path, ingredients):
         columns=[
             "plate_control",
             "plate_blank",
-            "parent_well",
-            "parent_well_index",
-            "replicate",
-            "solution_id_hex",
         ]
     )
-    data_grouped = data.groupby(
-        by=leave_out_cols + ["environment", "strain", "parent_plate"],
-        as_index=False,
-    )
-
-    data = data_grouped.median()
-    # data = data_grouped.mean()
-
-    cols = list(ingredients) + list(data.columns)
-
-    data = pd.concat(
-        (pd.DataFrame(np.ones((data.shape[0], n_ingredients), dtype=int)), data),
-        axis=1,
-        ignore_index=True,
-    )
-    data.columns = cols
-    for row_idx, row in data.iterrows():
-        idxs = pd.unique([i for i in row[leave_out_cols] if i != ""])
-        data.loc[row_idx, idxs] = 0
-
-    data = data.drop(columns=leave_out_cols)
     return data, plate_controls, plate_blanks
 
 

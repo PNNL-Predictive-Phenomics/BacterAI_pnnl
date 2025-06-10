@@ -179,20 +179,21 @@ def process_results(
         raise "file 'mapped_data' not found!"
     if batch_path is None:
         raise "file 'batch_meta' not found!"
-    if dataset_path is None:
-        raise "file 'train_pred' not found!"
 
     new_dataset_path = os.path.join(new_folder, "train_pred.csv")
 
     # Merge results (mapped data) with predictions (batch data)
     data, _, _ = utils.process_mapped_data(mapped_path, ingredient_names)
     batch_df = utils.normalize_ingredient_names(pd.read_csv(batch_path, index_col=None))
+
+    batch_df['experiment_number'] = batch_df.index
+    
     results = pd.merge(
         batch_df,
         data,
         how="left",
-        left_on=ingredient_names,
-        right_on=ingredient_names,
+        left_on='experiment_number',
+        right_on='experiment_number',
         sort=True,
     )
 
@@ -225,9 +226,8 @@ def process_results(
             plot_redos_(folder, prev_results, redo_results, ingredient_names)
 
     # Process results
-    results.iloc[:, :n_ingredients] = results.iloc[:, :n_ingredients].astype(int)
-    results["depth"] = n_ingredients - results.iloc[:, :n_ingredients].sum(axis=1)
-    results = results.sort_values(["depth", "fitness"], ascending=False)
+    results["depth"] = results.iloc[:, :n_ingredients].sum(axis=1) # do we need this?
+    results = results.sort_values(["fitness", "depth"], ascending=False)
     if "frontier_type" not in results.columns:
         results["frontier_type"] = "FRONTIER"
         print("Added 'frontier_type' column")
@@ -257,17 +257,11 @@ def process_results(
         )
 
         data_batch = results.loc[:, cols]
-        data_batch.iloc[:, :n_ingredients] = data_batch.iloc[:, :n_ingredients].astype(
-            int
-        )
         dataset.columns = data_batch.columns = cols_new
         new_dataset = pd.concat([dataset, data_batch], ignore_index=True)
 
     # Used experiments are the new dataset (old dataset plus "good" experiments from current round)
     used_experiments = set(map(tuple, new_dataset.to_numpy()[:, :n_ingredients]))
-    new_dataset.iloc[:, :n_ingredients] = new_dataset.iloc[:, :n_ingredients].astype(
-        int
-    )
     new_dataset.to_csv(new_dataset_path, index=None)
     X_train = new_dataset.iloc[:, :n_ingredients].to_numpy()
     y_train = new_dataset.loc[:, "y_true"].to_numpy()
@@ -325,6 +319,8 @@ def process_results(
             redo_experiments.columns[n_ingredients:]
         )
         print(f"Redoing {len(redo_experiments)} experiments from previous round.")
+    else:
+        redo_experiments = None
 
     # Save and output successful results
     results_grow_only.to_csv(os.path.join(folder, "results_grow_only.csv"), index=False)
@@ -333,14 +329,15 @@ def process_results(
     top_10 = results_grow_only.iloc[:10, :]
     print("Media Results (Top 10):")
     for idx, (_, row) in enumerate(top_10.iterrows()):
-        print(f"{idx+1:2}. Depth: {row['depth']:2}, Fitness: {row['fitness']:.3f}")
+        print(f"{idx+1:2}. Fitness: {row['fitness']:.3f}, Depth: {row['depth']:2}")
         for l in row[:n_ingredients][row[:n_ingredients] == 1].index:
             print(f"\t{l}")
 
     print(f"Total unique experiments: {len(used_experiments)}")
-    print(
-        f"Total redo experiments chosen: {len(redo_experiments)} ({len(results_bad)} 'bad' repeats)"
-    )
+    if redo_experiments:
+        print(
+            f"Total redo experiments chosen: {len(redo_experiments)} ({len(results_bad)} 'bad' repeats)"
+        )
 
     return X_train, y_train, used_experiments, redo_experiments
 
