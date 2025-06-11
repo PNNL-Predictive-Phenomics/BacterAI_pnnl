@@ -226,14 +226,14 @@ def process_results(
             plot_redos_(folder, prev_results, redo_results, ingredient_names)
 
     # Process results
-    results["depth"] = results.iloc[:, :n_ingredients].sum(axis=1) # do we need this?
+    results["depth"] = results.iloc[:, :n_ingredients].sum(axis=1)
     results = results.sort_values(["fitness", "depth"], ascending=False)
     if "frontier_type" not in results.columns:
         results["frontier_type"] = "FRONTIER"
         print("Added 'frontier_type' column")
     if not plot_only:
         results.to_csv(os.path.join(folder, "results_all.csv"), index=None)
-
+    print(results)
     # Generate results figure for current round
     plot_results(folder, results, threshold)
     if plot_only:
@@ -622,7 +622,7 @@ def main(args):
               
         batch["type"] = "n/a"
         batch["direction"] = 2
-        batch["frontier_type"] = False
+        batch["frontier_type"] = 'FRONTIER'
         batch["growth_pred"] = 1
         batch["var"] = 0
         batch["is_redo"] = False
