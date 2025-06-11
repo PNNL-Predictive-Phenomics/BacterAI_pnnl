@@ -26,14 +26,12 @@ def process_mapped_data(path, ingredients):
     plate_control_indexes = data[data["plate_control"]].index
     plate_blank_indexes = data[data["plate_blank"]].index
 
-    data["delta_od"] = data["final_od"] - data["initial_od"]
-
     plate_controls = data.loc[plate_control_indexes, :]
     plate_blanks = data.loc[plate_blank_indexes, :]
     plate_control_means = (
-        plate_controls.groupby("parent_plate").mean().to_dict()["delta_od"]
+        plate_controls.groupby("parent_plate").mean().to_dict()["feature"]
     )
-    data["fitness"] = data["delta_od"] / data["parent_plate"].replace(
+    data["fitness"] = data["feature"] / data["parent_plate"].replace(
         plate_control_means
     )
 

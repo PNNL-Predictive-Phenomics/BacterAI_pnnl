@@ -68,12 +68,9 @@ def main(path, date, round_number, signal, feature):
             raise ValueError(f"Number of possible Excel files containing {fid} is either none or more than one")
 
         if feature == 'delta_od':
-            feature_names = ['initial_od','final_od']
-            final_df = pd.concat([biotek_df.groupby('well').first()['y'],
-                                  biotek_df.groupby('well').last()['y']],
-                                  axis=1,
-                                  keys=['initial_od','final_od']
-                                  ).reset_index()
+            initial_od = biotek_df.groupby('well').first()['y']
+            final_od = biotek_df.groupby('well').last()['y']
+            final_df = (final_od - initial_od).rename('feature').reset_index()
         elif feature == 'growth_rate':
             # Placeholder: Calculate growth_rate
             pass
@@ -102,7 +99,7 @@ def main(path, date, round_number, signal, feature):
     # extract experiment number and fill controls with 9999 so they won't match to experiment request df
     result['experiment_number'] = result['solution_id'].str.extract(r'expt(\d+)').fillna(value = 10000).astype(int) - 1
     
-    names_to_keep = feature_names + ['bad', 'plate_control', 'plate_blank', 'parent_plate', 'experiment_number', 'strain', 'environment']
+    names_to_keep = ['feature', 'bad', 'plate_control', 'plate_blank', 'parent_plate', 'experiment_number', 'strain', 'environment']
     result = result[names_to_keep]
 
     out_file = 'mapped_data_' + date + '_biotek_' + feature + '_data.csv'
@@ -117,7 +114,7 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--date', required=True, type=str, help='Date that the experiment request was made')
     parser.add_argument('-r', '--round_number', required=True, type=int, help='Round for the experiment')
     parser.add_argument('-s', '--signal', required=True, type=int, help='Wavelength of plate reader measurements')
-    parser.add_argument('-f', '--feature', required=True, type=str, choices=['final_od', 'growth_rate', 'lag_time'], help='Feature to extract')
+    parser.add_argument('-f', '--feature', required=True, type=str, choices=['delta_od', 'growth_rate', 'lag_time'], help='Feature to extract')
     
     args = parser.parse_args()
     main(args.path, args.date, args.round_number, args.signal, args.feature)
