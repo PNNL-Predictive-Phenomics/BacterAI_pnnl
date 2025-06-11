@@ -62,7 +62,6 @@ def main(path, date, round_number, signal, feature):
         exception_file = [f for f in os.listdir(data_path) if fid in f and "exception" in f][0]
         exceptions = pd.read_csv(os.path.join(data_path, exception_file)) if exception_file else None
        
-
         biotek_file = [f for f in os.listdir(data_path) if fid in f and f.endswith('.xlsx')]
         if len(biotek_file) == 1:
             biotek_df = read_biotek(os.path.join(data_path, biotek_file[0]), signal)
@@ -70,7 +69,12 @@ def main(path, date, round_number, signal, feature):
             raise ValueError(f"Number of possible Excel files containing {fid} is either none or more than one")
 
         if feature == 'final_od':
-            final_df = biotek_df.groupby('well').last().reset_index()
+            feature_names = ['initial_od','final_od']
+            final_df = pd.concat([biotek_df.groupby('well').first()['y'],
+                                  biotek_df.groupby('well').last()['y']],
+                                  axis=1,
+                                  keys=['initial_od','final_od']
+                                  ).reset_index()
         elif feature == 'growth_rate':
             # Placeholder: Calculate growth_rate
             pass
@@ -99,7 +103,7 @@ def main(path, date, round_number, signal, feature):
     # extract experiment number and fill controls with 9999 so they won't match to experiment request df
     result['experiment_number'] = result['solution_id'].str.extract(r'expt(\d+)').fillna(value = 10000).astype(int) - 1
     
-    names_to_keep = ['y', 'bad', 'plate_control', 'plate_blank', 'parent_plate', 'experiment_number', 'strain', 'environment']
+    names_to_keep = feature_names + ['bad', 'plate_control', 'plate_blank', 'parent_plate', 'experiment_number', 'strain', 'environment']
     result = result[names_to_keep]
 
     out_file = 'mapped_data_' + date + '_biotek_' + feature + '_data.csv'

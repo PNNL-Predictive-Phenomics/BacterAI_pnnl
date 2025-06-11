@@ -26,13 +26,14 @@ def process_mapped_data(path, ingredients):
     plate_control_indexes = data[data["plate_control"]].index
     plate_blank_indexes = data[data["plate_blank"]].index
 
+    data["delta_od"] = data["final_od"] - data["initial_od"]
+
     plate_controls = data.loc[plate_control_indexes, :]
     plate_blanks = data.loc[plate_blank_indexes, :]
-    # plate_blanks is not used here, do we want to subtract plate_blank?
     plate_control_means = (
-        plate_controls.groupby("parent_plate").mean().to_dict()["y"]
+        plate_controls.groupby("parent_plate").mean().to_dict()["delta_od"]
     )
-    data["fitness"] = data["y"] / data["parent_plate"].replace(
+    data["fitness"] = data["delta_od"] / data["parent_plate"].replace(
         plate_control_means
     )
 
