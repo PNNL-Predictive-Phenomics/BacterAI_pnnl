@@ -37,7 +37,6 @@ def main(path, date, round_number, signal, feature):
     plate_maps_path = os.path.join(experiment_request_path, "plate_maps")
     
     round_folder = os.path.join(path, f"Round{round_number}")
-           
 
     instructions = [d for d in os.listdir(plate_maps_path) if os.path.isdir(os.path.join(plate_maps_path, d))]
     
@@ -68,7 +67,7 @@ def main(path, date, round_number, signal, feature):
         else:
             raise ValueError(f"Number of possible Excel files containing {fid} is either none or more than one")
 
-        if feature == 'final_od':
+        if feature == 'delta_od':
             feature_names = ['initial_od','final_od']
             final_df = pd.concat([biotek_df.groupby('well').first()['y'],
                                   biotek_df.groupby('well').last()['y']],
@@ -124,4 +123,4 @@ if __name__ == "__main__":
     main(args.path, args.date, args.round_number, args.signal, args.feature)
     
     # example run:
-    # python biotek_feature_extract.py /path/to/experiment/ -d "2025-04-01"" -r 1 -s 600 -f "final_od"
+    # python biotek_feature_extract.py /path/to/experiment/ -d "2025-04-01"" -r 1 -s 600 -f "delta_od"

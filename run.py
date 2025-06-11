@@ -233,7 +233,7 @@ def process_results(
         print("Added 'frontier_type' column")
     if not plot_only:
         results.to_csv(os.path.join(folder, "results_all.csv"), index=None)
-    print(results)
+    
     # Generate results figure for current round
     plot_results(folder, results, threshold)
     if plot_only:
