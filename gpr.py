@@ -84,8 +84,8 @@ def sample_GP(model, likelihood, X, n_samples=1):
     cov = observed_pred.covariance_matrix.numpy()
     
     # Sample from the multivariate normal distribution
-    samples = multivariate_normal.rvs(mean, cov, size=n_samples).T
+    samples = np.atleast_1d(multivariate_normal.rvs(mean, cov, size=n_samples))
     variances = np.diag(cov)
     
-    return np.hstack((samples, variances.reshape(-1, 1)))
+    return samples, variances
 
