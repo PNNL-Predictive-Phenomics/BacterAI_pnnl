@@ -52,6 +52,21 @@ class GPRModel(Model):
         self.is_trained = False
         super().__init__(self, ModelType.GPR)
         
+    @classmethod
+    def load_trained_models(cls, models_path):
+        obj = cls(models_path)
+
+        for filename in os.listdir(models_path):
+            if "model" in filename:
+                model = torch.load(os.path.join(models_path, filename), map_location=torch.device(net.DEVICE))
+                obj.model.append(model)
+            if "likelihood" in filename:
+                likelihood = torch.load(os.path.join(models_path, filename), map_location=torch.device(net.DEVICE))
+                obj.likelihood.append(likelihood)
+
+        obj.is_trained = True
+        return obj
+    
     def check_path(self):
         if not os.path.exists(self.model_path):
             os.makedirs(self.model_path)
