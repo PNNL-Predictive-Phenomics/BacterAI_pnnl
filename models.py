@@ -47,6 +47,7 @@ class GPRModel(Model):
     def __init__(self, model_path):
         # self.activate_R()
         self.model = []
+        self.likelihood = []
         self.model_path = model_path
         self.is_trained = False
         super().__init__(self, ModelType.GPR)
@@ -62,7 +63,7 @@ class GPRModel(Model):
         # y_trainR = robjects.r.matrix(y_train, nrow=y_train.shape[0], ncol=1)
         # self.model = self.gpr_lib.train_new_GP(X_trainR, y_trainR)
         self.check_path()
-        self.model = gpr.train_new_GP(X_train, y_train, self.model_path, **kwargs)
+        self.model, self.likelihood = gpr.train_new_GP(X_train, y_train, self.model_path, **kwargs)
         self.is_trained = True
 
     def evaluate(self, X, clip=True, n=1):
@@ -70,11 +71,10 @@ class GPRModel(Model):
         if not self.is_trained:
             raise Exception("GPR model needs to be trained before evaluating.")
 
-        result = gpr.sample_GP(self.model, X, n)
-        result = np.array(result)
+        samples, variances  = gpr.sample_GP(self.model, self.likelihood, X, n)
+        # Do we want to clip samples?
         if clip:
-            result = np.clip(result, 0, 1)
-        samples, variances = result[:, 0], result[:, 1]
+            samples = np.clip(samples, 0, 1)
         return samples, variances
 
     # def activate_R(self):
