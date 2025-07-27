@@ -58,6 +58,7 @@ def export_to_dp_batch(
 def make_batch(
     model,
     media,
+    ingredients_pd,
     new_round_n,
     batch_size,
     sim_types,
@@ -84,6 +85,7 @@ def make_batch(
         batch, batch_set, metrics = perform_simulations(
             model,
             media,
+            ingredients_pd,
             n_exps,
             threshold,
             sim_type,
@@ -451,11 +453,13 @@ def main(args):
         
         # Note from BWS: this process shouldn't interfere with Plackett-Burman initializing, can be left as-is
 
-        # Create random binary inputs of shape (1000, n_ingredients) and assign random fitness [0, 1]
+        # Create random inputs between MIN_VALUE and MAX_VALUE of shape (1000, n_ingredients) and assign random fitness [0, 1]
         n_examples = 1000
-        X_train = np.random.rand(n_examples, n_ingredients)
-        X_train[X_train >= 0.5] = 1
-        X_train[X_train < 0.5] = 0
+        min_values = ingredients_pd["MIN_VALUE"].to_numpy()
+        max_values = ingredients_pd["MAX_VALUE"].to_numpy()
+        X_train = min_values + np.random.rand(n_examples, n_ingredients)*(max_values - min_values)
+        discrete_types = ingredients_pd["TYPE"].isin(["binary","semi-quantitative"])
+        X_train[:, discrete_types] = np.round(X_train[:, discrete_types])
         y_train = np.random.rand(n_examples, 1).flatten()
 
         # Force at least 25% of the fitnesses to 0
@@ -615,7 +619,9 @@ def main(args):
                 switch_vals = np.linspace(0, 1, num = np.int64(n_states))
                 
             else:
-                switch_vals = np.linspace(1/2, 2/3, num = 3)
+                min_value = ingredients_pd[ingredients_pd.INGREDIENT == ingt].MIN_VALUE.iloc[0]
+                max_value = ingredients_pd[ingredients_pd.INGREDIENT == ingt].MAX_VALUE.iloc[0]
+                switch_vals = np.linspace(min_value, max_value, num = 3)
                 
             row_select = batch["modify"] == ingt
             batch.loc[row_select, ingt] = switch_vals
@@ -645,25 +651,45 @@ def main(args):
         
     # For rounds > 1 or if we have transfer learning, run simulations to make new batches
     else: 
+        # Build starting_media based on ingredient type
+        starting_media_down = []
+        starting_media_up = []
+        for ingt in INGREDIENTS:
+            ingt_type = ingredients_pd[ingredients_pd.INGREDIENT == ingt].TYPE.iloc[0]
+            if ingt_type == "binary":
+                starting_media_down.append(1.0)
+                starting_media_up.append(0.0)
+            elif ingt_type in ["semi-quantitative", "quantitative"]:
+                min_value = ingredients_pd[ingredients_pd.INGREDIENT == ingt].MIN_VALUE.iloc[0]
+                max_value = ingredients_pd[ingredients_pd.INGREDIENT == ingt].MAX_VALUE.iloc[0]
+                n_states = int(ingredients_pd[ingredients_pd.INGREDIENT == ingt].N_STATES.iloc[0])
+                levels = np.linspace(min_value, max_value, n_states)
+                starting_media_down.append(levels[-1])
+                starting_media_up.append(levels[0])
+            else:
+                raise ValueError(f"Unknown ingredient type: {ingt_type}")
+        starting_media_down = np.array(starting_media_down)
+        starting_media_up = np.array(starting_media_up)
 
         if DIRECTION == SimDirection.DOWN:
-            starting_media = np.ones(n_ingredients)
+            starting_media = starting_media_down
             direction = SimDirection.DOWN
             batch_size = BATCH_SIZE
         elif DIRECTION == SimDirection.UP:
-            starting_media = np.zeros(n_ingredients)
+            starting_media = starting_media_up
             direction = SimDirection.UP
             batch_size = BATCH_SIZE
         elif DIRECTION == SimDirection.BOTH:
-            starting_media = np.ones(n_ingredients)
+            starting_media = starting_media_down
             direction = SimDirection.DOWN
             batch_size = BATCH_SIZE // 2
-        
+
         # Create batches 
         all_metrics = {}
         batch, batch_used, metrics = make_batch(
             model,
             starting_media,
+            ingredients_pd,
             new_round_n=NEW_ROUND_N,
             batch_size=batch_size,
             sim_types=SIMULATION_TYPE,
@@ -686,6 +712,7 @@ def main(args):
             batch2, _, metrics = make_batch(
                 model,
                 starting_media,
+                ingredients_pd,
                 new_round_n=NEW_ROUND_N,
                 batch_size=batch_size,
                 sim_types=SIMULATION_TYPE,
@@ -699,7 +726,7 @@ def main(args):
             )
             batch = pd.concat((batch, batch2), ignore_index=True)
             all_metrics[direction.name] = metrics
-          #############################################################
+        #############################################################
           
         model.close()
 
