@@ -8,6 +8,9 @@ import shutil
 import numpy as np
 import pandas as pd
 
+from pyDOE3 import pbdesign
+from scipy.stats import qmc
+
 # from constants import *
 from models import GPRModel, NeuralNetModel, ModelType
 from plot import plot_redos as plot_redos_, plot_results
@@ -597,35 +600,69 @@ def main(args):
     # for first batch: do the Plackett-Burman intializing if we have no transfer learning whatsoever
     if NEW_ROUND_N == 1 and TRANSFER_DATA_DIR is None and TRANSFER_MODEL_FOLDER is None:
       
-        # create the "batch" pd.DataFrame, with a column for each ingredient
-        # each row is a separate experiment where only one variable is manipulated at a time
+        # create the "batch" pd.DataFrame, with a column for each ingredient and each row is a separate experiment
         ingredients_pd.loc[ingredients_pd.TYPE == "quantitative", "N_STATES"] = 3
         total_runs = np.sum(ingredients_pd.astype({"N_STATES" : "int64"})["N_STATES"])
-        batch = np.tile(np.array(ingredients_pd["NOMINAL_VALUE"]), (total_runs, 1))
-        batch = pd.DataFrame(batch, columns = ingredients_pd["INGREDIENT"])
         
-        # keep track of which variable is being modified
-        batch["modify"] = (ingredients_pd["INGREDIENT"].loc[ingredients_pd.index.repeat(ingredients_pd['N_STATES'])]
-                                                       .reset_index(drop=True))
-                                                       
-        # for each ingredient, modify the column values to the corresponding number of options
-        for ingt in INGREDIENTS:
-            ingt_type = ingredients_pd[ingredients_pd.INGREDIENT == ingt].TYPE.iloc[0]
+        # if number of experiments run at once is < 40, use Plackett-Burman
+        if BATCH_SIZE < 40:
+            # Note, under this scheme, every ingredient gets 2 values
+            batch = pbdesign(n_ingredients)
+            batch = pd.DataFrame(batch, columns = ingredients_pd["INGREDIENT"])
+            batch = (batch + 1) / 2
             
-            if ingt_type == "binary":
-                switch_vals = [0.0, 1.0]
+            # modify 0/1 values to concentrations
+            for ingt in INGREDIENTS:
+                ingt_type = ingredients_pd[ingredients_pd.INGREDIENT == ingt].TYPE.iloc[0]
+
+                # quantitatve ingredients get either 0 or the nominal value
+                if ingt_type == "quantitative":
+                    nominal_val = ingredients_pd[ingredients_pd.INGREDIENT == ingt].NOMINAL_VALUE.iloc[0]
+                    if nominal_val == 0:
+                        nominal_val = ingredients_pd[ingredients_pd.INGREDIENT == ingt].MAX_VALUE.iloc[0]
+                    batch[ingt] = batch[ingt] * nominal_val
                 
-            elif ingt_type == "semi-quantitative":
-                n_states = ingredients_pd[ingredients_pd.INGREDIENT == ingt].N_STATES.iloc[0]
-                switch_vals = np.linspace(0, 1, num = np.int64(n_states))
-                
-            else:
-                min_value = ingredients_pd[ingredients_pd.INGREDIENT == ingt].MIN_VALUE.iloc[0]
-                max_value = ingredients_pd[ingredients_pd.INGREDIENT == ingt].MAX_VALUE.iloc[0]
-                switch_vals = np.linspace(min_value, max_value, num = 3)
-                
-            row_select = batch["modify"] == ingt
-            batch.loc[row_select, ingt] = switch_vals
+                # semi-quantitative ingredients get either the min or max value
+                elif ingt_type == "semi-quantitative":
+                    min_val = ingredients_pd[ingredients_pd.INGREDIENT == ingt].MIN_VALUE.iloc[0]
+                    max_val = ingredients_pd[ingredients_pd.INGREDIENT == ingt].MAX_VALUE.iloc[0]
+                    batch.loc[batch[ingt] == 0, ingt] = min_val
+                    batch.loc[batch[ingt] == 1, ingt] = max_val
+
+        # else, if number of experiments run at once is >= 40, use space-filling random design
+        else:
+            # create 2^m experiments, likely creating more than necessary at first; will reduce afterward
+            ingt_sampler = qmc.Sobol(d=n_ingredients)
+            m_to_use = np.ceil(np.log2(BATCH_SIZE))
+            batch = ingt_sampler.random_base2(m = np.int64(m_to_use))
+            
+            # rescale values to upper and lower bounds
+            l_bounds = ingredients_pd.MIN_VALUE.values
+            u_bounds = ingredients_pd.MAX_VALUE.values
+            u_bounds[ingredients_pd.TYPE.values == "binary"] = 1
+            
+            batch = qmc.scale(batch, l_bounds, u_bounds)
+            batch = pd.DataFrame(batch, columns = ingredients_pd["INGREDIENT"])
+            
+            # convert binary values to 0/1 and match semi-quantitative values to closest match
+            for ingt in INGREDIENTS:
+                ingt_type = ingredients_pd[ingredients_pd.INGREDIENT == ingt].TYPE.iloc[0]
+
+                if ingt_type == "binary":
+                    batch[ingt] = round(batch[ingt])
+            
+                elif ingt_type == "semi-quantitative":
+                    # note that this approach assumes a min, nominal, and max semi-quant value scheme
+                    # I will need more work with the ingredients list to specify a greater number of value states
+                    sq_vals = np.array([ingredients_pd[ingredients_pd.INGREDIENT == ingt].MIN_VALUE.iloc[0],
+                        ingredients_pd[ingredients_pd.INGREDIENT == ingt].NOMINAL_VALUE.iloc[0],
+                        ingredients_pd[ingredients_pd.INGREDIENT == ingt].MAX_VALUE.iloc[0]])
+                    col = batch[ingt].values
+                    col_match = np.array([np.argmin(np.abs(val - sq_vals)) for val in col])
+                    batch[ingt] = sq_vals[col_match]
+            
+            # limit to number of experiments in plate
+            batch = batch.loc[0:(BATCH_SIZE - 1)]
               
         batch["type"] = "n/a"
         batch["direction"] = 2
