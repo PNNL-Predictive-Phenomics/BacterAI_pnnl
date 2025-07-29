@@ -374,7 +374,7 @@ def main(args):
     TRANSFER_DATA_DIR = config.get("transfer_model_dir", None)
     SEPARATE_REDOS = config.get("separate_redos", False)
     N_BAGS = config.get("n_bags", 25)
-    RANDOM_WALK_INTERVAL = config.get("transfer_model_dir", 0.1)
+    RANDOM_WALK_INCREMENT = config.get("random_walk_increment", 10)
 
     # Load the ingredients list
     if INGREDIENTS_FILE is not None:
