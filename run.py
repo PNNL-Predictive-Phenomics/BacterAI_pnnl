@@ -371,6 +371,7 @@ def main(args):
     TRANSFER_DATA_DIR = config.get("transfer_model_dir", None)
     SEPARATE_REDOS = config.get("separate_redos", False)
     N_BAGS = config.get("n_bags", 25)
+    RANDOM_WALK_INTERVAL = config.get("transfer_model_dir", 10)
 
     # Load the ingredients list
     if INGREDIENTS_FILE is not None:
@@ -651,6 +652,9 @@ def main(args):
         
     # For rounds > 1 or if we have transfer learning, run simulations to make new batches
     else: 
+        # replace NA instances of N_STATES in the ingredients list with the user-specified interval
+        ingredients_pd['N_STATES'] = ingredients_pd['N_STATES'].replace("NA", RANDOM_WALK_INTERVAL)
+        ingredients_pd['N_STATES'] = pd.to_numeric(ingredients_pd['N_STATES'])
         # Build starting_media based on ingredient type
         starting_media_down = []
         starting_media_up = []
@@ -664,6 +668,8 @@ def main(args):
                 max_value = ingredients_pd[ingredients_pd.INGREDIENT == ingt].MAX_VALUE.iloc[0]
                 n_states = int(ingredients_pd[ingredients_pd.INGREDIENT == ingt].N_STATES.iloc[0])
                 levels = np.linspace(min_value, max_value, n_states)
+                nom_value = ingredients_pd[ingredients_pd.INGREDIENT == ingt].NOMINAL_VALUE.iloc[0]
+                levels = levels[::-1] if min_value == nom_value  # reverse levels for "stress" conditions where minimum is nominal for growth
                 starting_media_down.append(levels[-1])
                 starting_media_up.append(levels[0])
             else:
