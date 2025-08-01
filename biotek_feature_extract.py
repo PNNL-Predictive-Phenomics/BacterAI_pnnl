@@ -15,7 +15,7 @@ def read_biotek(filename, signal='600'):
     z = [group.iloc[2:, 1:] for _, group in y[wp > 0].groupby(wp[wp > 0])]
     for i, df in enumerate(z):
         df.columns = z[i].iloc[0]
-        df = df.iloc[1:]
+        df = df.iloc[1:].copy()
         df.reset_index(inplace = True, drop = True)
         df.loc[:, df.columns != 'Time'] = df.loc[:, df.columns != 'Time'].apply(pd.to_numeric, errors='coerce')
         z[i] = df
@@ -97,7 +97,7 @@ def main(path, date, round_number, signal, feature):
     result = result.dropna(subset=["solution_id"])
 
     # extract experiment number and fill controls with 9999 so they won't match to experiment request df
-    result['experiment_number'] = result['solution_id'].str.extract(r'expt(\d+)').fillna(value = 10000).astype(int) - 1
+    result['experiment_number'] = result['solution_id'].str.extract(r'expt(\d+)').fillna(value = 9999).astype(int)
     
     names_to_keep = ['feature', 'bad', 'plate_control', 'plate_blank', 'parent_plate', 'experiment_number', 'strain', 'environment']
     result = result[names_to_keep]
