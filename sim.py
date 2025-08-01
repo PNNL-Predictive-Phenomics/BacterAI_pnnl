@@ -120,6 +120,8 @@ def rollout_trajectory(model, states, ingredients_pd, n_trajectories, threshold,
                     min_value = ingredients_pd.iloc[col_idx].MIN_VALUE
                     max_value = ingredients_pd.iloc[col_idx].MAX_VALUE
                     n_states = int(ingredients_pd.iloc[col_idx].N_STATES)
+                    if ingt_type == "quantitative":
+                        n_states += 1
                     levels = np.linspace(min_value, max_value, n_states)
                     idx_level = np.where(np.isclose(levels, val))[0]
                     if not len(idx_level):
@@ -291,6 +293,8 @@ def perform_simulations(
                     min_value = ingredients_pd.iloc[i].MIN_VALUE
                     max_value = ingredients_pd.iloc[i].MAX_VALUE
                     n_states = int(ingredients_pd.iloc[i].N_STATES)
+                    if ingt_type == "quantitative":
+                        n_states += 1
                     levels = np.linspace(min_value, max_value, n_states)
                     idx_level = np.where(np.isclose(levels, val))[0]
                     if not len(idx_level):
@@ -420,6 +424,7 @@ def perform_simulations(
                         batch_frontier_types.append(ft)
                         batch_set.add(key)
                         tq.update()
+                        st_print = np.round(st, decimals=2)  # round decimals for printing
                         print(f"\n\tADDED: {st} - {ft}")
                         if sim_type == SimType.ROLLOUT_PROB:
                             n_found_but_exists -= 1

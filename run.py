@@ -191,7 +191,7 @@ def process_results(
     data, _, _ = utils.process_mapped_data(mapped_path, ingredient_names)
     batch_df = utils.normalize_ingredient_names(pd.read_csv(batch_path, index_col=None))
 
-    batch_df['experiment_number'] = batch_df.index
+    batch_df['experiment_number'] = batch_df.index + 1
     
     results = pd.merge(
         batch_df,
@@ -690,7 +690,7 @@ def main(args):
     # For rounds > 1 or if we have transfer learning, run simulations to make new batches
     else: 
         # replace NA instances of N_STATES in the ingredients list with the user-specified interval
-        ingredients_pd['N_STATES'] = ingredients_pd['N_STATES'].replace("NA", RANDOM_WALK_INTERVAL)
+        ingredients_pd['N_STATES'] = ingredients_pd['N_STATES'].fillna(RANDOM_WALK_INCREMENT)
         ingredients_pd['N_STATES'] = pd.to_numeric(ingredients_pd['N_STATES'])
         # reverse min and max values if min == nominal (i.e., if a "stress" condition)
         ingredients_pd['IS_STRESS'] = ingredients_pd['MIN_VALUE'] == ingredients_pd['NOMINAL_VALUE']
