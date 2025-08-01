@@ -77,6 +77,7 @@ def plot_results(folder, results, threshold):
     """
 
     results = results.sort_values(by="growth_pred").reset_index(drop=True)
+    results['frontier_type'] = results['frontier_type'].fillna("Undefined").astype(str)
     fig, axs = plt.subplots(
         nrows=2,
         ncols=2,
@@ -87,11 +88,12 @@ def plot_results(folder, results, threshold):
     )
 
     frontier_grouped = results.groupby(by=["frontier_type"], as_index=False)
-    for row_idx, (frontier_type, results) in enumerate(
+    for row_idx, (frontier_type, group_results) in enumerate(
         reversed(list(frontier_grouped))
     ):
-        results = results.reset_index(drop=True)
-        sim_type_grouped = results.groupby(by=["type"], as_index=False)
+        frontier_type = frontier_type[0]
+        group_results = group_results.reset_index(drop=True)
+        sim_type_grouped = group_results.groupby(by=["type"], as_index=False)
         present_groups = []
         for group_name, data in sim_type_grouped:
             present_groups.append(group_name)
@@ -103,7 +105,7 @@ def plot_results(folder, results, threshold):
                 markersize=3,
                 alpha=0.75,
             )
-        axs[row_idx, 0].plot(results.index, results["growth_pred"], "-", color="black")
+        axs[row_idx, 0].plot(group_results.index, group_results["growth_pred"], "-", color="black")
         axs[row_idx, 0].set_xlabel("Assay N")
         axs[row_idx, 0].set_ylabel("Fitness")
         axs[row_idx, 0].legend(
