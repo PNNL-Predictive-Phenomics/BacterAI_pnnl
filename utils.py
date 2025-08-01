@@ -29,17 +29,17 @@ def process_mapped_data(path, ingredients):
     plate_controls = data.loc[plate_control_indexes, :]
     plate_blanks = data.loc[plate_blank_indexes, :]
     plate_control_means = (
-        plate_controls.groupby("parent_plate").mean().to_dict()["feature"]
+        plate_controls.groupby("parent_plate")["feature"].mean().to_dict()
     )
-    data["fitness"] = data["feature"] / data["parent_plate"].replace(
-        plate_control_means
-    )
+    data["control_mean"] = data["parent_plate"].map(plate_control_means)
+    data["fitness"] = data["feature"] / data["control_mean"]
 
     data = data.drop(data[(data["plate_control"] | data["plate_blank"])].index)
     data = data.drop(
         columns=[
             "plate_control",
             "plate_blank",
+            "control_mean",
         ]
     )
     return data, plate_controls, plate_blanks
