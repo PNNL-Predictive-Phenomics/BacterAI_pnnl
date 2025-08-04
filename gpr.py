@@ -23,13 +23,14 @@ class ExactGPModel(gpytorch.models.ExactGP):
 
 def train_new_GP(X, y, model_path, d=0.1, g=0.1, max_iter=100, lr=0.1, verbosity=2):
     # Convert data to tensors
-    train_x = torch.tensor(X, dtype=torch.float32)
-    train_y = torch.tensor(y, dtype=torch.float32)
+    # ensure memory-block contiguity in train_x and model training tensor-format data or they will appear unequal the model(train_x) code below will fail
+    train_x = torch.tensor(X, dtype=torch.float32).contiguous()
+    train_y = torch.tensor(y, dtype=torch.float32).contiguous()
     
     # Initialize likelihood and model
     likelihood = gpytorch.likelihoods.GaussianLikelihood()
     model = ExactGPModel(train_x, train_y, likelihood)
-    
+
     # Find optimal model hyperparameters
     model.train()
     likelihood.train()
@@ -38,10 +39,16 @@ def train_new_GP(X, y, model_path, d=0.1, g=0.1, max_iter=100, lr=0.1, verbosity
     optimizer = torch.optim.Adam([
         {'params': model.parameters()},  # Includes GaussianLikelihood parameters
     ], lr=lr)
-    
+
     # "Loss" for GPs - the marginal log likelihood
     mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
-    
+
+    ## Note that if there are any nan values in either train_x or the model object training data, the output = model(train_x) line will fail
+    ## you get this line: "RuntimeError: You must train on the training inputs!"
+    ## a good diagnostic is to print out the values of each to see where the nan values are:
+    #print("train_x values:", train_x)
+    #print("model.train_inputs[0] values:", model.train_inputs[0])
+
     for i in range(max_iter):
         optimizer.zero_grad()  # Zero gradients from previous iteration
         output = model(train_x)
@@ -68,6 +75,15 @@ def train_new_GP(X, y, model_path, d=0.1, g=0.1, max_iter=100, lr=0.1, verbosity
     return model, likelihood
 
 
+def make_positive_semidefinite(matrix):
+    # Compute eigenvalues and eigenvectors
+    eigvals, eigvecs = np.linalg.eigh(matrix)  
+    # Clip small or negative eigenvalues to a minimal positive value
+    eigvals[eigvals < 0] = 1e-6
+    # Reconstruct matrix from modified eigenvalues
+    return eigvecs @ np.diag(eigvals) @ eigvecs.T
+
+
 def sample_GP(model, likelihood, X, n_samples=1):
     # Convert data to tensor
     test_x = torch.tensor(X, dtype=torch.float32)
@@ -82,7 +98,21 @@ def sample_GP(model, likelihood, X, n_samples=1):
     # Get the mean and covariance
     mean = observed_pred.mean.numpy()
     cov = observed_pred.covariance_matrix.numpy()
-    
+
+    # ensure covariance matrix is symmetric
+    cov = (cov + cov.T) / 2
+
+    # ensure covariance matrix is positive semidefinite
+    cov = make_positive_semidefinite(cov)
+
+    # add small amount of noise to stabilize covariance matrix
+    jitter = 1e-6  # Small constant
+    cov += jitter * np.eye(cov.shape[0])  # Add noise to diagonal
+
+    ## if you get errors during simulation such as: "numpy.linalg.LinAlgError: SVD did not converge",
+    ## then a good diagnostic is to look at the eignevalues -- large negative values indicate instability
+    #print("Covariance matrix eigenvalues:", np.linalg.eigvalsh(cov))
+
     # Sample from the multivariate normal distribution
     samples = np.atleast_1d(multivariate_normal.rvs(mean, cov, size=n_samples))
     variances = np.diag(cov)

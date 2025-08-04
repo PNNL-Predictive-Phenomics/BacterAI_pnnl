@@ -8,6 +8,9 @@ import shutil
 import numpy as np
 import pandas as pd
 
+from pyDOE3 import pbdesign
+from scipy.stats import qmc
+
 # from constants import *
 from models import GPRModel, NeuralNetModel, ModelType
 from plot import plot_redos as plot_redos_, plot_results
@@ -58,6 +61,7 @@ def export_to_dp_batch(
 def make_batch(
     model,
     media,
+    ingredients_pd,
     new_round_n,
     batch_size,
     sim_types,
@@ -84,6 +88,7 @@ def make_batch(
         batch, batch_set, metrics = perform_simulations(
             model,
             media,
+            ingredients_pd,
             n_exps,
             threshold,
             sim_type,
@@ -186,7 +191,7 @@ def process_results(
     data, _, _ = utils.process_mapped_data(mapped_path, ingredient_names)
     batch_df = utils.normalize_ingredient_names(pd.read_csv(batch_path, index_col=None))
 
-    batch_df['experiment_number'] = batch_df.index
+    batch_df['experiment_number'] = batch_df.index + 1
     
     results = pd.merge(
         batch_df,
@@ -369,6 +374,7 @@ def main(args):
     TRANSFER_DATA_DIR = config.get("transfer_model_dir", None)
     SEPARATE_REDOS = config.get("separate_redos", False)
     N_BAGS = config.get("n_bags", 25)
+    RANDOM_WALK_INCREMENT = config.get("random_walk_increment", 10)
 
     # Load the ingredients list
     if INGREDIENTS_FILE is not None:
@@ -451,11 +457,13 @@ def main(args):
         
         # Note from BWS: this process shouldn't interfere with Plackett-Burman initializing, can be left as-is
 
-        # Create random binary inputs of shape (1000, n_ingredients) and assign random fitness [0, 1]
+        # Create random inputs between MIN_VALUE and MAX_VALUE of shape (1000, n_ingredients) and assign random fitness [0, 1]
         n_examples = 1000
-        X_train = np.random.rand(n_examples, n_ingredients)
-        X_train[X_train >= 0.5] = 1
-        X_train[X_train < 0.5] = 0
+        min_values = ingredients_pd["MIN_VALUE"].to_numpy()
+        max_values = ingredients_pd["MAX_VALUE"].to_numpy()
+        X_train = min_values + np.random.rand(n_examples, n_ingredients)*(max_values - min_values)
+        discrete_types = ingredients_pd["TYPE"].isin(["binary","semi-quantitative"])
+        X_train[:, discrete_types] = np.round(X_train[:, discrete_types])
         y_train = np.random.rand(n_examples, 1).flatten()
 
         # Force at least 25% of the fitnesses to 0
@@ -592,33 +600,69 @@ def main(args):
     # for first batch: do the Plackett-Burman intializing if we have no transfer learning whatsoever
     if NEW_ROUND_N == 1 and TRANSFER_DATA_DIR is None and TRANSFER_MODEL_FOLDER is None:
       
-        # create the "batch" pd.DataFrame, with a column for each ingredient
-        # each row is a separate experiment where only one variable is manipulated at a time
+        # create the "batch" pd.DataFrame, with a column for each ingredient and each row is a separate experiment
         ingredients_pd.loc[ingredients_pd.TYPE == "quantitative", "N_STATES"] = 3
         total_runs = np.sum(ingredients_pd.astype({"N_STATES" : "int64"})["N_STATES"])
-        batch = np.tile(np.array(ingredients_pd["NOMINAL_VALUE"]), (total_runs, 1))
-        batch = pd.DataFrame(batch, columns = ingredients_pd["INGREDIENT"])
         
-        # keep track of which variable is being modified
-        batch["modify"] = (ingredients_pd["INGREDIENT"].loc[ingredients_pd.index.repeat(ingredients_pd['N_STATES'])]
-                                                       .reset_index(drop=True))
-                                                       
-        # for each ingredient, modify the column values to the corresponding number of options
-        for ingt in INGREDIENTS:
-            ingt_type = ingredients_pd[ingredients_pd.INGREDIENT == ingt].TYPE.iloc[0]
+        # if number of experiments run at once is < 40, use Plackett-Burman
+        if BATCH_SIZE < 40:
+            # Note, under this scheme, every ingredient gets 2 values
+            batch = pbdesign(n_ingredients)
+            batch = pd.DataFrame(batch, columns = ingredients_pd["INGREDIENT"])
+            batch = (batch + 1) / 2
             
-            if ingt_type == "binary":
-                switch_vals = [0.0, 1.0]
+            # modify 0/1 values to concentrations
+            for ingt in INGREDIENTS:
+                ingt_type = ingredients_pd[ingredients_pd.INGREDIENT == ingt].TYPE.iloc[0]
+
+                # quantitatve ingredients get either 0 or the nominal value
+                if ingt_type == "quantitative":
+                    nominal_val = ingredients_pd[ingredients_pd.INGREDIENT == ingt].NOMINAL_VALUE.iloc[0]
+                    if nominal_val == 0:
+                        nominal_val = ingredients_pd[ingredients_pd.INGREDIENT == ingt].MAX_VALUE.iloc[0]
+                    batch[ingt] = batch[ingt] * nominal_val
                 
-            elif ingt_type == "semi-quantitative":
-                n_states = ingredients_pd[ingredients_pd.INGREDIENT == ingt].N_STATES.iloc[0]
-                switch_vals = np.linspace(0, 1, num = np.int64(n_states))
-                
-            else:
-                switch_vals = np.linspace(1/2, 2/3, num = 3)
-                
-            row_select = batch["modify"] == ingt
-            batch.loc[row_select, ingt] = switch_vals
+                # semi-quantitative ingredients get either the min or max value
+                elif ingt_type == "semi-quantitative":
+                    min_val = ingredients_pd[ingredients_pd.INGREDIENT == ingt].MIN_VALUE.iloc[0]
+                    max_val = ingredients_pd[ingredients_pd.INGREDIENT == ingt].MAX_VALUE.iloc[0]
+                    batch.loc[batch[ingt] == 0, ingt] = min_val
+                    batch.loc[batch[ingt] == 1, ingt] = max_val
+
+        # else, if number of experiments run at once is >= 40, use space-filling random design
+        else:
+            # create 2^m experiments, likely creating more than necessary at first; will reduce afterward
+            ingt_sampler = qmc.Sobol(d=n_ingredients)
+            m_to_use = np.ceil(np.log2(BATCH_SIZE))
+            batch = ingt_sampler.random_base2(m = np.int64(m_to_use))
+            
+            # rescale values to upper and lower bounds
+            l_bounds = ingredients_pd.MIN_VALUE.values
+            u_bounds = ingredients_pd.MAX_VALUE.values
+            u_bounds[ingredients_pd.TYPE.values == "binary"] = 1
+            
+            batch = qmc.scale(batch, l_bounds, u_bounds)
+            batch = pd.DataFrame(batch, columns = ingredients_pd["INGREDIENT"])
+            
+            # convert binary values to 0/1 and match semi-quantitative values to closest match
+            for ingt in INGREDIENTS:
+                ingt_type = ingredients_pd[ingredients_pd.INGREDIENT == ingt].TYPE.iloc[0]
+
+                if ingt_type == "binary":
+                    batch[ingt] = round(batch[ingt])
+            
+                elif ingt_type == "semi-quantitative":
+                    # note that this approach assumes a min, nominal, and max semi-quant value scheme
+                    # I will need more work with the ingredients list to specify a greater number of value states
+                    sq_vals = np.array([ingredients_pd[ingredients_pd.INGREDIENT == ingt].MIN_VALUE.iloc[0],
+                        ingredients_pd[ingredients_pd.INGREDIENT == ingt].NOMINAL_VALUE.iloc[0],
+                        ingredients_pd[ingredients_pd.INGREDIENT == ingt].MAX_VALUE.iloc[0]])
+                    col = batch[ingt].values
+                    col_match = np.array([np.argmin(np.abs(val - sq_vals)) for val in col])
+                    batch[ingt] = sq_vals[col_match]
+            
+            # limit to number of experiments in plate
+            batch = batch.loc[0:(BATCH_SIZE - 1)]
               
         batch["type"] = "n/a"
         batch["direction"] = 2
@@ -645,25 +689,53 @@ def main(args):
         
     # For rounds > 1 or if we have transfer learning, run simulations to make new batches
     else: 
+        # replace NA instances of N_STATES in the ingredients list with the user-specified interval
+        ingredients_pd['N_STATES'] = ingredients_pd['N_STATES'].fillna(RANDOM_WALK_INCREMENT)
+        ingredients_pd['N_STATES'] = pd.to_numeric(ingredients_pd['N_STATES'])
+        # reverse min and max values if min == nominal (i.e., if a "stress" condition)
+        ingredients_pd['IS_STRESS'] = ingredients_pd['MIN_VALUE'] == ingredients_pd['NOMINAL_VALUE']
+        ingredients_pd.loc[ingredients_pd['IS_STRESS'], ['MIN_VALUE', 'MAX_VALUE']] = ingredients_pd.loc[ingredients_pd['IS_STRESS'], ['MAX_VALUE', 'MIN_VALUE']].values
+        # Build starting_media based on ingredient type
+        starting_media_down = []
+        starting_media_up = []
+        for ingt in INGREDIENTS:
+            ingt_type = ingredients_pd[ingredients_pd.INGREDIENT == ingt].TYPE.iloc[0]
+            if ingt_type == "binary":
+                starting_media_down.append(1.0)
+                starting_media_up.append(0.0)
+            elif ingt_type in ["semi-quantitative", "quantitative"]:
+                min_value = ingredients_pd[ingredients_pd.INGREDIENT == ingt].MIN_VALUE.iloc[0]
+                max_value = ingredients_pd[ingredients_pd.INGREDIENT == ingt].MAX_VALUE.iloc[0]
+                n_states = int(ingredients_pd[ingredients_pd.INGREDIENT == ingt].N_STATES.iloc[0])
+                levels = np.linspace(min_value, max_value, n_states)
+                # nom_value = ingredients_pd[ingredients_pd.INGREDIENT == ingt].NOMINAL_VALUE.iloc[0]
+                # levels = levels[::-1] if min_value == nom_value  # reverse levels for "stress" conditions where minimum is nominal for growth
+                starting_media_down.append(levels[-1])
+                starting_media_up.append(levels[0])
+            else:
+                raise ValueError(f"Unknown ingredient type: {ingt_type}")
+        starting_media_down = np.array(starting_media_down)
+        starting_media_up = np.array(starting_media_up)
 
         if DIRECTION == SimDirection.DOWN:
-            starting_media = np.ones(n_ingredients)
+            starting_media = starting_media_down
             direction = SimDirection.DOWN
             batch_size = BATCH_SIZE
         elif DIRECTION == SimDirection.UP:
-            starting_media = np.zeros(n_ingredients)
+            starting_media = starting_media_up
             direction = SimDirection.UP
             batch_size = BATCH_SIZE
         elif DIRECTION == SimDirection.BOTH:
-            starting_media = np.ones(n_ingredients)
+            starting_media = starting_media_down
             direction = SimDirection.DOWN
             batch_size = BATCH_SIZE // 2
-        
+
         # Create batches 
         all_metrics = {}
         batch, batch_used, metrics = make_batch(
             model,
             starting_media,
+            ingredients_pd,
             new_round_n=NEW_ROUND_N,
             batch_size=batch_size,
             sim_types=SIMULATION_TYPE,
@@ -686,6 +758,7 @@ def main(args):
             batch2, _, metrics = make_batch(
                 model,
                 starting_media,
+                ingredients_pd,
                 new_round_n=NEW_ROUND_N,
                 batch_size=batch_size,
                 sim_types=SIMULATION_TYPE,
@@ -699,7 +772,7 @@ def main(args):
             )
             batch = pd.concat((batch, batch2), ignore_index=True)
             all_metrics[direction.name] = metrics
-          #############################################################
+        #############################################################
           
         model.close()
 

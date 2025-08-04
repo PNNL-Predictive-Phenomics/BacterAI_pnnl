@@ -65,7 +65,7 @@ class SimDirection(Enum):
         return 0
 
 
-def rollout_trajectory(model, states, n_trajectories, threshold, sim_direction):
+def rollout_trajectory(model, states, ingredients_pd, n_trajectories, threshold, sim_direction):
     """Performs a randomized rollout simulation. The random walk looks for all available
     actions at a current state, then chooses a random one. This process is repeated until no
     more actions can be taken, or if the actions results in no growth above the threshold,
@@ -79,6 +79,8 @@ def rollout_trajectory(model, states, n_trajectories, threshold, sim_direction):
         The model used when running the simulation.
     states : np.ndarray
         A 2D array of the states to run the rollouts on.
+    ingredients_pd : pd.DataFrame
+        The ingredients DataFrame containing the media information.
     n_trajectories : int
         The number of rollouts to perform, which the rewards are averaged over.
     threshold : float
@@ -103,36 +105,49 @@ def rollout_trajectory(model, states, n_trajectories, threshold, sim_direction):
     step = 0
     # Random walk to remove 'n_trajectories' ingredients
     while trajectory_states.size > 0:
-        # Choices are the remaining actions available (depends on simulation direction)
-        choices = np.argwhere(trajectory_states == sim_direction.target_value())
+        available_actions = []
+        available_values = []
+        for row_idx, row in enumerate(trajectory_states):
+            row_actions = []
+            next_values = dict()
+            for col_idx, val in enumerate(row):
+                ingt_type = ingredients_pd.iloc[col_idx].TYPE
+                if ingt_type == "binary":
+                    if val == sim_direction.target_value():
+                        row_actions.append(col_idx)
+                        next_values[col_idx] = sim_direction.action_value()
+                else:
+                    min_value = ingredients_pd.iloc[col_idx].MIN_VALUE
+                    max_value = ingredients_pd.iloc[col_idx].MAX_VALUE
+                    n_states = int(ingredients_pd.iloc[col_idx].N_STATES)
+                    if ingt_type == "quantitative":
+                        n_states += 1
+                    levels = np.linspace(min_value, max_value, n_states)
+                    idx_level = np.where(np.isclose(levels, val))[0]
+                    if not len(idx_level):
+                        idx_level = [np.argmin(np.abs(levels - val))]
+                    idx_level = idx_level[0]
+                    if sim_direction == SimDirection.DOWN and idx_level > 0:
+                        row_actions.append(col_idx)
+                        next_values[col_idx] = levels[idx_level - 1]
+                    elif sim_direction == SimDirection.UP and idx_level < n_states - 1:
+                        row_actions.append(col_idx)
+                        next_values[col_idx] = levels[idx_level + 1]
+            available_actions.append(row_actions)
+            available_values.append(next_values)
 
-        # If no more items can be removed from any trajectory state, calculate
-        # the remaining rewards and end.
-        if choices.size == 0:
+        if all(len(row_actions) == 0 for row_actions in available_actions):
             for k, v in rewards.items():
                 remaining = n_trajectories - len(v)
                 if remaining > 0:
                     rewards[k] = v + [step] * remaining
             break
 
-        # boundaries separates the returned np.argwhere indexes of the available choices
-        # to indexes that we can use for choices
-        boundaries = np.r_[
-            0,
-            np.flatnonzero(choices[1:, 0] > choices[:-1, 0]) + 1,
-            choices.shape[0],
-        ]
-
-        for i in range(boundaries.shape[0] - 1):
-            row = choices[boundaries[i], 0]
-            idxes = choices[
-                boundaries[i] : boundaries[i + 1], 1
-            ]  # obtain the available choices
-            np.random.shuffle(idxes)  # randomize
-            chosen_action = idxes[0]  # pick random action
-            trajectory_states[
-                row, chosen_action
-            ] = sim_direction.action_value()  # take action
+        for row_idx, row_actions in enumerate(available_actions):
+            if not row_actions:
+                continue
+            chosen_action = np.random.choice(row_actions)
+            trajectory_states[row_idx, chosen_action] = available_values[row_idx][chosen_action]
 
         # Obtain predicted fitnesses for action taken for each tracjectory
         results, _ = model.evaluate(trajectory_states)
@@ -184,6 +199,7 @@ def compute_adaptive_choice_const(state, direction, n_already_exists):
 def perform_simulations(
     model,
     state,
+    ingredients_pd,
     n,
     threshold,
     sim_type,
@@ -208,6 +224,8 @@ def perform_simulations(
         The model used when running the simulation.
     state : np.ndarray()
         The starting state of the media.
+    ingredients_pd : pd.DataFrame
+        The ingredients DataFrame containing the media information.
     n : Int
         The number of simulations to perform for this batch.
     threshold : float
@@ -240,7 +258,6 @@ def perform_simulations(
         to test and their associated metadata (simulation parameters, predicted
         growth, etc.)
     """
-    state = state.astype(int)
     if batch_set == None:
         batch_set = set()
     batch = []
@@ -262,38 +279,59 @@ def perform_simulations(
 
         current_grow_pred = 0
         current_grow_var = 0
-        while (current_state == sim_direction.target_value()).sum() > 0:
+        while True:
             # print(f"Current state: {current_state}")
-            choices = np.argwhere(current_state == sim_direction.target_value())[:, 0]
+            choices = []
+            next_values = dict()
+            for i, val in enumerate(current_state):
+                ingt_type = ingredients_pd.iloc[i].TYPE
+                if ingt_type == "binary":
+                    if val == sim_direction.target_value():
+                        choices.append(i)
+                        next_values[i] = sim_direction.action_value()
+                else:
+                    min_value = ingredients_pd.iloc[i].MIN_VALUE
+                    max_value = ingredients_pd.iloc[i].MAX_VALUE
+                    n_states = int(ingredients_pd.iloc[i].N_STATES)
+                    if ingt_type == "quantitative":
+                        n_states += 1
+                    levels = np.linspace(min_value, max_value, n_states)
+                    idx_level = np.where(np.isclose(levels, val))[0]
+                    if not len(idx_level):
+                        idx_level = [np.argmin(np.abs(levels - val))]
+                    idx_level = idx_level[0]
+                    if sim_direction == SimDirection.DOWN and idx_level > 0:
+                        choices.append(i)
+                        next_values[i] = levels[idx_level - 1]
+                    elif sim_direction == SimDirection.UP and idx_level < n_states - 1:
+                        choices.append(i)
+                        next_values[i] = levels[idx_level + 1]
+            choices = np.array(choices)
             if choices.size == 0:
                 break
 
             candidate_states = np.tile(current_state, (choices.size, 1))
             if sim_type == SimType.RANDOM:
-                action = np.random.choice(choices, 1, False)  # Random leave-one-out
-                candidate_states[
-                    0, action
-                ] = sim_direction.action_value()  # Take action
+                action = np.random.choice(choices, 1, False)[0]  # Random one-step action
+                candidate_states[0, action] = next_values[action]  # Take action
                 candidate_states = candidate_states[0].reshape((1, -1))  # Reshape to 2D
                 choices = [action]
 
-            elif sim_type == SimType.GREEDY:
-                # Take all leave-one-out actions
-                candidate_states[
-                    np.arange(choices.size), choices
-                ] = sim_direction.action_value()
+            if sim_type == SimType.GREEDY:
+                # Take all possible one-step actions
+                for j, idx in enumerate(choices):
+                    candidate_states[j, idx] = next_values[idx]
 
             elif sim_type == SimType.ROLLOUT or sim_type == SimType.ROLLOUT_PROB:
-                # Take all leave-one-out actions
-                rollout_results = np.zeros(choices.size)
-                candidate_states[
-                    np.arange(choices.size), choices
-                ] = sim_direction.action_value()
+                # Generate all possible one-step actions
+                for j, idx in enumerate(choices):
+                    candidate_states[j, idx] = next_values[idx]
 
                 # Perform rollouts
                 rollout_results = rollout_trajectory(
                     model,
                     candidate_states,
+                    ingredients_pd,
                     n_rollout_trajectories,
                     threshold,
                     sim_direction,
@@ -329,10 +367,9 @@ def perform_simulations(
             old_growth_var = current_grow_var
 
             # Set new state values
-            new_state = current_state.copy()
+            new_state = candidate_states[best_action_idx]  # Take best action
             new_growth_result = float(results[best_action_idx])
             new_growth_var = float(results_vars[best_action_idx])
-            new_state[best_action] = sim_direction.action_value()  # Take best action
 
             is_down = sim_direction == SimDirection.DOWN
             grows_present = (results >= threshold).sum() > 0
@@ -387,6 +424,7 @@ def perform_simulations(
                         batch_frontier_types.append(ft)
                         batch_set.add(key)
                         tq.update()
+                        st_print = np.round(st, decimals=2)  # round decimals for printing
                         print(f"\n\tADDED: {st} - {ft}")
                         if sim_type == SimType.ROLLOUT_PROB:
                             n_found_but_exists -= 1
