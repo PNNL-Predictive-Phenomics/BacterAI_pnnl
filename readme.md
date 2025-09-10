@@ -51,7 +51,7 @@ ingredients_sheet <- "path/to/experiment/ingredients.xlsx"
 
 readxl::read_excel(ingredients_sheet, sheet = 1, na = 'NA') |>
   list(ingredients = _) |>
-  oJSON(dataframe = 'rows', pretty = T, auto_unbox = T, null = 'null', na = 'null') |>
+  toJSON(dataframe = 'rows', pretty = T, auto_unbox = T, null = 'null', na = 'null') |>
   write(file = file.path(getwd(), 'ingredients.json'))
 ```
 
@@ -62,6 +62,8 @@ readxl::read_excel(ingredients_sheet, sheet = 1, na = 'NA') |>
 To start the first round (`Round 1`), use the following steps. 
 Note that the `tee` command in a Unix-like system allows you to view standard output while saving it to a log file.
 
+*All commands assume that the conda environment is already loaded.*
+
 #### Ensure `run.py` has execute permissions:
 ```bash
 chmod u+x run.py
@@ -70,13 +72,10 @@ chmod u+x run.py
 #### Commands:
 ```bash
 cd /path/to/bacterai/code
-conda activate bacterai
 
 EXPT=/path/to/experiment
 N=1
 python run.py $EXPT/config.json --round $N | tee $EXPT/stdout_R${N}.log
-
-conda deactivate
 ```
 
 #### Output of Round 1
@@ -125,21 +124,22 @@ For the default Biotek plate reader settings, the system focuses on `OD-600` sig
 ### Runs 2+
 
 For subsequent rounds (`Round 2` and beyond), import raw data, extract relevant features, and generate a mapped data frame that BacterAI requires.
+The example below uses the function `biotek_feature_extract.py` to process the data from a Biotek plate reader and find the difference between the
+original and final optical density (OD).
+The wavelength (`--signal` or `-s`) for almost any optical density measurement will be 600 nm.
 
 #### Commands:
 ```bash
 cd /path/to/bacterai/code
-conda activate bacterai
 
 EXPT=/path/to/experiment
-N=round_number (2 or up)
+N=2
 PREV_N=$(expr $N - 1)
+run_date="YYYY-MM-DD"
 
-python biotek_feature_extract.py $EXPT -d "date-of-run" -r $PREV_N -s 600 -f "delta_od"
+python biotek_feature_extract.py $EXPT -d run_date -r $PREV_N -s 600 -f "delta_od"
 
 python run.py $EXPT/config.json --round $N | tee $EXPT/stdout_R${N}.log
-
-conda deactivate
 ```
 
 ---
