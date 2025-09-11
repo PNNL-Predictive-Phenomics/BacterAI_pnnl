@@ -30,14 +30,15 @@ conda deactivate
 ### Setting up an experiment
 
 #### Create an Experiment Folder Structure
-Place the necessary configuration files and optional ingredient files within the experiment folder. Customize the `config.json` file for the specific experiment you'd like to run. Ensure the experimental file paths in the `config.json` file are absolute paths. If PNNL code is used, an ingredients list JSON file may be required.
+Place the necessary configuration files and optional ingredient files within the experiment folder. 
+Customize the `config.json` file for the specific experiment you'd like to run (see Config section below). 
+Ensure the experimental file paths in the `config.json` file are absolute paths.
 
 Structure:
 ```plaintext
 EXPT_FOLDER
   |-- config.json
   |-- ingredients.json
-  |-- ingredients.xlsx (optional)
   |-- transfer_model_folder (optional)
   |   `-- transfer models
   |-- transfer_data_folder (optional)
@@ -60,7 +61,7 @@ readxl::read_excel(ingredients_sheet, sheet = 1, na = 'NA') |>
 ### First Run
 
 To start the first round (`Round 1`), use the following steps. 
-Note that the `tee` command in a Unix-like system allows you to view standard output while saving it to a log file.
+> **Note:** The `tee` command in a Unix-like system allows you to view standard output while saving it to a log file.
 
 *All commands assume that the conda environment is already loaded.*
 
@@ -85,7 +86,6 @@ If training bagged neural nets:
 EXPT_FOLDER
   |-- config.json
   |-- ingredients.json
-  |-- ingredients.xlsx (optional)
   |-- Round1
   |   |-- random_train_kickstart*.csv (for round 1)
   |   |-- run_metrics.json
@@ -98,12 +98,11 @@ EXPT_FOLDER
   |   |   `-- bag_model_n.pkl
 ```
 
-If training GPR models:
+If training Gaussian process regression (GPR) models:
 ```plaintext
 EXPT_FOLDER
   |-- config.json
   |-- ingredients.json
-  |-- ingredients.xlsx (optional)
   |-- Round1
   |   |-- random_train_kickstart*.csv (for round 1)
   |   |-- run_metrics.json
@@ -115,17 +114,24 @@ EXPT_FOLDER
 ```
 
 #### Final Output after Full Round 1
-After generating instrument data via PlatePlan, place those data into the `Round1` folder.
-Look for files containing the term `"mapped_data"`, as these are what BacterAI will process.
-For the default Biotek plate reader settings, the system focuses on `OD-600` signal, extracting the final OD values.
+The model-specific files will be utilized in the next round of BacterAI.
+The most important file is the `batch_meta` CSV file.
+This file contains the set of experiments that BacterAI has requested to be run.
+These experiments will need to be converted into a more detailed protocol, either for an autonomous laboratory system, or for a human researcher.
+The `Plateplan` application may be utilized for this but are not part of the BacterAI documentation.
+`Plateplan` instructions are often embedded in larger custom Python script which can handle the idiosyncrasies of each experiment
+(*e.g.,* which "ingredients" are liquid-dispensable reagents vs. which are conditions which might be controlled by other means).
 
 ---
 
 ### Runs 2+
 
-For subsequent rounds (`Round 2` and beyond), import raw data, extract relevant features, and generate a mapped data frame that BacterAI requires.
+For subsequent rounds (`Round 2` and beyond), you need to import raw data, extract relevant features, and generate a mapped data table that BacterAI requires.
+The resulting CSV should have the term `mapped_data` somewhere in the filename, and it should go into the same round where the original request came from.
+
 The example below uses the function `biotek_feature_extract.py` to process the data from a Biotek plate reader and find the difference between the
 original and final optical density (OD).
+In the example, this function placed the `mapped_data` file back into the `Round1` folder. 
 The wavelength (`--signal` or `-s`) for almost any optical density measurement will be 600 nm.
 
 #### Commands:
@@ -197,7 +203,8 @@ The config file represents the main way to control the experiment.
 #### `model_type`
 - Used in `main()` function in `run.py`
 - Selects the predictive model
-  - From Paul Jensen: most automation uses GPR for prediction; you really need a good reason to choose otherwise
+  - GPR is a form of Bayesian optimization and will work best for continuous variables and where the full kernel of a density distribution can be explored across the possible range of values of a variable
+  - Bagged neural nets may work best when confronted with binary or ordinal factors or a mix of categorical and continuous variables
 - `0 = GPR (Gaussian process regression)`, `1 = NEURAL_NET`
 - Default: `0`
 
