@@ -101,7 +101,7 @@ def plot_results(folder, results, threshold):
                 data.index,
                 data["fitness"],
                 ".",
-                color=COLORS[group_name],
+                color=COLORS[group_name[0]],
                 markersize=3,
                 alpha=0.75,
             )
@@ -109,21 +109,21 @@ def plot_results(folder, results, threshold):
         axs[row_idx, 0].set_xlabel("Assay N")
         axs[row_idx, 0].set_ylabel("Fitness")
         axs[row_idx, 0].legend(
-            [f"{g.title()}" for g in present_groups] + ["Model Prediction"]
+            [f"{g[0].title()}" for g in present_groups] + ["Model Prediction"]
         )
         axs[row_idx, 0].set_title(f"Experiment Results - {frontier_type.title()}")
 
         width = 0.25
         legend_labels = []
         for i, (group_name, data) in enumerate(sim_type_grouped):
-            color = COLORS[group_name]
+            color = COLORS[group_name[0]]
             grows = data[data["fitness"] >= threshold]
             no_grows = data[data["fitness"] < threshold]
             data_g = collections.Counter(list(grows["depth"]))
             data_ng = collections.Counter(list(no_grows["depth"]))
             bottom = [data_g[k] if k in data_g else 0 for k in data_ng.keys()]
             if len(no_grows) > 0:
-                legend_labels.append(f"{group_name.title()} - No Grow")
+                legend_labels.append(f"{group_name[0].title()} - No Grow")
                 axs[row_idx, 1].bar(
                     np.array(list(data_ng.keys())) + width * i,
                     data_ng.values(),
@@ -136,7 +136,7 @@ def plot_results(folder, results, threshold):
                     linewidth=0,
                 )
             if len(grows) > 0:
-                legend_labels.append(f"{group_name.title()} - Grow")
+                legend_labels.append(f"{group_name[0].title()} - Grow")
                 axs[row_idx, 1].bar(
                     np.array(list(data_g.keys())) + width * i,
                     data_g.values(),
