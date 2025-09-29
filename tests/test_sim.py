@@ -7,7 +7,7 @@ from sim import rollout_trajectory, perform_simulations
 from sim import SimType, SimDirection
 
 # Load test data for functions
-test_data_path = os.path.join(os.path.dirname(__file__), 'test_data.pkl')
+test_data_path = os.path.join(os.path.dirname(__file__), 'test_experiment', 'test_data.pkl')
 with open(test_data_path, 'rb') as f:
     test_data = pickle.load(f)
 
