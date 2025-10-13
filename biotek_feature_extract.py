@@ -64,11 +64,10 @@ def main(path, date, round_number, signal, feature):
         if len(exception_file) >= 1:
             for eid in exception_file:
                 exception = pd.read_csv(os.path.join(data_path, eid))
-            exceptions.append(exception)
+                exceptions.append(exception)
+            exceptions = pd.concat(exceptions, ignore_index = True)
         else:
             exceptions = None
-
-        exceptions = pd.concat(exceptions, ignore_index = True)
        
         biotek_file = [f for f in os.listdir(data_path) if fid in f and f.endswith('.xlsx')]
         if len(biotek_file) == 1:
