@@ -367,10 +367,12 @@ def main(args):
     SIMULATION_TYPE = [SimType(x) for x in config["simulation_types"]]
     BEYOND_FRONTIER = config["beyond_frontier"]
     USE_UNIQUE = config["use_unique"]
+    # TODO: get clarification on this
     TRANSFER_MODEL_FOLDER = config.get("transfer_model_folder", None)
     N_REDOS = config.get("redo_size", None)
     REDO_THRESHOLD = config.get("redo_threshold", None)
     AAS_ONLY = config.get("aas_only", False)
+    # TODO: get clarification on this
     TRANSFER_DATA_DIR = config.get("transfer_model_dir", None)
     SEPARATE_REDOS = config.get("separate_redos", False)
     N_BAGS = config.get("n_bags", 25)
@@ -747,6 +749,7 @@ def main(args):
             BEYOND_FRONTIER,
             used_experiments,
             redo_experiments]
+        # TODO: all imports to top of file
         import pickle
         with open('test_data.pkl', 'wb') as f:
             pickle.dump(data_to_pickle, f)
@@ -829,5 +832,5 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-
+    print("run.py ran")
     main(args)

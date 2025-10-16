@@ -1,5 +1,5 @@
 {
-  "experiment_path": "tests/test_experiment",
+  "experiment_path": "/Users/reyn999/Desktop/Projects/BacterAI/BacterAI_pnnl-1/tests/test_experiment",
   "ingredients_file": "ingredients.json",
   "grow_threshold": 0.25,
   "nickname": "Test",

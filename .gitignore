@@ -30,3 +30,4 @@ COBRANet
 .vscode
 .venv*
 .DS_Store
+env/
