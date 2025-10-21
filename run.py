@@ -327,6 +327,18 @@ def process_results(
     else:
         redo_experiments = None
 
+    # include failed experiments in the list of those to redo
+    # note that individual experiments failing vs. whole plates is dependent on the sample prep pipeline
+    # for example, specific wells can be problematic on the Echo vs. issues with dispensing on the whole plate using the Mantis
+    if not results_bad.empty:
+        redo_bad = results_bad.loc[:, batch_df.columns]
+        redo_bad["is_redo"] = True
+        redo_bad["round"] = new_round_n - 1
+        redo_bad.columns = list(range(n_ingredients)) + list(
+            redo_bad.columns[n_ingredients:]
+        )
+        redo_experiments = pd.concat([redo_experiments, redo_bad], axis = 0)
+
     # Save and output successful results
     results_grow_only.to_csv(os.path.join(folder, "results_grow_only.csv"), index=False)
 
@@ -339,7 +351,7 @@ def process_results(
             print(f"\t{l}")
 
     print(f"Total unique experiments: {len(used_experiments)}")
-    if redo_experiments:
+    if not redo_experiments.empty:
         print(
             f"Total redo experiments chosen: {len(redo_experiments)} ({len(results_bad)} 'bad' repeats)"
         )
