@@ -406,14 +406,10 @@ def main(args):
         if "INGREDIENT" in ingredients_pd.columns:  # old way
             ingredients_pd = ingredients_pd[~(ingredients_pd.INGREDIENT.str.contains("\\:\\:"))] # remove grouped conditions
             ingredients_pd = ingredients_pd.reset_index(drop=True)
-            INGREDIENTS = ingredients_pd["INGREDIENT"]
-            ingredients_map = dict(zip(INGREDIENTS.index, INGREDIENTS))
-            INGREDIENTS = INGREDIENTS.tolist()
 
         elif "CONDITION" in ingredients_pd.columns:  # new way
             # remove grouped conditions
             ingredients_pd = ingredients_pd.reset_index(drop=True)
-            
             # For conditions with multiple rows, keep only rows where REAGENT is NA
             # i.e., focus on the condition itself, not specific reagents used to achieve it
             condition_counts = ingredients_pd.groupby("CONDITION").size()
@@ -425,14 +421,12 @@ def main(args):
                 # Keep all single-row conditions and only NA reagent rows for multi-row conditions
                 ingredients_pd = ingredients_pd[single_row_mask | (multi_row_mask & na_reagent_mask)]
                 ingredients_pd = ingredients_pd.reset_index(drop=True)
-            
-            INGREDIENTS = ingredients_pd["CONDITION"]
-            ingredients_map = dict(zip(INGREDIENTS.index, INGREDIENTS))
-            INGREDIENTS = INGREDIENTS.tolist()
-
             # even if using the "new" way of CONDITION, specify the INGREDIENTS column to match rest of code
-            ingredients_pd["INGREDIENTS"] = ingredients_pd["CONDITION"]
+            ingredients_pd["INGREDIENT"] = ingredients_pd["CONDITION"]
 
+    INGREDIENTS = ingredients_pd["INGREDIENT"]
+    ingredients_map = dict(zip(INGREDIENTS.index, INGREDIENTS))
+    INGREDIENTS = INGREDIENTS.tolist()
     n_ingredients = len(INGREDIENTS)
 
     tl_transition_round = False
