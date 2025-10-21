@@ -448,8 +448,8 @@ def main(args):
         )
         if MODEL_TYPE == ModelType.GPR:
           # Note: I still need to define a python-based GPR class in models.py
-          transfer_model = GPR.load_trained_models(TRANSFER_MODEL_FOLDER)
-        elif MODEL_TYPE == modelType.NEURAL_NET:
+          transfer_model = GPRModel.load_trained_models(TRANSFER_MODEL_FOLDER)
+        elif MODEL_TYPE == ModelType.NEURAL_NET:
           transfer_model = NeuralNetModel.load_trained_models(TRANSFER_MODEL_FOLDER)
 
     date = datetime.datetime.now().isoformat().replace(":", ".")
@@ -764,6 +764,24 @@ def main(args):
 
         # Create batches 
         all_metrics = {}
+        # Save the container to a file
+        data_to_pickle = [model,
+            starting_media,
+            ingredients_pd,
+            NEW_ROUND_N,
+            batch_size,
+            SIMULATION_TYPE,
+            N_ROLLOUTS,
+            GROW_THRESHOLD,
+            60 * TIMEOUT_MIN,
+            USE_UNIQUE,
+            direction,
+            BEYOND_FRONTIER,
+            used_experiments,
+            redo_experiments]
+        import pickle
+        with open('test_data.pkl', 'wb') as f:
+            pickle.dump(data_to_pickle, f)
         batch, batch_used, metrics = make_batch(
             model,
             starting_media,
