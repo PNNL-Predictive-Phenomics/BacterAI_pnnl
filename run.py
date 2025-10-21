@@ -391,28 +391,48 @@ def main(args):
     # Load the ingredients list
     if INGREDIENTS_FILE is not None:
         ingredients_full_path = os.path.join(EXPT_FOLDER, INGREDIENTS_FILE)
-        with open(ingredients_full_path, "r") as f:
-            ingredients_json = json.load(f)
-    
-        ingredients_pd = pd.json_normalize(ingredients_json["ingredients"])
-
+        if(".csv" in INGREDIENTS_FILE):
+            ingredients_pd = pd.read_csv(ingredients_full_path, na_values=["NA"])
+        else:
+            with open(ingredients_full_path, "r") as f:
+                ingredients_json = json.load(f)
+                ingredients_pd = pd.json_normalize(ingredients_json["ingredients"])
         # Remove entries in the ingredients not relevant to the BacterAI logical loop
 
-        # 1) remove grouped reagents which together create a single condition
-        ingredients_pd = ingredients_pd[~(ingredients_pd.INGREDIENT.str.contains("\\:\\:"))]
-
-        # 2) remove any other "ingredient" that is invariant -- where the MIN_VALUE and MAX_VALUE are the same
-        # e.g., if you want your strain(s) to always be present and not subject to BacterAI, make those two values equal
-        # e.g., your fill ingredient (media or water) that you're using to bring all wells up to the same volume
+        # remove any "ingredient" that is invariant -- where the MIN_VALUE and MAX_VALUE are the same
+        # i.e., your baseline media can be included in your ingredients list (for ease of later searching) and will be ignored by BacterAI
         ingredients_pd = ingredients_pd[~(ingredients_pd["MIN_VALUE"] == ingredients_pd["MAX_VALUE"])]
 
-        # re-index
-        ingredients_pd = ingredients_pd.reset_index(drop=True)
-        
-        INGREDIENTS = ingredients_pd["INGREDIENT"]
-        ingredients_map = dict(zip(INGREDIENTS.index, INGREDIENTS))
-        INGREDIENTS = INGREDIENTS.tolist()
-    
+        if "INGREDIENT" in ingredients_pd.columns:  # old way
+            ingredients_pd = ingredients_pd[~(ingredients_pd.INGREDIENT.str.contains("\\:\\:"))] # remove grouped conditions
+            ingredients_pd = ingredients_pd.reset_index(drop=True)
+            INGREDIENTS = ingredients_pd["INGREDIENT"]
+            ingredients_map = dict(zip(INGREDIENTS.index, INGREDIENTS))
+            INGREDIENTS = INGREDIENTS.tolist()
+
+        elif "CONDITION" in ingredients_pd.columns:  # new way
+            # remove grouped conditions
+            ingredients_pd = ingredients_pd.reset_index(drop=True)
+            
+            # For conditions with multiple rows, keep only rows where REAGENT is NA
+            # i.e., focus on the condition itself, not specific reagents used to achieve it
+            condition_counts = ingredients_pd.groupby("CONDITION").size()
+            if any(condition_counts > 1):                
+                conditions_with_multiple_rows = condition_counts[condition_counts > 1].index
+                multi_row_mask = ingredients_pd["CONDITION"].isin(conditions_with_multiple_rows)
+                na_reagent_mask = ingredients_pd["REAGENT"].isna()
+                single_row_mask = ~multi_row_mask
+                # Keep all single-row conditions and only NA reagent rows for multi-row conditions
+                ingredients_pd = ingredients_pd[single_row_mask | (multi_row_mask & na_reagent_mask)]
+                ingredients_pd = ingredients_pd.reset_index(drop=True)
+            
+            INGREDIENTS = ingredients_pd["CONDITION"]
+            ingredients_map = dict(zip(INGREDIENTS.index, INGREDIENTS))
+            INGREDIENTS = INGREDIENTS.tolist()
+
+            # even if using the "new" way of CONDITION, specify the INGREDIENTS column to match rest of code
+            ingredients_pd["INGREDIENTS"] = ingredients_pd["CONDITION"]
+
     n_ingredients = len(INGREDIENTS)
 
     tl_transition_round = False
@@ -615,7 +635,7 @@ def main(args):
         # create the "batch" pd.DataFrame, with a column for each ingredient and each row is a separate experiment
         ingredients_pd.loc[ingredients_pd.TYPE == "quantitative", "N_STATES"] = 3
         total_runs = np.sum(ingredients_pd.astype({"N_STATES" : "int64"})["N_STATES"])
-        
+
         # if number of experiments run at once is < 40, use Plackett-Burman
         if BATCH_SIZE < 40:
             # Note, under this scheme, every ingredient gets 2 values
