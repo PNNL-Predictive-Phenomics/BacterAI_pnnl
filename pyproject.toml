@@ -1,0 +1,33 @@
+[project]
+name = "bacterai"
+version = "0.1.0"
+description = "Unified configuration tool for experiments and ingredients."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+"pandas>=2.1",
+"openpyxl>=3.1",
+]
+
+[project.scripts]
+bacterai = "bacterai.main:main"
+
+[build-system]
+requires = ["hatchling>=1.21.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bacterai"]
+
+[dependency-groups]
+dev = [
+"mypy>=1.15.0",
+"pytest>=8.3.5",
+"pytest-cov>=6.1.1",
+"ruff>=0.11.8",
+"pandas-stubs>=2.2.0.240910",
+"pyinstaller>=6.14.1",
+]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "C90"]

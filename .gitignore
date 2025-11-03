@@ -3,7 +3,6 @@
 .RData
 .Ruserdata
 .Rproj
-BacterAI
 R-*
 rpy2*
 experiments/
@@ -31,3 +30,5 @@ COBRANet
 .venv*
 .DS_Store
 env/
+workdir
+test_files
