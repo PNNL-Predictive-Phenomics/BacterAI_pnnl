@@ -3,7 +3,7 @@ import datetime
 import json
 import os
 import shutil
-
+from pathlib import Path
 import numpy as np
 import pandas as pd
 
@@ -22,6 +22,81 @@ from ..analysis import processing as utils
 
 os.environ["MKL_DEBUG_CPU_TYPE"] = "5"  # Use IntelMKL - does this work?
 
+
+def get_round(experiment_path: str) -> int:
+    """
+    Automatically determine the next round number based on existing Round folders.
+    """
+    path = Path(experiment_path)
+    
+    if not path.exists():
+        raise FileNotFoundError(f"Experiment directory not found: {experiment_path}")
+    
+    if not path.is_dir():
+        raise NotADirectoryError(f"Path is not a directory: {experiment_path}")
+    
+    # Extract round numbers from Round directories
+    round_nums = [
+        int(item.name[5:]) 
+        for item in path.iterdir() 
+        if item.is_dir() and item.name.startswith("Round") and item.name[5:].isdigit()
+    ]
+    
+    return max(round_nums) + 1 if round_nums else 1
+
+def get_round_folder_path(base_path: str, round_num: int) -> Path:
+    return Path(base_path) / f"Round{round_num}"
+'''
+def process_ingredient_by_type(ingredient_name, ingredient_data, context="default"):
+    for ingt in INGREDIENTS:
+                ingt_type = ingredients_pd[ingredients_pd.INGREDIENT == ingt].TYPE.iloc[0]
+
+                # quantitatve ingredients get either 0 or the nominal value
+                if ingt_type == "quantitative":
+                    nominal_val = ingredients_pd[ingredients_pd.INGREDIENT == ingt].NOMINAL_VALUE.iloc[0]
+                    if nominal_val == 0:
+                        nominal_val = ingredients_pd[ingredients_pd.INGREDIENT == ingt].MAX_VALUE.iloc[0]
+                    batch[ingt] = batch[ingt] * nominal_val
+                
+                # semi-quantitative ingredients get either the min or max value
+                elif ingt_type == "semi-quantitative":
+                    min_val = ingredients_pd[ingredients_pd.INGREDIENT == ingt].MIN_VALUE.iloc[0]
+                    max_val = ingredients_pd[ingredients_pd.INGREDIENT == ingt].MAX_VALUE.iloc[0]
+                    batch.loc[batch[ingt] == 0, ingt] = min_val
+                    batch.loc[batch[ingt] == 1, ingt] = max_val
+    
+    for ingt in INGREDIENTS:
+                ingt_type = ingredients_pd[ingredients_pd.INGREDIENT == ingt].TYPE.iloc[0]
+
+                if ingt_type == "binary":
+                    batch[ingt] = round(batch[ingt])
+            
+                elif ingt_type == "semi-quantitative":
+                    # note that this approach assumes a min, nominal, and max semi-quant value scheme
+                    # I will need more work with the ingredients list to specify a greater number of value states
+                    sq_vals = np.array([ingredients_pd[ingredients_pd.INGREDIENT == ingt].MIN_VALUE.iloc[0],
+                        ingredients_pd[ingredients_pd.INGREDIENT == ingt].NOMINAL_VALUE.iloc[0],
+                        ingredients_pd[ingredients_pd.INGREDIENT == ingt].MAX_VALUE.iloc[0]])
+                    col = batch[ingt].values
+                    col_match = np.array([np.argmin(np.abs(val - sq_vals)) for val in col])
+                    batch[ingt] = sq_vals[col_match]
+    for ingt in INGREDIENTS:
+            ingt_type = ingredients_pd[ingredients_pd.INGREDIENT == ingt].TYPE.iloc[0]
+            if ingt_type == "binary":
+                starting_media_down.append(1.0)
+                starting_media_up.append(0.0)
+            elif ingt_type in ["semi-quantitative", "quantitative"]:
+                min_value = ingredients_pd[ingredients_pd.INGREDIENT == ingt].MIN_VALUE.iloc[0]
+                max_value = ingredients_pd[ingredients_pd.INGREDIENT == ingt].MAX_VALUE.iloc[0]
+                n_states = int(ingredients_pd[ingredients_pd.INGREDIENT == ingt].N_STATES.iloc[0])
+                levels = np.linspace(min_value, max_value, n_states)
+                # nom_value = ingredients_pd[ingredients_pd.INGREDIENT == ingt].NOMINAL_VALUE.iloc[0]
+                # levels = levels[::-1] if min_value == nom_value  # reverse levels for "stress" conditions where minimum is nominal for growth
+                starting_media_down.append(levels[-1])
+                starting_media_up.append(levels[0])
+            else:
+                raise ValueError(f"Unknown ingredient type: {ingt_type}")
+        '''
 
 def export_to_dp_batch(
     parent_path, batch, ingredient_names, date, nickname=None, is_redo=False
@@ -126,44 +201,6 @@ def process_results(
     """Process the results of the previous round, generate plots, and
     return batch information to be used when generating the new round's
     batch.
-
-    Parameters
-    ----------
-    folder: str
-        The folder path of the current round.
-    prev_folder: str
-        The folder path of the previous round.
-    new_folder: str
-        The folder path of the new round.
-    new_round_n: int
-        The number of the new round.
-    ingredient_names: int
-        The ingredients used.
-    threshold: float
-        The grow/no grow threshold used to determine when to terminate
-        a rollout simulation.
-    n_redos: int, optional
-        The number of the experiments to redo from previous round.
-    redo_threshold: [float, float], optional
-        The lower and upper thresholds used to determine which experiments to use when
-        sampling for redos. Lower threshold is inclusive, upper is exclusive.
-    redo_prev_round: bool, optional
-        Run the previous round's batch again,
-        by default False
-    plot_only: bool, optional
-        Only save plot, don't save/export any other files.
-    plot_redos: bool, optional
-        Whether or not to plot redos.
-    transfer_padding_needed: bool, optional
-        Whether or not to pad datasets with ones for transfer learning (data
-        dir method)
-
-    Returns
-    -------
-    (np.ndarray, np.ndarray, set(tuple), pd.DataFrame)
-        The new training set inputs, the  new training set labels, the
-        experiments used in all previous experimments, the set of
-        experiments to redo.
     """
 
     folder_contents = os.listdir(folder)
@@ -349,7 +386,7 @@ def process_results(
     return X_train, y_train, used_experiments, redo_experiments
 
 
-def execute_experiment(experiment_path: str, round_num: int, plot_only: bool = False):
+def execute_experiment(experiment_path: str, plot_only: bool = False):
     """
     Execute a BacterAI experiment round.
     
@@ -357,13 +394,11 @@ def execute_experiment(experiment_path: str, round_num: int, plot_only: bool = F
     ----------
     experiment_path : str
         Path to the experiment directory (containing config.json)
-    round_num : int  
-        The round number to execute
     plot_only : bool, optional
         If True, only generate plots without running experiments
     """
-    # Process parameters
-    NEW_ROUND_N = round_num
+    # Automatically determine the next round number
+    NEW_ROUND_N = get_round(experiment_path)
 
     # Find and load the configuration file
     config_path = os.path.join(experiment_path, "config.json")
@@ -441,13 +476,13 @@ def execute_experiment(experiment_path: str, round_num: int, plot_only: bool = F
           transfer_model = NeuralNetModel.load_trained_models(TRANSFER_MODEL_FOLDER)
 
     date = datetime.datetime.now().isoformat().replace(":", ".")
-    prev_round_folder = (
-        os.path.join(EXPT_FOLDER, f"Round{NEW_ROUND_N-2}") if NEW_ROUND_N > 2 else None
-    )
-    current_round_folder = os.path.join(EXPT_FOLDER, f"Round{NEW_ROUND_N-1}")
-    new_round_folder = os.path.join(EXPT_FOLDER, f"Round{NEW_ROUND_N}")
-    if not os.path.exists(new_round_folder):
-        os.makedirs(new_round_folder)
+    prev_round_folder = get_round_folder_path(EXPT_FOLDER, NEW_ROUND_N-2)
+    current_round_folder = get_round_folder_path(EXPT_FOLDER, NEW_ROUND_N-1)
+    new_round_folder = get_round_folder_path(EXPT_FOLDER, NEW_ROUND_N)
+    
+    if not new_round_folder.exists():
+        new_round_folder.mkdir(parents=True)
+
     if NEW_ROUND_N > 1:
         # Continue the experiment (for all rounds except the first)
         redo_entire_round = False if N_REDOS is not None else True
@@ -632,6 +667,7 @@ def execute_experiment(experiment_path: str, round_num: int, plot_only: bool = F
             batch = (batch + 1) / 2
             
             # modify 0/1 values to concentrations
+            # TODO: review
             for ingt in INGREDIENTS:
                 ingt_type = ingredients_pd[ingredients_pd.INGREDIENT == ingt].TYPE.iloc[0]
 
@@ -665,6 +701,7 @@ def execute_experiment(experiment_path: str, round_num: int, plot_only: bool = F
             batch = pd.DataFrame(batch, columns = ingredients_pd["INGREDIENT"])
             
             # convert binary values to 0/1 and match semi-quantitative values to closest match
+            # TODO: review
             for ingt in INGREDIENTS:
                 ingt_type = ingredients_pd[ingredients_pd.INGREDIENT == ingt].TYPE.iloc[0]
 
@@ -718,6 +755,7 @@ def execute_experiment(experiment_path: str, round_num: int, plot_only: bool = F
         # Build starting_media based on ingredient type
         starting_media_down = []
         starting_media_up = []
+        # TODO: review
         for ingt in INGREDIENTS:
             ingt_type = ingredients_pd[ingredients_pd.INGREDIENT == ingt].TYPE.iloc[0]
             if ingt_type == "binary":

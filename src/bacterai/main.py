@@ -96,12 +96,6 @@ def build_parser() -> argparse.ArgumentParser:
     run = subparsers.add_parser("run", help="Execute an experiment round using BacterAI models and simulations.")
     run.add_argument("experiment_path", help="Path to experiment directory.")
     run.add_argument(
-        "-r", "--round",
-        type=int,
-        required=True,
-        help="The new round number to execute",
-    )
-    run.add_argument(
         "-p", "--plot-only",
         action="store_true",
         help="Only generate plots, do not run experiments",
@@ -164,7 +158,6 @@ def ingredients_wrapper(args) -> None:
 def run_wrapper(args) -> None:
     cli_run(
         experiment_path=args.experiment_path,
-        round_num=args.round,
         plot_only=args.plot_only,
         verbose=args.verbose,
     )

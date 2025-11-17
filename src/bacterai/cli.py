@@ -268,13 +268,12 @@ def setup(
 
 def run(
     experiment_path: str,
-    round_num: int,
     plot_only: bool = False,
     verbose: bool = False,
 ) -> None:
     """
     Execute an experiment round using BacterAI models and simulations.
-    This function handles dependency checking and provides user-friendly error messages.
+    The round number is automatically determined based on existing Round folders.
     """
     
     # Check if the experiment directory exists
@@ -288,18 +287,21 @@ def run(
     
     # Import the core run functionality
     try:
-        from bacterai.core.run import execute_experiment
+        from bacterai.core.run import execute_experiment, get_round
+        
+        # Get the round number automatically
+        next_round = get_round(experiment_path)
         
         if verbose:
-            print(f"Starting BacterAI run for round {round_num}")
+            print(f"Starting BacterAI run for round {next_round}")
             print(f"Experiment directory: {experiment_path}")
             print(f"Plot only: {plot_only}")
         
         # Execute the experiment
-        execute_experiment(experiment_path, round_num, plot_only)
+        execute_experiment(experiment_path, plot_only)
         
         if verbose:
-            print(f"Run completed successfully for round {round_num}")
+            print(f"Run completed successfully for round {next_round}")
             
     except Exception as e:
         print(f"Error during experiment execution: {e}", file=sys.stderr)
