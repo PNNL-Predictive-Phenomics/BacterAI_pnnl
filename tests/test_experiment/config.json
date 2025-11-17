@@ -14,9 +14,14 @@
   "transfer_model_folder": null,
   "transfer_data_dir": null,
   "redo_size": 0,
-  "redo_threshold": [0, 1],
+  "redo_threshold": [
+    0.0,
+    1.0
+  ],
   "aas_only": false,
   "separate_redos": false,
-  "simulation_types": [2],
+  "simulation_types": [
+    2
+  ],
   "random_walk_increment": 10
 }

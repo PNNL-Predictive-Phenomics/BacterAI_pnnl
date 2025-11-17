@@ -1,17 +1,12 @@
 """
 Core logic for experiment and ingredient configuration processing.
-
-Dependencies:
-  pip install pandas openpyxl
 """
 import ast
-import json
 import os
 import re
 from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
-
 
 # ---------- Shared helpers ----------
 NA_STRINGS = {"na", "nan", "n/a", "", "null", "none"}
@@ -278,35 +273,15 @@ class ExperimentConfig:
         """
         Read the input table and return a list of experiment config dicts.
         Vertical format yields a single config in the list; horizontal yields multiple.
+        Allows configs without experiment_path.
+        
+        Args:
+            input_path: Path to input file
+            sheet: Excel sheet name or index
+            force_format: Force "vertical" or "horizontal" format
         """
         df = read_table(input_path, sheet_name=sheet)
         if not isinstance(df, pd.DataFrame):
-            raise ValueError("Failed to read a single DataFrame from input.")
-
-        fmt = force_format or ExperimentConfig.detect_format(df)
-        if fmt == "vertical":
-            cfg = ExperimentConfig.build_from_vertical(df)
-            if not cfg.get("experiment_path"):
-                raise ValueError("experiment_path is required but missing in vertical format.")
-            return [cfg]
-        else:
-            return ExperimentConfig.build_from_horizontal(df)
-    
-    @staticmethod
-    def parse_configs_lenient(
-        input_path: str,
-        sheet: Optional[Union[str, int]],
-        force_format: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
-        """
-        Lenient experiment parsing:
-        - Vertical: produce a single config even if experiment_path is missing
-          (fallback to first two columns as key/value pairs if needed).
-        - Horizontal: coerce each row to schema even if experiment_path is missing.
-        Returns a list of config dicts (may contain entries without experiment_path).
-        """
-        df = read_table(input_path, sheet_name=sheet)
-        if not hasattr(df, "shape"):
             raise ValueError("Failed to read a single DataFrame from input.")
 
         fmt = force_format or ExperimentConfig.detect_format(df)
@@ -356,7 +331,6 @@ class ExperimentConfig:
             cfg = ExperimentConfig.coerce_to_schema(partial)
             configs.append(cfg)
         return configs
-
 
 # ---------- Ingredients config ----------
 class IngredientsConfig:
@@ -556,11 +530,3 @@ class IngredientsConfig:
 
         result = IngredientsConfig.finalize_numeric_types(result)
         return result
-
-
-def to_json_string(obj: Any) -> str:
-    def nan_to_none(o):
-        if isinstance(o, float) and pd.isna(o):
-            return None
-        return o
-    return json.dumps(obj, indent=2, default=nan_to_none)

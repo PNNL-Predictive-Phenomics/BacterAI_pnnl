@@ -5,8 +5,7 @@ import argparse
 import sys
 from typing import Optional, Union
 
-from bacterai.cli import ingredients as cli_ingredients
-from bacterai.setup import setup_experiments
+from bacterai.cli import ingredients as cli_ingredients, setup as cli_setup, experiment as cli_experiment, run as cli_run
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -18,7 +17,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     subparsers = parser.add_subparsers(help="Commands", dest="command")
 
-    # Experiment subcommand (now routed to interactive setup when needed)
+    # Experiment subcommand
     exp = subparsers.add_parser("experiment", help="Convert experiment settings (CSV/XLSX) to JSON file(s).")
     exp.add_argument("input", help="Path to input .csv or .xlsx file")
     exp.add_argument(
@@ -37,11 +36,36 @@ def build_parser() -> argparse.ArgumentParser:
         help="Force input format if auto-detection fails",
     )
     exp.add_argument(
-        "--dry-run",
+        "--verbose",
         action="store_true",
-        help="Print what would be written without writing files",
+        help="Print file contents to console in addition to writing files",
     )
     exp.set_defaults(func=experiment_wrapper)
+
+    # Setup subcommand (interactive experiment setup)
+    setup = subparsers.add_parser("setup", help="Interactive setup of experiment with prompts for ingredients.")
+    setup.add_argument("input", help="Path to input .csv or .xlsx file")
+    setup.add_argument(
+        "-s", "--sheet",
+        help="Excel sheet name or index (for xlsx); defaults to first sheet",
+        default=None,
+    )
+    setup.add_argument(
+        "--outfile-name",
+        help="Output JSON filename to write in each experiment folder",
+        default="config.json",
+    )
+    setup.add_argument(
+        "--force-format",
+        choices=["vertical", "horizontal"],
+        help="Force input format if auto-detection fails",
+    )
+    setup.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Print file contents to console in addition to writing files",
+    )
+    setup.set_defaults(func=setup_wrapper)
 
     # Ingredients subcommand remains as-is
     ing = subparsers.add_parser("ingredients", help="Convert ingredient sheets (Format 1 or 2; CSV/XLSX) to JSON.")
@@ -61,7 +85,34 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional CSV mapping of INGREDIENT to ID (columns: INGREDIENT,ID)",
         default=None,
     )
+    ing.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Print file contents to console in addition to writing files",
+    )
     ing.set_defaults(func=ingredients_wrapper)
+
+    # Run subcommand (execute experiment rounds)
+    run = subparsers.add_parser("run", help="Execute an experiment round using BacterAI models and simulations.")
+    run.add_argument("experiment_path", help="Path to experiment directory.")
+    run.add_argument(
+        "-r", "--round",
+        type=int,
+        required=True,
+        help="The new round number to execute",
+    )
+    run.add_argument(
+        "-p", "--plot-only",
+        action="store_true",
+        help="Only generate plots, do not run experiments",
+    )
+    run.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Print detailed output during execution",
+    )
+    run.set_defaults(func=run_wrapper)
+    
     return parser
 
 
@@ -79,12 +130,23 @@ def _coerce_sheet_arg(raw: Optional[str]) -> Optional[Union[str, int]]:
 
 def experiment_wrapper(args) -> None:
     sheet = _coerce_sheet_arg(args.sheet)
-    setup_experiments(
+    cli_experiment(
+        input_path=args.input,
+        sheet=sheet,
+        outfile_name=args.outfile_name,
+        force_format=args.force_format,
+        verbose=args.verbose,
+    )
+
+
+def setup_wrapper(args) -> None:
+    sheet = _coerce_sheet_arg(args.sheet)
+    cli_setup(
         input_path=args.input,
         sheet=sheet,
         force_format=args.force_format,
         outfile_name=args.outfile_name,
-        dry_run=args.dry_run,
+        verbose=args.verbose,
     )
 
 
@@ -95,6 +157,16 @@ def ingredients_wrapper(args) -> None:
         sheet=sheet,
         output=args.output,
         id_map_path=args.id_map,
+        verbose=args.verbose,
+    )
+
+
+def run_wrapper(args) -> None:
+    cli_run(
+        experiment_path=args.experiment_path,
+        round_num=args.round,
+        plot_only=args.plot_only,
+        verbose=args.verbose,
     )
 
 
