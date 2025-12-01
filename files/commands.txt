@@ -1,2 +1,0 @@
-INSTALL CUSTOM COBRAPY:
-    install command: pip3 install --upgrade --user ../cobrapy/
