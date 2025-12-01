@@ -6,11 +6,14 @@ import json
 import os
 import shutil
 import sys
+import traceback
 from pathlib import Path
 from typing import Any, Dict, Optional, Union, List
 
 from bacterai.configuration import ExperimentConfig, IngredientsConfig
 from bacterai.setup import write_experiment_files, scan_next_index
+from bacterai.run.core import execute_experiment
+from bacterai.run.paths import get_round
 
 
 # User interaction functions
@@ -287,7 +290,6 @@ def run(
     
     # Import the core run functionality
     try:
-        from bacterai.core.run import execute_experiment, get_round
         
         # Get the round number automatically
         next_round = get_round(experiment_path)

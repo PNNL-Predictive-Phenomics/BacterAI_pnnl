@@ -4,7 +4,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from ..core.constants import AA_NAMES_TEMPEST, AA_SHORT, AA_NAMES_2, BASE_NAMES_TEMPEST, BASE_NAMES
+from ..utils.constants import AA_NAMES_TEMPEST, AA_SHORT, AA_NAMES_2, BASE_NAMES_TEMPEST, BASE_NAMES
 
 
 def seed_numpy_state(seed):

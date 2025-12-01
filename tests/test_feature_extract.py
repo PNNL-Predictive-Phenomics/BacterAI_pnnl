@@ -1,5 +1,6 @@
 import unittest
 import os
+import pytest
 from unittest.mock import patch
 from io import StringIO
 from biotek_feature_extract import read_biotek, main
@@ -10,7 +11,10 @@ date = 'test_date'
 round_number = '_test'
 signal = 600
 feature = 'delta_od'
+data_file_path = os.path.join(path, "experiment_request", date, 'data', 'testfid.xlsx')
 
+@pytest.mark.skipif(not os.path.exists(data_file_path), 
+                    reason="Test Excel file not found - biotek feature tests require sample data")
 class TestBiotekFeatureExtract(unittest.TestCase):
     def test_read_biotek(self):
         # Construct path to test data file

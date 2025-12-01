@@ -32,3 +32,4 @@ COBRANet
 env/
 workdir
 test_files
+old_tests

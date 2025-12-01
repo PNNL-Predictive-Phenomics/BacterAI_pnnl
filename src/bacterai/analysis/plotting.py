@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from ..core.constants import COLORS
+from ..utils.constants import COLORS
 
 
 def plot_redos(folder, prev_results, redo_results, ingredients):

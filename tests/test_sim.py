@@ -2,36 +2,30 @@ import unittest
 import os
 import pickle
 import numpy as np
-from models import GPRModel, NeuralNetModel, ModelType
-from sim import rollout_trajectory, perform_simulations
-from sim import SimType, SimDirection
+import pytest
+from src.bacterai.run.models import GPRModel, NeuralNetModel, ModelType
+from src.bacterai.sim.core import rollout_trajectory, perform_simulations
+from src.bacterai.sim.core import SimType, SimDirection
 
-# Load test data for functions
+# Path to test data
 test_data_path = os.path.join(os.path.dirname(__file__), 'test_experiment', 'test_data.pkl')
-with open(test_data_path, 'rb') as f:
-    test_data = pickle.load(f)
 
 class TestSim(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # Set up the temporary directory and its contents
-        #round_test_folder = os.path.join(EXPT_FOLDER, "Round_test")
-        #round_folder = os.path.join(EXPT_FOLDER, f"Round{NEW_ROUND_N}")
-        #shutil.copytree(round_test_folder, round_folder)
-        pass
+        # Load test data for the class
+        with open(test_data_path, 'rb') as f:
+            cls.test_data = pickle.load(f)
 
     @classmethod
     def tearDownClass(cls):
-        # Clean up the temporary directory and its contents
-        #round_folder = os.path.join(EXPT_FOLDER, f"Round{NEW_ROUND_N}")
-        #shutil.rmtree(round_folder)
         pass
 
     def test_rollout_trajectory(self):
         # Read arguments from the test data
         model, starting_media, ingredients_pd, new_round_n, batch_size, \
             sim_types, rollout_trajectories, threshold, timeout, unique, direction, \
-            go_beyond_frontier, used_experiments, redo_experiments = test_data
+            go_beyond_frontier, used_experiments, redo_experiments = self.test_data
         # Set up candidate states from starting media
         choices = np.argwhere(starting_media == direction.target_value())[:, 0]
         candidate_states = np.tile(starting_media, (choices.size, 1))
@@ -51,7 +45,7 @@ class TestSim(unittest.TestCase):
         # Read arguments from the test data
         model, starting_media, ingredients_pd, new_round_n, batch_size, \
             sim_types, rollout_trajectories, threshold, timeout, unique, direction, \
-            go_beyond_frontier, used_experiments, redo_experiments = test_data
+            go_beyond_frontier, used_experiments, redo_experiments = self.test_data
         # Perform simulations
         batch, batch_set, metrics = perform_simulations(
             model,

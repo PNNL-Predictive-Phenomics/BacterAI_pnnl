@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from .constants import *
+from ..utils.constants import *
 from ..analysis import processing as utils
 
 
