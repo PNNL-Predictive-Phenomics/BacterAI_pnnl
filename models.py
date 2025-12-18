@@ -9,8 +9,8 @@ import numpy as np
 import torch
 
 # from constants import *
-import net
-import gpr
+from src.bacterai.ml import neural_networks as net
+from src.bacterai.ml import gaussian_process as gpr
 
 
 class ModelType(Enum):
@@ -50,7 +50,7 @@ class GPRModel(Model):
         self.likelihood = []
         self.model_path = model_path
         self.is_trained = False
-        super().__init__(self, ModelType.GPR)
+        super().__init__(None, ModelType.GPR)
         
     @classmethod
     def load_trained_models(cls, models_path):
@@ -109,7 +109,7 @@ class NeuralNetModel(Model):
         self.models_path = models_path
         self.models = []
         self.is_trained = False
-        super().__init__(self, ModelType.NEURAL_NET)
+        super().__init__(None, ModelType.NEURAL_NET)
 
     @classmethod
     def load_trained_models(cls, models_path):

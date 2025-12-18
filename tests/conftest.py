@@ -11,6 +11,53 @@ import numpy as np
 from pathlib import Path
 
 
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_test_experiment():
+    """
+    Session-level fixture that preserves and restores the original mapped_data CSV.
+    Saves a backup before tests run, then restores it and cleans up Round folders after tests complete.
+    """
+    exp_path = os.path.join(os.path.dirname(__file__), 'test_experiment')
+    round_test_folder = os.path.join(exp_path, "Round_test")
+    mapped_data_filename = "mapped_data_test_date_biotek_delta_od_data.csv"
+    backup_filename = "mapped_data_test_date_biotek_delta_od_data (1).csv"
+    
+    original_file = os.path.join(round_test_folder, mapped_data_filename)
+    backup_file = os.path.join(round_test_folder, backup_filename)
+    temp_backup_file = os.path.join(round_test_folder, ".mapped_data_backup.csv")
+    
+    # Save backup before tests run (use the (1).csv as the canonical original)
+    if os.path.exists(backup_file):
+        shutil.copy2(backup_file, temp_backup_file)
+    elif os.path.exists(original_file):
+        shutil.copy2(original_file, temp_backup_file)
+    
+    yield  # Tests run here
+    
+    # After all tests complete, restore from backup
+    if os.path.exists(temp_backup_file):
+        shutil.copy2(temp_backup_file, original_file)
+        os.remove(temp_backup_file)
+        print(f"\nRestored original {mapped_data_filename} to Round_test")
+    
+    # Clean up Round folders
+    round_1_folder = os.path.join(exp_path, "Round1")
+    round_2_folder = os.path.join(exp_path, "Round2")
+    
+    for folder in [round_1_folder, round_2_folder]:
+        if os.path.exists(folder):
+            shutil.rmtree(folder)
+            print(f"Cleaned up {os.path.basename(folder)}")
+    
+    # Clean up any other Round folders except Round_test
+    for item in os.listdir(exp_path):
+        if item.startswith("Round") and item != "Round_test":
+            item_path = os.path.join(exp_path, item)
+            if os.path.isdir(item_path):
+                shutil.rmtree(item_path)
+                print(f"Cleaned up {item}")
+
+
 @pytest.fixture
 def temp_experiment_dir():
     """Create a temporary experiment directory for testing."""
@@ -145,3 +192,87 @@ def setup_experiment_dir(temp_experiment_dir, sample_config, sample_ingredients_
     batch_meta.to_csv(round1_dir / "batch_meta.csv", index=False)
     
     return temp_experiment_dir
+
+
+@pytest.fixture(scope="session")
+def simulation_test_data():
+    """
+    Generate test data for simulation and batch tests.
+    This replaces the old pickle file with fresh data generated from test_experiment.
+    
+    Returns a tuple of 14 items:
+    (model, starting_media, ingredients_pd, new_round_n, batch_size,
+     sim_types, rollout_trajectories, threshold, timeout, unique, direction,
+     go_beyond_frontier, used_experiments, redo_experiments)
+    """
+    from src.bacterai.run.models import GPRModel
+    from src.bacterai.sim.core import SimType, SimDirection
+    
+    # Paths to test experiment data
+    test_exp_path = os.path.join(os.path.dirname(__file__), 'test_experiment')
+    model_path = os.path.join(test_exp_path, 'Round_test', 'gpr_model')
+    config_path = os.path.join(test_exp_path, 'config.json')
+    ingredients_path = os.path.join(test_exp_path, 'ingredients.json')
+    results_path = os.path.join(test_exp_path, 'Round_test', 'results_grow_only.csv')
+    
+    # Load the trained model
+    model = GPRModel.load_trained_models(model_path)
+    
+    # Load config
+    with open(config_path, 'r') as f:
+        config = json.load(f)
+    
+    # Load ingredients and create DataFrame
+    with open(ingredients_path, 'r') as f:
+        ingredients_json = json.load(f)
+    
+    # Filter to only quantitative/binary/semi-quantitative (not environment or fill)
+    ingredients_list = [
+        ing for ing in ingredients_json['ingredients']
+        if ing['TYPE'] in ['quantitative', 'binary', 'semi-quantitative']
+    ]
+    
+    # Convert N_STATES to int, defaulting to 10 for quantitative types with None
+    for ing in ingredients_list:
+        if ing['N_STATES'] is None:
+            ing['N_STATES'] = 10  # Default for quantitative
+        elif isinstance(ing['N_STATES'], str):
+            ing['N_STATES'] = int(ing['N_STATES'])
+    
+    ingredients_pd = pd.DataFrame(ingredients_list)
+    n_ingredients = len(ingredients_list)
+    
+    # Load results and get starting media from first row
+    results_df = pd.read_csv(results_path)
+    ingredient_names = [ing['INGREDIENT'] for ing in ingredients_list]
+    starting_media = results_df.iloc[0][ingredient_names].values.astype(np.float64)
+    
+    # Create test parameters from config
+    new_round_n = 2
+    batch_size = config.get('batch_size', 100)
+    sim_types = [SimType(st) for st in config.get('simulation_types', [2])]
+    rollout_trajectories = config.get('n_rollouts', 2)
+    threshold = config.get('grow_threshold', 0.25)
+    timeout = config.get('timeout_min', 60) * 60  # Convert to seconds
+    unique = config.get('use_unique', False)
+    direction = SimDirection(config.get('direction', 0))
+    go_beyond_frontier = config.get('beyond_frontier', True)
+    used_experiments = set()
+    redo_experiments = []
+    
+    return (
+        model,
+        starting_media,
+        ingredients_pd,
+        new_round_n,
+        batch_size,
+        sim_types,
+        rollout_trajectories,
+        threshold,
+        timeout,
+        unique,
+        direction,
+        go_beyond_frontier,
+        used_experiments,
+        redo_experiments,
+    )

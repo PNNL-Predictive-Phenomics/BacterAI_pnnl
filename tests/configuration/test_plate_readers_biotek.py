@@ -3,10 +3,11 @@ import os
 import pytest
 from unittest.mock import patch
 from io import StringIO
-from biotek_feature_extract import read_biotek, main
+from bacterai.configuration.plate_readers import read_biotek, process_biotek_data, save_mapped_data
 
-# Set up input arguments
-path = os.path.join(os.path.dirname(__file__), 'test_experiment')
+# Set up input arguments - go up one level from configuration/ to tests/
+tests_dir = os.path.dirname(os.path.dirname(__file__))
+path = os.path.join(tests_dir, 'test_experiment')
 date = 'test_date'
 round_number = '_test'
 signal = 600
@@ -23,11 +24,16 @@ class TestBiotekFeatureExtract(unittest.TestCase):
         # Asset the output shape
         self.assertEqual(biotek_df.shape, (1152, 4))
 
-    @patch('sys.stdout', new_callable=StringIO)
-    def test_biotek_feature_extract(self, mock_stdout):
-        # Call the main function with the simulated arguments
-        main(path, date, round_number, signal, feature)
+    def test_biotek_feature_extract(self):
+        # Process the data and save
+        result_df = process_biotek_data(path, date, round_number, signal, feature)
+        out_path = save_mapped_data(result_df, path, date, round_number, 'biotek', feature)
+        
+        # Verify the file was created
+        self.assertTrue(os.path.exists(out_path), f"Output file should exist: {out_path}")
+        
+        # Verify the output filename
         round_folder = os.path.join(path, f"Round{round_number}")
         out_file = 'mapped_data_' + date + '_biotek_' + feature + '_data.csv'
-        # Assert the output
-        self.assertEqual(mock_stdout.getvalue().strip(), f"Successfully wrote Biotek output:\r\n  Location: {round_folder}\r\n  File: {out_file}")
+        expected_path = os.path.join(round_folder, out_file)
+        self.assertEqual(out_path, expected_path)

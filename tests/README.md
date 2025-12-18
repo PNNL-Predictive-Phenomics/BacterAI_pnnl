@@ -2,20 +2,30 @@
 
 ## Test Structure
 
-The BacterAI test suite is organized into multiple levels:
+The BacterAI test suite is organized to mirror the source code structure:
 
 ```
 tests/
-├── unit/                    # Fast, isolated unit tests
-│   ├── test_constants.py
-│   ├── test_paths.py
-│   ├── test_sim_types.py
-│   └── test_export.py
-├── integration/             # Integration tests for workflows
-│   └── test_configuration.py
+├── configuration/           # Tests for src/bacterai/configuration/
+│   ├── test_experiment.py  # Tests for experiment.py (ExperimentConfig)
+│   ├── test_plate_readers_biotek.py  # Tests for Biotek reader
+│   └── test_plate_readers_tecan.py   # Tests for Tecan reader
+├── run/                     # Tests for src/bacterai/run/
+│   ├── test_batch.py       # Tests for batch.py
+│   ├── test_core.py        # Tests for core.py (process_results, execute_experiment)
+│   ├── test_export.py      # Tests for export.py
+│   └── test_paths.py       # Tests for paths.py
+├── sim/                     # Tests for src/bacterai/sim/
+│   └── test_types.py       # Tests for simulation types
+├── ml/                      # Tests for src/bacterai/ml/ (placeholder)
+├── utils/                   # Tests for src/bacterai/utils/ (placeholder)
+├── analysis/                # Tests for src/bacterai/analysis/ (placeholder)
+├── test_sim.py             # Legacy simulation tests (kept as reference)
+├── test_files/             # Shared test data files
+│   ├── tecan_initial.asc   # Sample Tecan data
+│   └── tecan_final.asc     # Sample Tecan data
+├── test_experiment/        # Sample experiment directory structure
 ├── conftest.py             # Shared pytest fixtures
-├── test_run.py             # Legacy run tests
-├── test_sim.py             # Legacy simulation tests
 └── README.md               # This file
 ```
 
@@ -40,20 +50,21 @@ pytest
 ### Run Specific Test Categories
 
 ```bash
-# Run only unit tests
-pytest tests/unit/
-
-# Run only integration tests
-pytest tests/integration/
+# Run tests for specific modules
+pytest tests/configuration/  # All configuration tests
+pytest tests/run/            # All run module tests
+pytest tests/sim/            # All sim module tests
 
 # Run with coverage report
 pytest --cov=src/bacterai --cov-report=html
-
 # Run specific test file
-pytest tests/unit/test_constants.py
+pytest tests/configuration/test_plate_readers_tecan.py
+pytest tests/run/test_core.py
 
 # Run specific test class or function
-pytest tests/unit/test_constants.py::TestConstants::test_colors_defined
+pytest tests/configuration/test_plate_readers_tecan.py::TestTecanReader::test_read_tecan_basic
+pytest tests/run/test_core.py::TestProcessResults::test_process_results
+pytest tests/run/test_core.py::TestProcessResults::test_process_results
 ```
 
 ### Run Tests with Different Verbosity
@@ -111,34 +122,34 @@ pytest -m integration
 
 # Run only unit tests
 pytest -m unit
-```
-
 ### Test Performance
 
 The BacterAI test suite has been optimized for fast execution:
 
-- **All passing tests** (44 tests, ~10 seconds): Unit, integration, and experiment tests
+- **All passing tests** (45 tests, ~10 seconds): Unit tests, integration tests, and experiment tests
+  - Configuration tests: 17 (experiment config + plate readers)
+  - Run tests: 16 (batch, core, export, paths)
+  - Sim tests: 12 (types + legacy)
+
+Test organization mirrors source code:
+- `tests/configuration/` → `src/bacterai/configuration/`
+- `tests/run/` → `src/bacterai/run/`
+- `tests/sim/` → `src/bacterai/sim/`
 
 The test experiment config uses reduced parameters for speed:
 - `batch_size`: 10 (vs 100 in production)
 - `n_bags`: 3 (vs 25 in production) 
 - `n_rollouts`: 1 (vs 2 in production)
 - `timeout_min`: 5 (vs 60 in production)
+- `n_rollouts`: 1 (vs 2 in production)
+- `timeout_min`: 5 (vs 60 in production)
 
 ## Test Configuration
-
-The test experiment uses optimized settings for fast execution:
-- GPR training: 50 iterations (vs 100 in production)
-- Batch generation timeout: 20 minutes (to allow simulations to complete)
-- Small batch size (10) and ensemble (3 models)
-
-If tests fail with empty batches, the simulation timeout may need adjustment.
-
-## Writing New Tests
 
 ### Unit Tests
 
 Unit tests should:
+- Be located in the appropriate subdirectory matching the source module
 - Test a single function or method
 - Use mocks/stubs for dependencies
 - Run quickly (< 1 second each)
@@ -146,6 +157,15 @@ Unit tests should:
 
 Example:
 
+```python
+# tests/configuration/test_my_feature.py
+import pytest
+from bacterai.configuration import my_function
+
+def test_my_function_basic():
+    result = my_function(5)
+    assert result == 10
+```
 ```python
 # tests/unit/test_mymodule.py
 import pytest
