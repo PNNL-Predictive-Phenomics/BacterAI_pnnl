@@ -36,3 +36,4 @@ old_tests
 htmlcov/
 .coverage
 docs/
+.coverage

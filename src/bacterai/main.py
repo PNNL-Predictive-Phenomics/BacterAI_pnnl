@@ -5,7 +5,13 @@ import argparse
 import sys
 from typing import Optional, Union
 
-from bacterai.cli import ingredients as cli_ingredients, setup as cli_setup, experiment as cli_experiment, run as cli_run
+from bacterai.cli import (
+    ingredients as cli_ingredients,
+    setup as cli_setup,
+    experiment as cli_experiment,
+    run as cli_run,
+    process_data as cli_process_data
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -107,6 +113,59 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run.set_defaults(func=run_wrapper)
     
+    # Process data subcommand (extract features from plate reader data)
+    process = subparsers.add_parser(
+        "process_data",
+        help="Process plate reader data (Biotek or Tecan) and create mapped_data CSV.",
+        description=(
+            "Extract features from raw plate reader files and merge with experiment metadata "
+            "to create the mapped_data file needed for BacterAI training."
+        ),
+    )
+    process.add_argument(
+        "reader_type",
+        choices=["biotek", "tecan"],
+        help="Type of plate reader data to process",
+    )
+    process.add_argument(
+        "path",
+        help="Path to experiment directory containing experiment_request/",
+        default=".",
+        nargs="?",
+    )
+    process.add_argument(
+        "-d", "--date",
+        required=True,
+        help="Date identifier for the data files (e.g., 2024-01-15 or test_date)",
+    )
+    process.add_argument(
+        "-r", "--round",
+        type=int,
+        required=True,
+        dest="round_number",
+        help="Round number for the experiment",
+    )
+    process.add_argument(
+        "-f", "--feature",
+        required=True,
+        help="Feature to extract (e.g., delta_od, max_slope, auc)",
+    )
+    process.add_argument(
+        "-s", "--signal",
+        type=int,
+        help="Wavelength signal (required for Biotek, e.g., 600 for OD600)",
+    )
+    process.add_argument(
+        "-o", "--output",
+        help="Optional output filename override (default: auto-generated in Round directory)",
+    )
+    process.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Print detailed processing information",
+    )
+    process.set_defaults(func=process_data_wrapper)
+    
     return parser
 
 
@@ -159,6 +218,19 @@ def run_wrapper(args) -> None:
     cli_run(
         experiment_path=args.experiment_path,
         plot_only=args.plot_only,
+        verbose=args.verbose,
+    )
+
+
+def process_data_wrapper(args) -> None:
+    cli_process_data(
+        reader_type=args.reader_type,
+        path=args.path,
+        date=args.date,
+        round_number=args.round_number,
+        feature=args.feature,
+        signal=args.signal,
+        output=args.output,
         verbose=args.verbose,
     )
 
