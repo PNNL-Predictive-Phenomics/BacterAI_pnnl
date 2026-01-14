@@ -337,7 +337,10 @@ def process_results(
         redo_bad.columns = list(range(n_ingredients)) + list(
             redo_bad.columns[n_ingredients:]
         )
-        redo_experiments = pd.concat([redo_experiments, redo_bad], axis = 0)
+        if redo_experiments is None:
+            redo_experiments = redo_bad
+        else:
+            redo_experiments = pd.concat([redo_experiments, redo_bad], axis = 0)
 
     # Save and output successful results
     results_grow_only.to_csv(os.path.join(folder, "results_grow_only.csv"), index=False)
@@ -351,7 +354,7 @@ def process_results(
             print(f"\t{l}")
 
     print(f"Total unique experiments: {len(used_experiments)}")
-    if not redo_experiments.empty:
+    if redo_experiments is not None and not redo_experiments.empty:
         print(
             f"Total redo experiments chosen: {len(redo_experiments)} ({len(results_bad)} 'bad' repeats)"
         )
