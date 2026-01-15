@@ -135,8 +135,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     process.add_argument(
         "-d", "--date",
-        required=True,
-        help="Date identifier for the data files (e.g., 2024-01-15 or test_date)",
+        required=False,
+        default=None,
+        help="Date identifier for the data files (optional; e.g., 2024-01-15 or test_date). If not provided or date folder not found, will look directly in experiment_request/",
     )
     process.add_argument(
         "-r", "--round",
