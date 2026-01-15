@@ -263,7 +263,7 @@ def run(
 def process_data(
     reader_type: str,
     path: str,
-    date: str,
+    date: Optional[str],
     round_number: int,
     feature: str,
     signal: Optional[int] = None,
@@ -279,7 +279,7 @@ def process_data(
     Args:
         reader_type: Type of plate reader ('biotek' or 'tecan')
         path: Path to experiment directory containing experiment_request/
-        date: Date identifier for the data files
+        date: Date identifier for the data files (optional)
         round_number: Round number for the experiment
         feature: Feature to extract (e.g., 'delta_od', 'max_slope')
         signal: Wavelength signal for Biotek (required for Biotek, ignored for Tecan)
@@ -341,7 +341,7 @@ def process_data(
     if verbose:
         print(f"Processing {reader_type.upper()} data:")
         print(f"  Experiment path: {exp_path}")
-        print(f"  Date: {date}")
+        print(f"  Date: {date if date else 'Not specified (using direct experiment_request path)'}")
         print(f"  Round: {round_number}")
         print(f"  Feature: {feature}")
         if reader_type == 'biotek':
@@ -372,7 +372,8 @@ def process_data(
         else:
             # Use default naming from save_mapped_data
             round_dir = exp_path / f"Round{round_number}"
-            output_file = round_dir / f"mapped_data_{date}_{reader_type}_{feature}_data.csv"
+            date_str = date if date else "nodate"
+            output_file = round_dir / f"mapped_data_{date_str}_{reader_type}_{feature}_data.csv"
         
         # Ensure output directory exists
         output_file.parent.mkdir(parents=True, exist_ok=True)
