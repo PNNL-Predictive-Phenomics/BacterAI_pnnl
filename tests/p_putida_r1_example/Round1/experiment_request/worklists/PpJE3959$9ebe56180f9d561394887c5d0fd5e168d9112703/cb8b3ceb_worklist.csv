@@ -1,0 +1,562 @@
+SourceLabwareID,SourcePosition,DestinationLabwareID,DestinationPosition,Volume
+ammonium_chloride x10,A1,cb8b3ceb,E3,12.5
+ammonium_chloride x10,A1,cb8b3ceb,F6,12.5
+ammonium_chloride x10,A1,cb8b3ceb,G3,12.5
+ammonium_chloride x14,A1,cb8b3ceb,A5,13.6
+ammonium_chloride x14,A1,cb8b3ceb,A7,13.1
+ammonium_chloride x14,A1,cb8b3ceb,A8,13.6
+ammonium_chloride x14,A1,cb8b3ceb,B3,12.6
+ammonium_chloride x14,A1,cb8b3ceb,B6,11.6
+ammonium_chloride x14,A1,cb8b3ceb,E4,11.6
+ammonium_chloride x14,A1,cb8b3ceb,E5,13.1
+ammonium_chloride x14,A1,cb8b3ceb,F1,12.6
+ammonium_chloride x14,A1,cb8b3ceb,F7,13.6
+ammonium_chloride x14,A1,cb8b3ceb,G2,11.6
+ammonium_chloride x14,A1,cb8b3ceb,H1,12.6
+ammonium_chloride x14,A1,cb8b3ceb,H6,13.1
+ammonium_chloride x2,A1,cb8b3ceb,B4,18.4
+ammonium_chloride x2,A1,cb8b3ceb,C1,16.8
+ammonium_chloride x2,A1,cb8b3ceb,C3,16.8
+ammonium_chloride x2,A1,cb8b3ceb,C6,16.8
+ammonium_chloride x2,A1,cb8b3ceb,D4,18.4
+ammonium_chloride x2,A1,cb8b3ceb,H3,18.4
+ammonium_chloride x20,A1,cb8b3ceb,A2,10.4
+ammonium_chloride x20,A1,cb8b3ceb,A4,13.8
+ammonium_chloride x20,A1,cb8b3ceb,A6,13.8
+ammonium_chloride x20,A1,cb8b3ceb,B1,13.8
+ammonium_chloride x20,A1,cb8b3ceb,B2,13.8
+ammonium_chloride x20,A1,cb8b3ceb,B8,11.8
+ammonium_chloride x20,A1,cb8b3ceb,C2,11.8
+ammonium_chloride x20,A1,cb8b3ceb,C8,13.8
+ammonium_chloride x20,A1,cb8b3ceb,D1,11.4
+ammonium_chloride x20,A1,cb8b3ceb,D5,10.4
+ammonium_chloride x20,A1,cb8b3ceb,D6,10.4
+ammonium_chloride x20,A1,cb8b3ceb,D7,11.4
+ammonium_chloride x20,A1,cb8b3ceb,E2,13.8
+ammonium_chloride x20,A1,cb8b3ceb,G4,11.8
+ammonium_chloride x20,A1,cb8b3ceb,G5,11.4
+ammonium_chloride x6,A1,cb8b3ceb,B7,14.8
+ammonium_chloride x6,A1,cb8b3ceb,D3,13.1
+ammonium_chloride x6,A1,cb8b3ceb,E6,16.6
+ammonium_chloride x6,A1,cb8b3ceb,F4,13.1
+ammonium_chloride x6,A1,cb8b3ceb,F5,14.8
+ammonium_chloride x6,A1,cb8b3ceb,G6,14.8
+ammonium_chloride x6,A1,cb8b3ceb,G7,16.6
+ammonium_chloride x6,A1,cb8b3ceb,H2,13.1
+ammonium_chloride x6,A1,cb8b3ceb,H4,16.6
+d_glucose x10,A1,cb8b3ceb,A5,14.0
+d_glucose x10,A1,cb8b3ceb,A7,10.2
+d_glucose x10,A1,cb8b3ceb,A8,14.0
+d_glucose x10,A1,cb8b3ceb,C1,13.1
+d_glucose x10,A1,cb8b3ceb,C3,13.1
+d_glucose x10,A1,cb8b3ceb,C6,13.1
+d_glucose x10,A1,cb8b3ceb,E5,10.2
+d_glucose x10,A1,cb8b3ceb,F7,14.0
+d_glucose x10,A1,cb8b3ceb,H6,10.2
+d_glucose x14,A1,cb8b3ceb,B3,14.1
+d_glucose x14,A1,cb8b3ceb,C5,12.8
+d_glucose x14,A1,cb8b3ceb,D3,10.9
+d_glucose x14,A1,cb8b3ceb,E1,12.8
+d_glucose x14,A1,cb8b3ceb,E6,14.1
+d_glucose x14,A1,cb8b3ceb,F1,14.1
+d_glucose x14,A1,cb8b3ceb,F2,12.8
+d_glucose x14,A1,cb8b3ceb,F4,10.9
+d_glucose x14,A1,cb8b3ceb,G7,14.1
+d_glucose x14,A1,cb8b3ceb,H1,14.1
+d_glucose x14,A1,cb8b3ceb,H2,10.9
+d_glucose x14,A1,cb8b3ceb,H4,14.1
+d_glucose x2,A1,cb8b3ceb,E3,18.0
+d_glucose x2,A1,cb8b3ceb,F6,18.0
+d_glucose x2,A1,cb8b3ceb,G3,18.0
+d_glucose x20,A1,cb8b3ceb,A4,13.8
+d_glucose x20,A1,cb8b3ceb,A6,13.8
+d_glucose x20,A1,cb8b3ceb,B1,13.8
+d_glucose x20,A1,cb8b3ceb,B2,13.8
+d_glucose x20,A1,cb8b3ceb,B4,11.5
+d_glucose x20,A1,cb8b3ceb,B6,12.9
+d_glucose x20,A1,cb8b3ceb,B8,11.7
+d_glucose x20,A1,cb8b3ceb,C2,11.7
+d_glucose x20,A1,cb8b3ceb,C8,13.8
+d_glucose x20,A1,cb8b3ceb,D4,11.5
+d_glucose x20,A1,cb8b3ceb,E2,13.8
+d_glucose x20,A1,cb8b3ceb,E4,12.9
+d_glucose x20,A1,cb8b3ceb,G2,12.9
+d_glucose x20,A1,cb8b3ceb,G4,11.7
+d_glucose x20,A1,cb8b3ceb,H3,11.5
+d_glucose x6,A1,cb8b3ceb,B5,11.5
+d_glucose x6,A1,cb8b3ceb,B7,14.4
+d_glucose x6,A1,cb8b3ceb,D1,11.2
+d_glucose x6,A1,cb8b3ceb,D7,11.2
+d_glucose x6,A1,cb8b3ceb,E7,11.5
+d_glucose x6,A1,cb8b3ceb,F5,14.4
+d_glucose x6,A1,cb8b3ceb,G5,11.2
+d_glucose x6,A1,cb8b3ceb,G6,14.4
+d_glucose x6,A1,cb8b3ceb,H7,11.5
+d_xylose x10,A1,cb8b3ceb,A7,13.6
+d_xylose x10,A1,cb8b3ceb,B3,13.1
+d_xylose x10,A1,cb8b3ceb,B8,11.9
+d_xylose x10,A1,cb8b3ceb,C2,11.9
+d_xylose x10,A1,cb8b3ceb,D1,11.3
+d_xylose x10,A1,cb8b3ceb,D7,11.3
+d_xylose x10,A1,cb8b3ceb,E5,13.6
+d_xylose x10,A1,cb8b3ceb,F1,13.1
+d_xylose x10,A1,cb8b3ceb,G4,11.9
+d_xylose x10,A1,cb8b3ceb,G5,11.3
+d_xylose x10,A1,cb8b3ceb,H1,13.1
+d_xylose x10,A1,cb8b3ceb,H6,13.6
+d_xylose x14,A1,cb8b3ceb,C1,10.3
+d_xylose x14,A1,cb8b3ceb,C3,10.3
+d_xylose x14,A1,cb8b3ceb,C6,10.3
+d_xylose x2,A1,cb8b3ceb,E3,12.2
+d_xylose x2,A1,cb8b3ceb,F6,12.2
+d_xylose x2,A1,cb8b3ceb,G3,12.2
+d_xylose x20,A1,cb8b3ceb,A2,12.8
+d_xylose x20,A1,cb8b3ceb,A5,13.7
+d_xylose x20,A1,cb8b3ceb,A8,13.7
+d_xylose x20,A1,cb8b3ceb,B6,10.1
+d_xylose x20,A1,cb8b3ceb,D3,11.3
+d_xylose x20,A1,cb8b3ceb,D5,12.8
+d_xylose x20,A1,cb8b3ceb,D6,12.8
+d_xylose x20,A1,cb8b3ceb,E4,10.1
+d_xylose x20,A1,cb8b3ceb,F4,11.3
+d_xylose x20,A1,cb8b3ceb,F7,13.7
+d_xylose x20,A1,cb8b3ceb,G2,10.1
+d_xylose x20,A1,cb8b3ceb,H2,11.3
+d_xylose x6,A1,cb8b3ceb,B4,12.1
+d_xylose x6,A1,cb8b3ceb,B7,15.0
+d_xylose x6,A1,cb8b3ceb,D4,12.1
+d_xylose x6,A1,cb8b3ceb,E6,15.2
+d_xylose x6,A1,cb8b3ceb,F5,15.0
+d_xylose x6,A1,cb8b3ceb,G6,15.0
+d_xylose x6,A1,cb8b3ceb,G7,15.2
+d_xylose x6,A1,cb8b3ceb,H3,12.1
+d_xylose x6,A1,cb8b3ceb,H4,15.2
+l_arabinose x10,A1,cb8b3ceb,B3,11.4
+l_arabinose x10,A1,cb8b3ceb,B8,13.7
+l_arabinose x10,A1,cb8b3ceb,C2,13.7
+l_arabinose x10,A1,cb8b3ceb,C5,12.9
+l_arabinose x10,A1,cb8b3ceb,E1,12.9
+l_arabinose x10,A1,cb8b3ceb,F1,11.4
+l_arabinose x10,A1,cb8b3ceb,F2,12.9
+l_arabinose x10,A1,cb8b3ceb,G4,13.7
+l_arabinose x10,A1,cb8b3ceb,H1,11.4
+l_arabinose x14,A1,cb8b3ceb,A7,12.2
+l_arabinose x14,A1,cb8b3ceb,B4,13.1
+l_arabinose x14,A1,cb8b3ceb,B5,10.1
+l_arabinose x14,A1,cb8b3ceb,D1,10.7
+l_arabinose x14,A1,cb8b3ceb,D4,13.1
+l_arabinose x14,A1,cb8b3ceb,D7,10.7
+l_arabinose x14,A1,cb8b3ceb,E3,11.5
+l_arabinose x14,A1,cb8b3ceb,E5,12.2
+l_arabinose x14,A1,cb8b3ceb,E7,10.1
+l_arabinose x14,A1,cb8b3ceb,F6,11.5
+l_arabinose x14,A1,cb8b3ceb,G3,11.5
+l_arabinose x14,A1,cb8b3ceb,G5,10.7
+l_arabinose x14,A1,cb8b3ceb,H3,13.1
+l_arabinose x14,A1,cb8b3ceb,H6,12.2
+l_arabinose x14,A1,cb8b3ceb,H7,10.1
+l_arabinose x2,A1,cb8b3ceb,A5,11.1
+l_arabinose x2,A1,cb8b3ceb,A8,11.1
+l_arabinose x2,A1,cb8b3ceb,F7,11.1
+l_arabinose x20,A1,cb8b3ceb,A2,13.2
+l_arabinose x20,A1,cb8b3ceb,B6,10.8
+l_arabinose x20,A1,cb8b3ceb,C1,13.6
+l_arabinose x20,A1,cb8b3ceb,C3,13.6
+l_arabinose x20,A1,cb8b3ceb,C6,13.6
+l_arabinose x20,A1,cb8b3ceb,D3,10.4
+l_arabinose x20,A1,cb8b3ceb,D5,13.2
+l_arabinose x20,A1,cb8b3ceb,D6,13.2
+l_arabinose x20,A1,cb8b3ceb,E4,10.8
+l_arabinose x20,A1,cb8b3ceb,E6,10.3
+l_arabinose x20,A1,cb8b3ceb,F4,10.4
+l_arabinose x20,A1,cb8b3ceb,G2,10.8
+l_arabinose x20,A1,cb8b3ceb,G7,10.3
+l_arabinose x20,A1,cb8b3ceb,H2,10.4
+l_arabinose x20,A1,cb8b3ceb,H4,10.3
+l_arabinose x6,A1,cb8b3ceb,B7,13.5
+l_arabinose x6,A1,cb8b3ceb,F5,13.5
+l_arabinose x6,A1,cb8b3ceb,G6,13.5
+o2 x20.0,A1,cb8b3ceb,A2,13.8
+o2 x20.0,A1,cb8b3ceb,A4,13.8
+o2 x20.0,A1,cb8b3ceb,A6,13.8
+o2 x20.0,A1,cb8b3ceb,A7,13.8
+o2 x20.0,A1,cb8b3ceb,B5,13.8
+o2 x20.0,A1,cb8b3ceb,B7,13.8
+o2 x20.0,A1,cb8b3ceb,C1,13.8
+o2 x20.0,A1,cb8b3ceb,C3,13.8
+o2 x20.0,A1,cb8b3ceb,C6,13.8
+o2 x20.0,A1,cb8b3ceb,D1,13.8
+o2 x20.0,A1,cb8b3ceb,D5,13.8
+o2 x20.0,A1,cb8b3ceb,D6,13.8
+o2 x20.0,A1,cb8b3ceb,D7,13.8
+o2 x20.0,A1,cb8b3ceb,E2,13.8
+o2 x20.0,A1,cb8b3ceb,E3,13.8
+o2 x20.0,A1,cb8b3ceb,E5,13.8
+o2 x20.0,A1,cb8b3ceb,E7,13.8
+o2 x20.0,A1,cb8b3ceb,F5,13.8
+o2 x20.0,A1,cb8b3ceb,F6,13.8
+o2 x20.0,A1,cb8b3ceb,G3,13.8
+o2 x20.0,A1,cb8b3ceb,G5,13.8
+o2 x20.0,A1,cb8b3ceb,G6,13.8
+o2 x20.0,A1,cb8b3ceb,H6,13.8
+o2 x20.0,A1,cb8b3ceb,H7,13.8
+p_coumaric_acid x10,A1,cb8b3ceb,B5,13.8
+p_coumaric_acid x10,A1,cb8b3ceb,B7,10.1
+p_coumaric_acid x10,A1,cb8b3ceb,B8,11.6
+p_coumaric_acid x10,A1,cb8b3ceb,C2,11.6
+p_coumaric_acid x10,A1,cb8b3ceb,C5,13.3
+p_coumaric_acid x10,A1,cb8b3ceb,E1,13.3
+p_coumaric_acid x10,A1,cb8b3ceb,E7,13.8
+p_coumaric_acid x10,A1,cb8b3ceb,F2,13.3
+p_coumaric_acid x10,A1,cb8b3ceb,F5,10.1
+p_coumaric_acid x10,A1,cb8b3ceb,G4,11.6
+p_coumaric_acid x10,A1,cb8b3ceb,G6,10.1
+p_coumaric_acid x10,A1,cb8b3ceb,H7,13.8
+p_coumaric_acid x14,A1,cb8b3ceb,A7,13.6
+p_coumaric_acid x14,A1,cb8b3ceb,B4,10.2
+p_coumaric_acid x14,A1,cb8b3ceb,D1,11.1
+p_coumaric_acid x14,A1,cb8b3ceb,D4,10.2
+p_coumaric_acid x14,A1,cb8b3ceb,D7,11.1
+p_coumaric_acid x14,A1,cb8b3ceb,E3,12.4
+p_coumaric_acid x14,A1,cb8b3ceb,E5,13.6
+p_coumaric_acid x14,A1,cb8b3ceb,E6,12.7
+p_coumaric_acid x14,A1,cb8b3ceb,F6,12.4
+p_coumaric_acid x14,A1,cb8b3ceb,G3,12.4
+p_coumaric_acid x14,A1,cb8b3ceb,G5,11.1
+p_coumaric_acid x14,A1,cb8b3ceb,G7,12.7
+p_coumaric_acid x14,A1,cb8b3ceb,H3,10.2
+p_coumaric_acid x14,A1,cb8b3ceb,H4,12.7
+p_coumaric_acid x14,A1,cb8b3ceb,H6,13.6
+p_coumaric_acid x20,A1,cb8b3ceb,A2,12.9
+p_coumaric_acid x20,A1,cb8b3ceb,B6,10.9
+p_coumaric_acid x20,A1,cb8b3ceb,C1,13.7
+p_coumaric_acid x20,A1,cb8b3ceb,C3,13.7
+p_coumaric_acid x20,A1,cb8b3ceb,C6,13.7
+p_coumaric_acid x20,A1,cb8b3ceb,D3,11.7
+p_coumaric_acid x20,A1,cb8b3ceb,D5,12.9
+p_coumaric_acid x20,A1,cb8b3ceb,D6,12.9
+p_coumaric_acid x20,A1,cb8b3ceb,E4,10.9
+p_coumaric_acid x20,A1,cb8b3ceb,F4,11.7
+p_coumaric_acid x20,A1,cb8b3ceb,G2,10.9
+p_coumaric_acid x20,A1,cb8b3ceb,H2,11.7
+p_coumaric_acid x4,A1,cb8b3ceb,A5,14.5
+p_coumaric_acid x4,A1,cb8b3ceb,A8,14.5
+p_coumaric_acid x4,A1,cb8b3ceb,F7,14.5
+p_coumaric_acid x6,A1,cb8b3ceb,B3,13.4
+p_coumaric_acid x6,A1,cb8b3ceb,F1,13.4
+p_coumaric_acid x6,A1,cb8b3ceb,H1,13.4
+sodium_acetate x10,A1,cb8b3ceb,A2,12.1
+sodium_acetate x10,A1,cb8b3ceb,B4,11.8
+sodium_acetate x10,A1,cb8b3ceb,D4,11.8
+sodium_acetate x10,A1,cb8b3ceb,D5,12.1
+sodium_acetate x10,A1,cb8b3ceb,D6,12.1
+sodium_acetate x10,A1,cb8b3ceb,H3,11.8
+sodium_acetate x14,A1,cb8b3ceb,A5,11.7
+sodium_acetate x14,A1,cb8b3ceb,A8,11.7
+sodium_acetate x14,A1,cb8b3ceb,B7,10.6
+sodium_acetate x14,A1,cb8b3ceb,C1,12.3
+sodium_acetate x14,A1,cb8b3ceb,C3,12.3
+sodium_acetate x14,A1,cb8b3ceb,C6,12.3
+sodium_acetate x14,A1,cb8b3ceb,D1,13.2
+sodium_acetate x14,A1,cb8b3ceb,D7,13.2
+sodium_acetate x14,A1,cb8b3ceb,F5,10.6
+sodium_acetate x14,A1,cb8b3ceb,F7,11.7
+sodium_acetate x14,A1,cb8b3ceb,G5,13.2
+sodium_acetate x14,A1,cb8b3ceb,G6,10.6
+sodium_acetate x2,A1,cb8b3ceb,B8,15.1
+sodium_acetate x2,A1,cb8b3ceb,C2,15.1
+sodium_acetate x2,A1,cb8b3ceb,E3,10.8
+sodium_acetate x2,A1,cb8b3ceb,F6,10.8
+sodium_acetate x2,A1,cb8b3ceb,G3,10.8
+sodium_acetate x2,A1,cb8b3ceb,G4,15.1
+sodium_acetate x20,A1,cb8b3ceb,A7,13.5
+sodium_acetate x20,A1,cb8b3ceb,C5,13.1
+sodium_acetate x20,A1,cb8b3ceb,D3,12.4
+sodium_acetate x20,A1,cb8b3ceb,E1,13.1
+sodium_acetate x20,A1,cb8b3ceb,E5,13.5
+sodium_acetate x20,A1,cb8b3ceb,F2,13.1
+sodium_acetate x20,A1,cb8b3ceb,F4,12.4
+sodium_acetate x20,A1,cb8b3ceb,H2,12.4
+sodium_acetate x20,A1,cb8b3ceb,H6,13.5
+sodium_acetate x6,A1,cb8b3ceb,B3,13.5
+sodium_acetate x6,A1,cb8b3ceb,B5,12.1
+sodium_acetate x6,A1,cb8b3ceb,E6,10.5
+sodium_acetate x6,A1,cb8b3ceb,E7,12.1
+sodium_acetate x6,A1,cb8b3ceb,F1,13.5
+sodium_acetate x6,A1,cb8b3ceb,G7,10.5
+sodium_acetate x6,A1,cb8b3ceb,H1,13.5
+sodium_acetate x6,A1,cb8b3ceb,H4,10.5
+sodium_acetate x6,A1,cb8b3ceb,H7,12.1
+sodium_benzoate x10,A1,cb8b3ceb,B3,12.0
+sodium_benzoate x10,A1,cb8b3ceb,B5,12.2
+sodium_benzoate x10,A1,cb8b3ceb,B8,13.6
+sodium_benzoate x10,A1,cb8b3ceb,C2,13.6
+sodium_benzoate x10,A1,cb8b3ceb,D3,12.8
+sodium_benzoate x10,A1,cb8b3ceb,E3,10.3
+sodium_benzoate x10,A1,cb8b3ceb,E7,12.2
+sodium_benzoate x10,A1,cb8b3ceb,F1,12.0
+sodium_benzoate x10,A1,cb8b3ceb,F4,12.8
+sodium_benzoate x10,A1,cb8b3ceb,F6,10.3
+sodium_benzoate x10,A1,cb8b3ceb,G3,10.3
+sodium_benzoate x10,A1,cb8b3ceb,G4,13.6
+sodium_benzoate x10,A1,cb8b3ceb,H1,12.0
+sodium_benzoate x10,A1,cb8b3ceb,H2,12.8
+sodium_benzoate x10,A1,cb8b3ceb,H7,12.2
+sodium_benzoate x20,A1,cb8b3ceb,A5,13.7
+sodium_benzoate x20,A1,cb8b3ceb,A7,11.3
+sodium_benzoate x20,A1,cb8b3ceb,A8,13.7
+sodium_benzoate x20,A1,cb8b3ceb,B4,13.3
+sodium_benzoate x20,A1,cb8b3ceb,B6,10.6
+sodium_benzoate x20,A1,cb8b3ceb,C1,12.0
+sodium_benzoate x20,A1,cb8b3ceb,C3,12.0
+sodium_benzoate x20,A1,cb8b3ceb,C5,11.0
+sodium_benzoate x20,A1,cb8b3ceb,C6,12.0
+sodium_benzoate x20,A1,cb8b3ceb,D1,10.5
+sodium_benzoate x20,A1,cb8b3ceb,D4,13.3
+sodium_benzoate x20,A1,cb8b3ceb,D7,10.5
+sodium_benzoate x20,A1,cb8b3ceb,E1,11.0
+sodium_benzoate x20,A1,cb8b3ceb,E4,10.6
+sodium_benzoate x20,A1,cb8b3ceb,E5,11.3
+sodium_benzoate x20,A1,cb8b3ceb,E6,12.4
+sodium_benzoate x20,A1,cb8b3ceb,F2,11.0
+sodium_benzoate x20,A1,cb8b3ceb,F7,13.7
+sodium_benzoate x20,A1,cb8b3ceb,G2,10.6
+sodium_benzoate x20,A1,cb8b3ceb,G5,10.5
+sodium_benzoate x20,A1,cb8b3ceb,G7,12.4
+sodium_benzoate x20,A1,cb8b3ceb,H3,13.3
+sodium_benzoate x20,A1,cb8b3ceb,H4,12.4
+sodium_benzoate x20,A1,cb8b3ceb,H6,11.3
+sodium_benzoate x6,A1,cb8b3ceb,A2,14.7
+sodium_benzoate x6,A1,cb8b3ceb,B7,16.4
+sodium_benzoate x6,A1,cb8b3ceb,D5,14.7
+sodium_benzoate x6,A1,cb8b3ceb,D6,14.7
+sodium_benzoate x6,A1,cb8b3ceb,F5,16.4
+sodium_benzoate x6,A1,cb8b3ceb,G6,16.4
+sodium_chloride x14,A1,cb8b3ceb,A2,10.1
+sodium_chloride x14,A1,cb8b3ceb,A5,10.3
+sodium_chloride x14,A1,cb8b3ceb,A7,13.8
+sodium_chloride x14,A1,cb8b3ceb,A8,10.3
+sodium_chloride x14,A1,cb8b3ceb,B6,13.3
+sodium_chloride x14,A1,cb8b3ceb,B8,13.9
+sodium_chloride x14,A1,cb8b3ceb,C2,13.9
+sodium_chloride x14,A1,cb8b3ceb,D5,10.1
+sodium_chloride x14,A1,cb8b3ceb,D6,10.1
+sodium_chloride x14,A1,cb8b3ceb,E4,13.3
+sodium_chloride x14,A1,cb8b3ceb,E5,13.8
+sodium_chloride x14,A1,cb8b3ceb,F7,10.3
+sodium_chloride x14,A1,cb8b3ceb,G2,13.3
+sodium_chloride x14,A1,cb8b3ceb,G4,13.9
+sodium_chloride x14,A1,cb8b3ceb,H6,13.8
+sodium_chloride x2,A1,cb8b3ceb,E6,11.8
+sodium_chloride x2,A1,cb8b3ceb,G7,11.8
+sodium_chloride x2,A1,cb8b3ceb,H4,11.8
+sodium_chloride x20,A1,cb8b3ceb,B4,13.4
+sodium_chloride x20,A1,cb8b3ceb,B7,13.7
+sodium_chloride x20,A1,cb8b3ceb,C1,12.4
+sodium_chloride x20,A1,cb8b3ceb,C3,12.4
+sodium_chloride x20,A1,cb8b3ceb,C5,11.3
+sodium_chloride x20,A1,cb8b3ceb,C6,12.4
+sodium_chloride x20,A1,cb8b3ceb,D3,10.8
+sodium_chloride x20,A1,cb8b3ceb,D4,13.4
+sodium_chloride x20,A1,cb8b3ceb,E1,11.3
+sodium_chloride x20,A1,cb8b3ceb,E3,11.6
+sodium_chloride x20,A1,cb8b3ceb,F2,11.3
+sodium_chloride x20,A1,cb8b3ceb,F4,10.8
+sodium_chloride x20,A1,cb8b3ceb,F5,13.7
+sodium_chloride x20,A1,cb8b3ceb,F6,11.6
+sodium_chloride x20,A1,cb8b3ceb,G3,11.6
+sodium_chloride x20,A1,cb8b3ceb,G6,13.7
+sodium_chloride x20,A1,cb8b3ceb,H2,10.8
+sodium_chloride x20,A1,cb8b3ceb,H3,13.4
+sodium_chloride x6,A1,cb8b3ceb,B3,16.2
+sodium_chloride x6,A1,cb8b3ceb,B5,10.2
+sodium_chloride x6,A1,cb8b3ceb,D1,16.5
+sodium_chloride x6,A1,cb8b3ceb,D7,16.5
+sodium_chloride x6,A1,cb8b3ceb,E7,10.2
+sodium_chloride x6,A1,cb8b3ceb,F1,16.2
+sodium_chloride x6,A1,cb8b3ceb,G5,16.5
+sodium_chloride x6,A1,cb8b3ceb,H1,16.2
+sodium_chloride x6,A1,cb8b3ceb,H7,10.2
+sodium_citrate x10,A1,cb8b3ceb,E6,13.5
+sodium_citrate x10,A1,cb8b3ceb,G7,13.5
+sodium_citrate x10,A1,cb8b3ceb,H4,13.5
+sodium_citrate x14,A1,cb8b3ceb,A5,12.6
+sodium_citrate x14,A1,cb8b3ceb,A8,12.6
+sodium_citrate x14,A1,cb8b3ceb,B3,11.5
+sodium_citrate x14,A1,cb8b3ceb,B6,13.7
+sodium_citrate x14,A1,cb8b3ceb,B7,13.4
+sodium_citrate x14,A1,cb8b3ceb,E3,14.3
+sodium_citrate x14,A1,cb8b3ceb,E4,13.7
+sodium_citrate x14,A1,cb8b3ceb,F1,11.5
+sodium_citrate x14,A1,cb8b3ceb,F5,13.4
+sodium_citrate x14,A1,cb8b3ceb,F6,14.3
+sodium_citrate x14,A1,cb8b3ceb,F7,12.6
+sodium_citrate x14,A1,cb8b3ceb,G2,13.7
+sodium_citrate x14,A1,cb8b3ceb,G3,14.3
+sodium_citrate x14,A1,cb8b3ceb,G6,13.4
+sodium_citrate x14,A1,cb8b3ceb,H1,11.5
+sodium_citrate x2,A1,cb8b3ceb,B8,10.1
+sodium_citrate x2,A1,cb8b3ceb,C2,10.1
+sodium_citrate x2,A1,cb8b3ceb,G4,10.1
+sodium_citrate x20,A1,cb8b3ceb,A2,13.0
+sodium_citrate x20,A1,cb8b3ceb,B4,13.5
+sodium_citrate x20,A1,cb8b3ceb,C5,12.7
+sodium_citrate x20,A1,cb8b3ceb,D1,10.3
+sodium_citrate x20,A1,cb8b3ceb,D4,13.5
+sodium_citrate x20,A1,cb8b3ceb,D5,13.0
+sodium_citrate x20,A1,cb8b3ceb,D6,13.0
+sodium_citrate x20,A1,cb8b3ceb,D7,10.3
+sodium_citrate x20,A1,cb8b3ceb,E1,12.7
+sodium_citrate x20,A1,cb8b3ceb,F2,12.7
+sodium_citrate x20,A1,cb8b3ceb,G5,10.3
+sodium_citrate x20,A1,cb8b3ceb,H3,13.5
+sodium_citrate x6,A1,cb8b3ceb,A7,12.7
+sodium_citrate x6,A1,cb8b3ceb,B5,11.2
+sodium_citrate x6,A1,cb8b3ceb,D3,13.6
+sodium_citrate x6,A1,cb8b3ceb,E5,12.7
+sodium_citrate x6,A1,cb8b3ceb,E7,11.2
+sodium_citrate x6,A1,cb8b3ceb,F4,13.6
+sodium_citrate x6,A1,cb8b3ceb,H2,13.6
+sodium_citrate x6,A1,cb8b3ceb,H6,12.7
+sodium_citrate x6,A1,cb8b3ceb,H7,11.2
+sodium_octanoate x10,A1,cb8b3ceb,B3,12.5
+sodium_octanoate x10,A1,cb8b3ceb,E6,10.2
+sodium_octanoate x10,A1,cb8b3ceb,F1,12.5
+sodium_octanoate x10,A1,cb8b3ceb,G7,10.2
+sodium_octanoate x10,A1,cb8b3ceb,H1,12.5
+sodium_octanoate x10,A1,cb8b3ceb,H4,10.2
+sodium_octanoate x14,A1,cb8b3ceb,A5,12.3
+sodium_octanoate x14,A1,cb8b3ceb,A8,12.3
+sodium_octanoate x14,A1,cb8b3ceb,C1,13.0
+sodium_octanoate x14,A1,cb8b3ceb,C3,13.0
+sodium_octanoate x14,A1,cb8b3ceb,C6,13.0
+sodium_octanoate x14,A1,cb8b3ceb,D1,12.6
+sodium_octanoate x14,A1,cb8b3ceb,D3,13.7
+sodium_octanoate x14,A1,cb8b3ceb,D7,12.6
+sodium_octanoate x14,A1,cb8b3ceb,F4,13.7
+sodium_octanoate x14,A1,cb8b3ceb,F7,12.3
+sodium_octanoate x14,A1,cb8b3ceb,G5,12.6
+sodium_octanoate x14,A1,cb8b3ceb,H2,13.7
+sodium_octanoate x20,A1,cb8b3ceb,B4,13.2
+sodium_octanoate x20,A1,cb8b3ceb,B8,11.8
+sodium_octanoate x20,A1,cb8b3ceb,C2,11.8
+sodium_octanoate x20,A1,cb8b3ceb,D4,13.2
+sodium_octanoate x20,A1,cb8b3ceb,E3,12.7
+sodium_octanoate x20,A1,cb8b3ceb,F6,12.7
+sodium_octanoate x20,A1,cb8b3ceb,G3,12.7
+sodium_octanoate x20,A1,cb8b3ceb,G4,11.8
+sodium_octanoate x20,A1,cb8b3ceb,H3,13.2
+sodium_octanoate x4,A1,cb8b3ceb,B7,10.3
+sodium_octanoate x4,A1,cb8b3ceb,F5,10.3
+sodium_octanoate x4,A1,cb8b3ceb,G6,10.3
+sodium_octanoate x6,A1,cb8b3ceb,A2,14.3
+sodium_octanoate x6,A1,cb8b3ceb,B5,12.3
+sodium_octanoate x6,A1,cb8b3ceb,B6,15.3
+sodium_octanoate x6,A1,cb8b3ceb,C5,10.8
+sodium_octanoate x6,A1,cb8b3ceb,D5,14.3
+sodium_octanoate x6,A1,cb8b3ceb,D6,14.3
+sodium_octanoate x6,A1,cb8b3ceb,E1,10.8
+sodium_octanoate x6,A1,cb8b3ceb,E4,15.3
+sodium_octanoate x6,A1,cb8b3ceb,E7,12.3
+sodium_octanoate x6,A1,cb8b3ceb,F2,10.8
+sodium_octanoate x6,A1,cb8b3ceb,G2,15.3
+sodium_octanoate x6,A1,cb8b3ceb,H7,12.3
+urea x10,A1,cb8b3ceb,B5,12.2
+urea x10,A1,cb8b3ceb,B7,14.0
+urea x10,A1,cb8b3ceb,E7,12.2
+urea x10,A1,cb8b3ceb,F5,14.0
+urea x10,A1,cb8b3ceb,G6,14.0
+urea x10,A1,cb8b3ceb,H7,12.2
+urea x14,A1,cb8b3ceb,A2,12.8
+urea x14,A1,cb8b3ceb,A5,13.6
+urea x14,A1,cb8b3ceb,A7,14.0
+urea x14,A1,cb8b3ceb,A8,13.6
+urea x14,A1,cb8b3ceb,B4,11.4
+urea x14,A1,cb8b3ceb,B8,12.3
+urea x14,A1,cb8b3ceb,C2,12.3
+urea x14,A1,cb8b3ceb,D3,10.2
+urea x14,A1,cb8b3ceb,D4,11.4
+urea x14,A1,cb8b3ceb,D5,12.8
+urea x14,A1,cb8b3ceb,D6,12.8
+urea x14,A1,cb8b3ceb,E5,14.0
+urea x14,A1,cb8b3ceb,F4,10.2
+urea x14,A1,cb8b3ceb,F7,13.6
+urea x14,A1,cb8b3ceb,G4,12.3
+urea x14,A1,cb8b3ceb,H2,10.2
+urea x14,A1,cb8b3ceb,H3,11.4
+urea x14,A1,cb8b3ceb,H6,14.0
+urea x2,A1,cb8b3ceb,C1,18.6
+urea x2,A1,cb8b3ceb,C3,18.6
+urea x2,A1,cb8b3ceb,C6,18.6
+urea x20,A1,cb8b3ceb,B3,12.2
+urea x20,A1,cb8b3ceb,D1,13.1
+urea x20,A1,cb8b3ceb,D7,13.1
+urea x20,A1,cb8b3ceb,E6,11.5
+urea x20,A1,cb8b3ceb,F1,12.2
+urea x20,A1,cb8b3ceb,G5,13.1
+urea x20,A1,cb8b3ceb,G7,11.5
+urea x20,A1,cb8b3ceb,H1,12.2
+urea x20,A1,cb8b3ceb,H4,11.5
+urea x4,A1,cb8b3ceb,C5,10.2
+urea x4,A1,cb8b3ceb,E1,10.2
+urea x4,A1,cb8b3ceb,E3,13.9
+urea x4,A1,cb8b3ceb,F2,10.2
+urea x4,A1,cb8b3ceb,F6,13.9
+urea x4,A1,cb8b3ceb,G3,13.9
+water,A1,cb8b3ceb,A2,60.2
+water,A1,cb8b3ceb,A3,204.2
+water,A1,cb8b3ceb,A4,162.8
+water,A1,cb8b3ceb,A5,63.1
+water,A1,cb8b3ceb,A6,162.8
+water,A1,cb8b3ceb,A7,56.3
+water,A1,cb8b3ceb,A8,63.1
+water,A1,cb8b3ceb,B1,176.6
+water,A1,cb8b3ceb,B2,176.6
+water,A1,cb8b3ceb,B3,61.7
+water,A1,cb8b3ceb,B4,62.3
+water,A1,cb8b3ceb,B5,78.3
+water,A1,cb8b3ceb,B6,89.6
+water,A1,cb8b3ceb,B7,44.2
+water,A1,cb8b3ceb,B8,66.7
+water,A1,cb8b3ceb,C1,46.4
+water,A1,cb8b3ceb,C2,66.7
+water,A1,cb8b3ceb,C3,46.4
+water,A1,cb8b3ceb,C4,198.7
+water,A1,cb8b3ceb,C5,90.3
+water,A1,cb8b3ceb,C6,46.4
+water,A1,cb8b3ceb,C7,198.7
+water,A1,cb8b3ceb,C8,176.6
+water,A1,cb8b3ceb,D1,58.5
+water,A1,cb8b3ceb,D3,73.3
+water,A1,cb8b3ceb,D4,62.3
+water,A1,cb8b3ceb,D5,60.2
+water,A1,cb8b3ceb,D6,60.2
+water,A1,cb8b3ceb,D7,58.5
+water,A1,cb8b3ceb,E1,90.3
+water,A1,cb8b3ceb,E2,162.8
+water,A1,cb8b3ceb,E3,50.2
+water,A1,cb8b3ceb,E4,89.6
+water,A1,cb8b3ceb,E5,56.3
+water,A1,cb8b3ceb,E6,65.4
+water,A1,cb8b3ceb,E7,78.3
+water,A1,cb8b3ceb,F1,61.7
+water,A1,cb8b3ceb,F2,90.3
+water,A1,cb8b3ceb,F3,204.2
+water,A1,cb8b3ceb,F4,73.3
+water,A1,cb8b3ceb,F5,44.2
+water,A1,cb8b3ceb,F6,50.2
+water,A1,cb8b3ceb,F7,63.1
+water,A1,cb8b3ceb,G1,204.2
+water,A1,cb8b3ceb,G2,89.6
+water,A1,cb8b3ceb,G3,50.2
+water,A1,cb8b3ceb,G4,66.7
+water,A1,cb8b3ceb,G5,58.5
+water,A1,cb8b3ceb,G6,44.2
+water,A1,cb8b3ceb,G7,65.4
+water,A1,cb8b3ceb,H1,61.7
+water,A1,cb8b3ceb,H2,73.3
+water,A1,cb8b3ceb,H3,62.3
+water,A1,cb8b3ceb,H4,65.4
+water,A1,cb8b3ceb,H5,198.7
+water,A1,cb8b3ceb,H6,56.3
+water,A1,cb8b3ceb,H7,78.3
