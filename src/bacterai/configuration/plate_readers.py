@@ -6,6 +6,7 @@ This module handles reading and processing data from various plate readers
 required by BacterAI.
 """
 
+import sys
 import os
 import re
 from typing import Optional, List, Dict, Tuple
@@ -233,11 +234,15 @@ def process_tecan_data(
             # Date provided but folder doesn't exist - fall back to direct path
             experiment_request_path = os.path.join(path, "experiment_request")
     else:
-        # No date provided - use direct path
+        # No date provided - check either RoundN/experiment_request/ or experiment_request/RoundN/
         experiment_request_path = os.path.join(path, "experiment_request")
+        if os.path.exists(experiment_request_path):
+            experiment_request_path = os.path.join(experiment_request_path, f"Round{round_number}")
+        else:
+            experiment_request_path = os.path.join(path, f"Round{round_number}", "experiment_request")
     
     plate_maps_path = os.path.join(experiment_request_path, "plate_maps")
-    round_folder = os.path.join(path, f"Round{round_number}")
+    # round_folder = os.path.join(path, f"Round{round_number}")
 
     # Load plate maps and file ID mappings
     instructions = [d for d in os.listdir(plate_maps_path) if os.path.isdir(os.path.join(plate_maps_path, d))]
@@ -245,7 +250,7 @@ def process_tecan_data(
     map_files = [pd.read_csv(os.path.join(plate_maps_path, instruction, "map.csv")) for instruction in instructions]
     maps_combined = pd.concat(map_files)
 
-    plate_to_file_id_files = [pd.read_csv(os.path.join(plate_maps_path, instruction, "plate_to_file_id.csv")) 
+    plate_to_file_id_files = [pd.read_csv(os.path.join(plate_maps_path, instruction, f"{instruction}_plate_to_file_id.csv")) 
                                for instruction in instructions]
     plate_to_file_id_combined = pd.concat(plate_to_file_id_files)
 
@@ -277,7 +282,7 @@ def process_tecan_data(
 
         if len(tecan_files) == 0:
             # No file - create empty DF with all wells marked as bad (so will be flagged for redo)
-            raise Warning(f"No .asc files found for file ID: {fid}")
+            print(f"Warning: No .asc files found for file ID: {fid}. All wells will be marked for redo", file=sys.stderr)
             all_plate_bad = True
             final_df = pd.DataFrame({
                 'well': [f"{row}{col:d}" for row in 'ABCDEFGH' for col in range(1,13)],
@@ -336,6 +341,11 @@ def process_tecan_data(
     
     # Merge with plate maps
     result = pd.merge(final_dfs, plate_to_file_id_combined, on='file_id', how='left')
+
+    # if column "environment" exists, remove it to avoid duplication issues in final mapped_data
+    if 'environment' in maps_combined.columns:
+        maps_combined = maps_combined.drop(columns=['environment'])
+
     result = pd.merge(result, maps_combined, left_on=['parent_plate', 'well'], 
                      right_on=['parent_plate', 'parent_well'], how='left')
     
@@ -346,8 +356,8 @@ def process_tecan_data(
 
     # flag negative delta OD results as bad (except for plate blanks which could reasonably be negative)
     if feature == 'delta_od':
-        final_df.loc[(final_df['feature'] < 0) & (final_df['plate_blank'] == False), 'bad'] = 1
-    
+        result.loc[(result['feature'] < 0) & (result['plate_blank'] == False), 'bad'] = 1
+
     # Keep only required columns
     names_to_keep = ['feature', 'bad', 'plate_control', 'plate_blank', 'parent_plate', 
                      'experiment_number', 'strain', 'environment']
