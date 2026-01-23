@@ -374,7 +374,7 @@ def process_data(
         else:
             # Use default naming from save_mapped_data
             round_dir = exp_path / f"Round{round_number}"
-            date_str = date if date else "nodate"
+            date_str = date if date else sys.time.strftime("%Y%m%d")
             output_file = round_dir / f"mapped_data_{date_str}_{reader_type}_{feature}_data.csv"
         
         # Ensure output directory exists
