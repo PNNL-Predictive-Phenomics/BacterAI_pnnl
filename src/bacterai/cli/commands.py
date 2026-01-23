@@ -305,11 +305,13 @@ def process_data(
         print(f"Error: Path is not a directory: {exp_path}", file=sys.stderr)
         sys.exit(1)
     
-    # Validate experiment_request directory structure
+    # Validate experiment_request directory structure - support multiple layouts
     exp_request_dir = exp_path / "experiment_request"
-    if not exp_request_dir.exists():
+    round_exp_request_dir = exp_path / f"Round{round_number}" / "experiment_request"
+    
+    if not exp_request_dir.exists() and not round_exp_request_dir.exists():
         print(f"Error: experiment_request directory not found in {exp_path}", file=sys.stderr)
-        print("Expected structure: <experiment_path>/experiment_request/", file=sys.stderr)
+        print("Expected structure: <experiment_path>/experiment_request/ OR <experiment_path>/RoundN/experiment_request/", file=sys.stderr)
         sys.exit(1)
     
     # Check for config.json and ingredients.json
@@ -380,15 +382,19 @@ def process_data(
         
         # Save the data
         result_df.to_csv(output_file, index=False)
+
+        # count unique experiments processed
+        total_expt = result_df[result_df["experiment_number"] < 9999].shape[0]
+        unique_expt = result_df[result_df["experiment_number"] < 9999]['experiment_number'].nunique()
         
-        print(f"Successfully processed {len(result_df)} experiments")
+        print(f"Successfully processed {total_expt} experiments ({unique_expt} unique experiments)")
         print(f"Output written to: {output_file}")
         
         if verbose:
             print(f"\nData preview (first 5 rows):")
             print(result_df.head())
             print(f"\nColumns: {', '.join(result_df.columns.tolist())}")
-            print(f"Shape: {result_df.shape}")
+            print(f"Shape (incl. controls): {result_df.shape}")
         
     except FileNotFoundError as e:
         print(f"Error: Required file not found: {e}", file=sys.stderr)
