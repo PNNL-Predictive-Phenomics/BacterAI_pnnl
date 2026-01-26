@@ -482,6 +482,7 @@ cp tests/test_experiment/config.json /tmp/biotek_test/
 cp tests/test_experiment/ingredients.json /tmp/biotek_test/
 
 # Run (should auto-process Biotek data)
+
 bacterai run /tmp/biotek_test --verbose
 ```
 
