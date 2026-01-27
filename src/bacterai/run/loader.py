@@ -12,7 +12,7 @@ def load_experiment_config(experiment_path: str) -> Dict[str, Any]:
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
         
-    with open(config_path) as f:
+    with open(config_path, encoding='utf-8-sig') as f:
         return json.load(f)
 
 
@@ -23,7 +23,7 @@ def load_ingredients_data(experiment_path: str, config: Dict[str, Any]):
         raise ValueError("No ingredients_file specified in config")
         
     ingredients_full_path = os.path.join(experiment_path, ingredients_file)
-    with open(ingredients_full_path, "r") as f:
+    with open(ingredients_full_path, "r", encoding='utf-8-sig') as f:
         ingredients_json = json.load(f)
 
     ingredients_pd = pd.json_normalize(ingredients_json["ingredients"])
