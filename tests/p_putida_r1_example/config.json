@@ -1,6 +1,6 @@
 {
   "experiment_path": "/Users/ston832/Library/CloudStorage/OneDrive-PNNL/Documents/projects/ppi/tecan_data/P_putida_growth_boundaries",
-  "ingredients_file": "ingredients.csv",
+  "ingredients_file": "ingredients.json",
   "grow_threshold": 1,
   "nickname": "PpJE3959",
   "batch_size": 60,
