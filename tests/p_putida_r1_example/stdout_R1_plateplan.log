@@ -1,0 +1,61 @@
+
+============================================================
+PlatePlan Experiment Scheduler - Round 1
+============================================================
+Total volume:        275.0 ul
+Inoculation volume:  2.0 ul
+Media concentration: 4X
+Working volume:      204.24999999999997 ul
+Stock conc. range:   [2, 4, 6, 10, 14, 20]
+Experiment prefix:   PpJE3959
+============================================================
+
+Loading experiment data...
+Creating reagents...
+Creating stocks...
+Creating solutions...
+
+Scheduling Tecan liquid handler operations...
+  - Solutions (w/ ctrls): 64
+  - Stocks: 69
+Restricted license - for non-production use only - expires 2026-11-23
+  - Plates: 4
+
+Checking low dispense volumes...
+  Plate PpJE3959_1$99e85d6119da7d70adc0858eaec564db3c0806c7: 39 dispenses under 10 µL
+  Plate PpJE3959_2$3e894198c0cc26c1b52fcbb12bdb8c6a9c871efc: 45 dispenses under 10 µL
+  Plate PpJE3959_3$3067e9ef2be000e9460c393e18176ba6671ed8b1: 30 dispenses under 10 µL
+  Plate PpJE3959_4$bdb72c7aef7f895c3ee005d1f6bd7fc271c3e736: 39 dispenses under 10 µL
+
+High-level experimental needs...
+Tip boxes for low volume dispenses: 2 (n = 153)
+Tip boxes for inoculation: 4
+Media (4X) for environment pH5 (1 plates): 6.55 ml
+Media (4X) for environment pH7 (2 plates): 13.10 ml
+Media (4X) for environment pH9 (1 plates): 6.55 ml
+PpJE3959: 0.456 ml
+ammonium_chloride x20: 3.36 ml
+d_glucose x20: 3.36 ml
+d_xylose x20: 3.36 ml
+l_arabinose x20: 3.36 ml
+o2 x20.0: 1.407 ml
+orange_g x50: 0.066 ml
+p_coumaric_acid x20: 3.36 ml
+sodium_acetate x20: 3.36 ml
+sodium_benzoate x20: 3.36 ml
+sodium_chloride x20: 3.36 ml
+sodium_citrate x20: 3.36 ml
+sodium_octanoate x20: 3.36 ml
+urea x20: 3.36 ml
+water: 42.24 ml
+
+Free, on-demand stock containers needed on worktable to begin: 6
+
+============================================================
+Location:
+  /Users/ston832/Library/CloudStorage/OneDrive-PNNL/Documents/projects/ppi/tecan_data/P_putida_growth_boundaries/Round1/experiment_request
+
+Instruction set ID: PpJE3959$9ebe56180f9d561394887c5d0fd5e168d9112703
+Date generated: 2025-12-29
+============================================================
+

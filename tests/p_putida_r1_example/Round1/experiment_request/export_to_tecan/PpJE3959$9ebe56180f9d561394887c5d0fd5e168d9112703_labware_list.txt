@@ -1,0 +1,29 @@
+e30d6074	96 Well Flat_BacterAI	Nest61mm_Pos	6
+efc53db4	96 Well Flat_BacterAI	Nest61mm_Pos	7
+cb8b3ceb	96 Well Flat_BacterAI	Nest61mm_Pos	8
+bddde5fd	96 Well Flat_BacterAI	Nest61mm_Pos	9
+tips1	FCA, 50ul Filtered	Nest7mm_Pos	1
+tips2	FCA, 50ul Filtered	Nest7mm_Pos	2
+media_pH5	100ml	Trough_100ml	1
+media_pH7	100ml	Trough_100ml	2
+media_pH9	100ml	Trough_100ml	3
+ammonium_chloride x20	50ml Falcon	Tube50_Pos_2	1
+d_glucose x20	50ml Falcon	Tube50_Pos_2	2
+d_xylose x20	50ml Falcon	Tube50_Pos_2	3
+l_arabinose x20	50ml Falcon	Tube50_Pos_2	4
+o2 x20.0	50ml Falcon	Tube50_Pos_2	5
+p_coumaric_acid x20	50ml Falcon	Tube50_Pos_2	6
+sodium_acetate x20	50ml Falcon	Tube50_Pos_2	7
+sodium_benzoate x20	50ml Falcon	Tube50_Pos_2	8
+sodium_chloride x20	50ml Falcon	Tube50_Pos_2	9
+sodium_citrate x20	50ml Falcon	Tube50_Pos_2	10
+sodium_octanoate x20	50ml Falcon	Tube50_Pos_2	11
+urea x20	50ml Falcon	Tube50_Pos_2	12
+StockPlate1	96 Well Flat_BacterAI	Nest61mm_Pos	10
+StockPlate2	96 Well Flat_BacterAI	Nest61mm_Pos	11
+StockPlate3	96 Well Flat_BacterAI	Nest61mm_Pos	12
+StockPlate4	96 Well Flat_BacterAI	Nest61mm_Pos	13
+StockPlate5	96 Well Flat_BacterAI	Nest61mm_Pos	14
+StockPlate6	96 Well Flat_BacterAI	Nest61mm_Pos	15
+water	100ml	Trough_100ml	4
+o2_and_orange_g	96 Well Flat_BacterAI	Nest61mm_Pos	1
