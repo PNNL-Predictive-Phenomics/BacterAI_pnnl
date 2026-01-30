@@ -263,7 +263,7 @@ def run(
 def process_data(
     reader_type: str,
     path: str,
-    date: str,
+    date: Optional[str],
     round_number: int,
     feature: str,
     signal: Optional[int] = None,
@@ -279,7 +279,7 @@ def process_data(
     Args:
         reader_type: Type of plate reader ('biotek' or 'tecan')
         path: Path to experiment directory containing experiment_request/
-        date: Date identifier for the data files
+        date: Date identifier for the data files (optional)
         round_number: Round number for the experiment
         feature: Feature to extract (e.g., 'delta_od', 'max_slope')
         signal: Wavelength signal for Biotek (required for Biotek, ignored for Tecan)
@@ -305,11 +305,13 @@ def process_data(
         print(f"Error: Path is not a directory: {exp_path}", file=sys.stderr)
         sys.exit(1)
     
-    # Validate experiment_request directory structure
+    # Validate experiment_request directory structure - support multiple layouts
     exp_request_dir = exp_path / "experiment_request"
-    if not exp_request_dir.exists():
+    round_exp_request_dir = exp_path / f"Round{round_number}" / "experiment_request"
+    
+    if not exp_request_dir.exists() and not round_exp_request_dir.exists():
         print(f"Error: experiment_request directory not found in {exp_path}", file=sys.stderr)
-        print("Expected structure: <experiment_path>/experiment_request/", file=sys.stderr)
+        print("Expected structure: <experiment_path>/experiment_request/ OR <experiment_path>/RoundN/experiment_request/", file=sys.stderr)
         sys.exit(1)
     
     # Check for config.json and ingredients.json
@@ -341,7 +343,7 @@ def process_data(
     if verbose:
         print(f"Processing {reader_type.upper()} data:")
         print(f"  Experiment path: {exp_path}")
-        print(f"  Date: {date}")
+        print(f"  Date: {date if date else 'Not specified (using direct experiment_request path)'}")
         print(f"  Round: {round_number}")
         print(f"  Feature: {feature}")
         if reader_type == 'biotek':
@@ -372,22 +374,27 @@ def process_data(
         else:
             # Use default naming from save_mapped_data
             round_dir = exp_path / f"Round{round_number}"
-            output_file = round_dir / f"mapped_data_{date}_{reader_type}_{feature}_data.csv"
+            date_str = date if date else sys.time.strftime("%Y%m%d")
+            output_file = round_dir / f"mapped_data_{date_str}_{reader_type}_{feature}_data.csv"
         
         # Ensure output directory exists
         output_file.parent.mkdir(parents=True, exist_ok=True)
         
         # Save the data
         result_df.to_csv(output_file, index=False)
+
+        # count unique experiments processed
+        total_expt = result_df[result_df["experiment_number"] < 9999].shape[0]
+        unique_expt = result_df[result_df["experiment_number"] < 9999]['experiment_number'].nunique()
         
-        print(f"Successfully processed {len(result_df)} experiments")
+        print(f"Successfully processed {total_expt} experiments ({unique_expt} unique experiments)")
         print(f"Output written to: {output_file}")
         
         if verbose:
             print(f"\nData preview (first 5 rows):")
             print(result_df.head())
             print(f"\nColumns: {', '.join(result_df.columns.tolist())}")
-            print(f"Shape: {result_df.shape}")
+            print(f"Shape (incl. controls): {result_df.shape}")
         
     except FileNotFoundError as e:
         print(f"Error: Required file not found: {e}", file=sys.stderr)

@@ -439,7 +439,7 @@ def execute_experiment(experiment_path: str, plot_only: bool = False):
                     
                     if use_existing:
                         # Load the existing ingredients file
-                        with open(potential_ingredients_path, 'r') as f:
+                        with open(potential_ingredients_path, 'r', encoding='utf-8-sig') as f:
                             ingredients_data = json.load(f)
                         print("✓ Using existing ingredients file")
         

@@ -1,0 +1,22 @@
+{
+    "DOWN": {
+        "ROLLOUT": {
+            "k_history": [],
+            "count_history": [],
+            "k_avg": "n/a",
+            "count_avg": "n/a",
+            "total_loops_count": 15,
+            "time_to_finish_sec": 6.8
+        }
+    },
+    "UP": {
+        "ROLLOUT": {
+            "k_history": [],
+            "count_history": [],
+            "k_avg": "n/a",
+            "count_avg": "n/a",
+            "total_loops_count": 15,
+            "time_to_finish_sec": 6.71
+        }
+    }
+}
