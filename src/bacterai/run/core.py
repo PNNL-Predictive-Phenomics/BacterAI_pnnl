@@ -12,7 +12,12 @@ from ..analysis import plotting, processing as utils
 from ..scripts import size_n_to_m_conversion
 from ..utils import constants
 from ..sim.core import SimType, SimDirection, perform_simulations
-
+from ..configuration.ingredients import IngredientsConfig
+from ..configuration.plate_readers import process_biotek_data, process_tecan_data
+from .loader import load_experiment_config
+from ..cli.prompts import prompt_nonempty, prompt_yes_no, prompt_for_ingredients
+from ..configuration import ExperimentConfig
+        
 # Construct combined ingredients list
 TEMPEST_INGREDIENTS = constants.AA_NAMES_TEMPEST + constants.BASE_NAMES_TEMPEST
 
@@ -25,8 +30,6 @@ def auto_process_plate_data(experiment_path: str, round_number: int, verbose: bo
     
     Returns True if successful, False if unable to auto-process.
     """
-    from ..configuration.plate_readers import process_biotek_data, process_tecan_data
-    
     # Look for experiment_request directory
     exp_request_path = os.path.join(experiment_path, "experiment_request")
     if not os.path.exists(exp_request_path):
@@ -316,6 +319,54 @@ def process_results(
 
 
 def execute_experiment(experiment_path: str, plot_only: bool = False):
+    # --- NEW LOGIC: Ensure config points to ingredients.json and ingredients.json exists ---
+    if 'config_exists' in locals() or 'config_exists' in globals():
+        if config_exists:
+            temp_config = load_experiment_config(experiment_path)
+            ingredients_file = temp_config.get("ingredients_file", "ingredients.json")
+            ingredients_json_path = os.path.join(experiment_path, "ingredients.json")
+            ingredients_file_path = os.path.join(experiment_path, ingredients_file)
+            # If config points to something other than ingredients.json
+            if ingredients_file != "ingredients.json":
+                # If ingredients.json exists, prompt user to use it
+                if os.path.exists(ingredients_json_path):
+                    use_json = prompt_yes_no(f"config.json points to '{ingredients_file}'. Use 'ingredients.json' instead? (Y/N): ")
+                    if use_json:
+                        temp_config["ingredients_file"] = "ingredients.json"
+                        with open(os.path.join(experiment_path, "config.json"), "w") as f:
+                            json.dump(temp_config, f, indent=2)
+                        print("✓ Updated config.json to reference ingredients.json")
+                        # Reload config and ingredients_file so downstream code uses the correct file
+                        temp_config = load_experiment_config(experiment_path)
+                        ingredients_file = temp_config.get("ingredients_file", "ingredients.json")
+                        ingredients_file_path = os.path.join(experiment_path, ingredients_file)
+                # If user says no, just use the file in config.json (no conversion)
+                # If neither exists, prompt user for correct file
+                else:
+                    print(f"config.json points to '{ingredients_file}', but it does not exist.")
+                    while True:
+                        ingredients_path = prompt_nonempty("\nProvide ingredients file path (CSV/XLSX/JSON): ")
+                        ext = ingredients_path.lower().split('.')[-1]
+                        try:
+                            if ext == "json":
+                                with open(ingredients_path, 'r', encoding='utf-8-sig') as f:
+                                    ingredients_data = json.load(f)
+                                if not (isinstance(ingredients_data, dict) and "ingredients" in ingredients_data) and not isinstance(ingredients_data, list):
+                                    print("Error: JSON must be a dict with an 'ingredients' key or a list of ingredients.")
+                                    ingredients_data = None
+                                    continue
+                            else:
+                                ingredients_data = IngredientsConfig.parse_ingredients(ingredients_path, sheet=None, id_map_path=None)
+                            with open(ingredients_json_path, 'w') as f:
+                                json.dump(ingredients_data, f, indent=2)
+                            temp_config["ingredients_file"] = "ingredients.json"
+                            with open(os.path.join(experiment_path, "config.json"), "w") as f:
+                                json.dump(temp_config, f, indent=2)
+                            print("✓ Wrote ingredients.json and updated config.json")
+                            break
+                        except Exception as e:
+                            print(f"Error: Could not load ingredients file: {e}")
+                            ingredients_data = None
     """
     Execute a BacterAI experiment round.
     
@@ -335,7 +386,6 @@ def execute_experiment(experiment_path: str, plot_only: bool = False):
     
     if config_exists:
         try:
-            from .loader import load_experiment_config
             temp_config = load_experiment_config(experiment_path)
             ingredients_file = temp_config.get("ingredients_file", "ingredients.json")
             ingredients_path = os.path.join(experiment_path, ingredients_file)
@@ -343,42 +393,80 @@ def execute_experiment(experiment_path: str, plot_only: bool = False):
         except Exception:
             config_exists = False
     
-    # If files missing, run interactive setup
-    if not config_exists or not ingredients_exists:
-        from ..cli.prompts import prompt_nonempty, prompt_yes_no, prompt_for_ingredients
-        from ..configuration import ExperimentConfig
-        
+    # If only ingredients is missing, prompt only for ingredients
+    if config_exists and not ingredients_exists:
         print("\n" + "="*70)
         print("Experiment setup incomplete")
         print("="*70)
-        
-        if not config_exists:
-            print(f"\nMissing: config.json in {experiment_path}")
-        if config_exists and not ingredients_exists:
-            print(f"\nMissing: {ingredients_file} in {experiment_path}")
-        
+        print(f"\nMissing: {ingredients_file} in {experiment_path}")
+        temp_config = load_experiment_config(experiment_path)
+        ingredients_file = temp_config.get("ingredients_file", "ingredients.json")
+        ingredients_data = None
+        while True:
+            ingredients_path = prompt_nonempty("\nProvide ingredients file path (CSV/XLSX/JSON): ")
+            ext = ingredients_path.lower().split('.')[-1]
+            try:
+                if ext == "json":
+                    with open(ingredients_path, 'r', encoding='utf-8-sig') as f:
+                        ingredients_data = json.load(f)
+                    if not (isinstance(ingredients_data, dict) and "ingredients" in ingredients_data) and not isinstance(ingredients_data, list):
+                        print("Error: JSON must be a dict with an 'ingredients' key or a list of ingredients.")
+                        ingredients_data = None
+                        continue
+                else:
+                    ingredients_data = IngredientsConfig.parse_ingredients(ingredients_path, sheet=None, id_map_path=None)
+                break
+            except Exception as e:
+                print(f"Error: Could not load ingredients file: {e}")
+                ingredients_data = None
+        ingredients_output_path = os.path.join(experiment_path, "ingredients.json")
+        with open(ingredients_output_path, 'w') as f:
+            json.dump(ingredients_data, f, indent=2)
+        print(f"✓ Wrote: {ingredients_output_path}")
+        # Update config to point to the normalized file
+        temp_config = load_experiment_config(experiment_path)
+        temp_config["ingredients_file"] = "ingredients.json"
+        with open(os.path.join(experiment_path, "config.json"), "w") as f:
+            json.dump(temp_config, f, indent=2)
+        print("✓ Updated config.json to reference ingredients.json")
+        print("\nSetup complete! Continuing with experiment run...\n")
+    # If both are missing, prompt for both as before
+    elif not config_exists and not ingredients_exists:
+        print("\n" + "="*70)
+        print("Experiment setup incomplete")
+        print("="*70)
+        print(f"\nMissing: config.json in {experiment_path}")
+        print(f"\nMissing: {ingredients_file} in {experiment_path}")
         # Prompt for config file
-        config_file_path = prompt_nonempty("\nProvide experiment config filepath (CSV/XLSX): ")
-        
-        # Ask for sheet if it's Excel
+        config_file_path = prompt_nonempty("\nProvide experiment config filepath (CSV/XLSX/JSON): ")
         sheet = None
-        if config_file_path.lower().endswith('.xlsx'):
-            sheet_input = input("Excel sheet name or index (press Enter to use first sheet): ").strip()
-            if sheet_input:
-                sheet = int(sheet_input) if sheet_input.isdigit() else sheet_input
-        
-        # Parse the config file
-        configs = ExperimentConfig.parse_configs(
-            input_path=config_file_path,
-            sheet=sheet,
-            force_format=None,
-        )
-        
+        configs = None
+        if config_file_path.lower().endswith('.json'):
+            try:
+                with open(config_file_path, 'r', encoding='utf-8-sig') as f:
+                    config_data = json.load(f)
+                if isinstance(config_data, dict):
+                    configs = [ExperimentConfig.coerce_to_schema(config_data)]
+                elif isinstance(config_data, list):
+                    configs = [ExperimentConfig.coerce_to_schema(cfg) for cfg in config_data if isinstance(cfg, dict)]
+                else:
+                    raise ValueError("JSON must be a dict or list of dicts.")
+            except Exception as e:
+                print(f"Error: Invalid JSON config file: {e}")
+                sys.exit(1)
+        else:
+            if config_file_path.lower().endswith('.xlsx'):
+                sheet_input = input("Excel sheet name or index (press Enter to use first sheet): ").strip()
+                if sheet_input:
+                    sheet = int(sheet_input) if sheet_input.isdigit() else sheet_input
+            configs = ExperimentConfig.parse_configs(
+                input_path=config_file_path,
+                sheet=sheet,
+                force_format=None,
+            )
         if not configs:
             print("Error: No experiments found in config file.")
             sys.exit(1)
-        
-        # Handle multiple experiments
         if len(configs) > 1:
             print(f"\nFound {len(configs)} experiments in config file:")
             for i, cfg in enumerate(configs):
@@ -389,13 +477,10 @@ def execute_experiment(experiment_path: str, plot_only: bool = False):
             config = configs[choice]
         else:
             config = configs[0]
-        
-        # Handle path conflicts
         config_path_from_file = config.get("experiment_path")
         if config_path_from_file:
             config_path_resolved = str(Path(config_path_from_file).expanduser().resolve())
             experiment_path_resolved = str(Path(experiment_path).expanduser().resolve())
-            
             if config_path_resolved != experiment_path_resolved:
                 print("\n" + "="*70)
                 print("WARNING: Path mismatch detected")
@@ -405,7 +490,6 @@ def execute_experiment(experiment_path: str, plot_only: bool = False):
                 print("\nWhich path should be used?")
                 print("  1. Use config path (create/update files there)")
                 print("  2. Use run path (override config, use current directory)")
-                
                 path_choice = prompt_nonempty("Enter 1 or 2: ")
                 if path_choice == "1":
                     experiment_path = config_path_resolved
@@ -414,53 +498,66 @@ def execute_experiment(experiment_path: str, plot_only: bool = False):
                     config["experiment_path"] = experiment_path_resolved
                     print(f"\nUsing run path: {experiment_path}")
         else:
-            # No path in config, use the provided experiment_path
             config["experiment_path"] = experiment_path
-        
-        # Ensure experiment directory exists
         os.makedirs(experiment_path, exist_ok=True)
-        
-        # Set ingredients file
         config["ingredients_file"] = "ingredients.json"
-        
-        # Check if ingredients.json exists in the config's original experiment_path (if different)
         ingredients_data = None
-        if config_path_from_file and not ingredients_exists:
-            # If config had a different path, check if ingredients exists there
-            if str(Path(config_path_from_file).expanduser().resolve()) != str(Path(experiment_path).expanduser().resolve()):
-                potential_ingredients_path = os.path.join(
-                    str(Path(config_path_from_file).expanduser().resolve()),
-                    "ingredients.json"
-                )
-                if os.path.exists(potential_ingredients_path):
-                    print(f"\n✓ Found existing ingredients.json at:")
-                    print(f"  {potential_ingredients_path}")
-                    use_existing = prompt_yes_no("Copy and use this ingredients file? (Y/N): ")
-                    
-                    if use_existing:
-                        # Load the existing ingredients file
-                        with open(potential_ingredients_path, 'r', encoding='utf-8-sig') as f:
-                            ingredients_data = json.load(f)
-                        print("✓ Using existing ingredients file")
-        
-        # If no existing ingredients found or user declined, prompt for new one
-        if ingredients_data is None:
-            print("\nProvide the ingredients file...")
-            ingredients_data = prompt_for_ingredients()
-        
-        # Write both files
+        while True:
+            ingredients_path = prompt_nonempty("\nProvide ingredients file path (CSV/XLSX/JSON): ")
+            ext = ingredients_path.lower().split('.')[-1]
+            try:
+                if ext == "json":
+                    with open(ingredients_path, 'r', encoding='utf-8-sig') as f:
+                        ingredients_data = json.load(f)
+                    if not (isinstance(ingredients_data, dict) and "ingredients" in ingredients_data) and not isinstance(ingredients_data, list):
+                        print("Error: JSON must be a dict with an 'ingredients' key or a list of ingredients.")
+                        ingredients_data = None
+                        continue
+                else:
+                    ingredients_data = IngredientsConfig.parse_ingredients(ingredients_path, sheet=None, id_map_path=None)
+                break
+            except Exception as e:
+                print(f"Error: Could not load ingredients file: {e}")
+                ingredients_data = None
         config_output_path = os.path.join(experiment_path, "config.json")
         with open(config_output_path, 'w') as f:
             json.dump(config, f, indent=2)
         print(f"✓ Wrote: {config_output_path}")
-        
         ingredients_output_path = os.path.join(experiment_path, "ingredients.json")
         with open(ingredients_output_path, 'w') as f:
             json.dump(ingredients_data, f, indent=2)
         print(f"✓ Wrote: {ingredients_output_path}")
-        
         print("\nSetup complete! Continuing with experiment run...\n")
     
+    # Ensure config is updated to reference ingredients.json before setup.setup_experiment
+    config_path = os.path.join(experiment_path, "config.json")
+    if os.path.exists(config_path):
+        temp_config = load_experiment_config(experiment_path)
+        ingredients_file = temp_config.get("ingredients_file", "ingredients.json")
+        ingredients_json_path = os.path.join(experiment_path, "ingredients.json")
+        ingredients_file_path = os.path.join(experiment_path, ingredients_file)
+        if ingredients_file != "ingredients.json" and os.path.exists(ingredients_json_path):
+            # Prompt user to use ingredients.json if it exists
+            use_json = prompt_yes_no(f"config.json points to '{ingredients_file}'. Use 'ingredients.json' instead? (Y/N): ")
+            if use_json:
+                temp_config["ingredients_file"] = "ingredients.json"
+                with open(config_path, "w") as f:
+                    json.dump(temp_config, f, indent=2)
+                print("✓ Updated config.json to reference ingredients.json")
+            else:
+                # If user says no and file is not JSON, convert it to ingredients.json and update config
+                ext = ingredients_file.split('.')[-1].lower()
+                if ext != "json":
+                    try:
+                        ingredients_data = IngredientsConfig.parse_ingredients(ingredients_file_path, sheet=None, id_map_path=None)
+                        with open(ingredients_json_path, 'w') as f:
+                            json.dump(ingredients_data, f, indent=2)
+                        temp_config["ingredients_file"] = "ingredients.json"
+                        with open(config_path, "w") as f:
+                            json.dump(temp_config, f, indent=2)
+                        print(f"✓ Converted '{ingredients_file}' to ingredients.json and updated config.json")
+                    except Exception as e:
+                        print(f"Error converting {ingredients_file} to ingredients.json: {e}")
     # Setup experiment configuration and data
     settings, ingredients_pd, ingredients_list = setup.setup_experiment(experiment_path)
     n_ingredients = len(ingredients_list)

@@ -164,12 +164,10 @@ def experiment(
     for cfg, exp_dir in experiments:
         # Update config with path
         cfg["experiment_path"] = str(exp_dir)
-        out_path = exp_dir / outfile_name
-        
+        out_path = exp_dir / "config.json"
         with open(out_path, "w") as f:
             json.dump(cfg, f, indent=2)
         written.append(str(out_path))
-        
         if verbose:
             print(f"Contents of {out_path}:")
             print(json.dumps(cfg, indent=2))
@@ -201,14 +199,13 @@ def ingredients(
         id_map_path=id_map_path,
     )
     out_str = json.dumps(result, indent=2)
-    if output:
-        with open(output, "w") as f:
-            f.write(out_str)
-        print(f"Wrote: {output}")
-        if verbose:
-            print(f"Contents of {output}:")
-            print(out_str)
-    else:
+    # Always write to ingredients.json in the current directory if output is not provided
+    output_path = output if output else "ingredients.json"
+    with open(output_path, "w") as f:
+        f.write(out_str)
+    print(f"Wrote: {output_path}")
+    if verbose:
+        print(f"Contents of {output_path}:")
         print(out_str)
 
 

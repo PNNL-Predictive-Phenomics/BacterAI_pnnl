@@ -1,7 +1,7 @@
 {
-  "experiment_path": "/Users/ston832/Library/CloudStorage/OneDrive-PNNL/Documents/projects/ppi/tecan_data/P_putida_growth_boundaries",
+  "experiment_path": "tests/p_putida_r1_example",
   "ingredients_file": "ingredients.csv",
-  "grow_threshold": 1,
+  "grow_threshold": 1.0,
   "nickname": "PpJE3959",
   "batch_size": 60,
   "timeout_min": 240,
@@ -14,9 +14,14 @@
   "transfer_model_folder": null,
   "transfer_data_dir": null,
   "redo_size": 0,
-  "redo_threshold": [0, 1],
+  "redo_threshold": [
+    0.0,
+    1.0
+  ],
   "aas_only": false,
   "separate_redos": false,
-  "simulation_types": [2],
+  "simulation_types": [
+    2
+  ],
   "random_walk_increment": 10
 }
