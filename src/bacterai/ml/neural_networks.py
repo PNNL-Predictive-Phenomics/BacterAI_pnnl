@@ -88,9 +88,11 @@ def threshold(data, value):
     return data
 
 
-def accuracy(preds, labels, threshold):
-    preds = threshold(preds, threshold)
-    labels = threshold(labels, threshold)
+def accuracy(preds, labels, threshold_value=None, **kwargs):
+    if threshold_value is None:
+        threshold_value = kwargs.get("threshold")
+    preds = threshold(preds, threshold_value)
+    labels = threshold(labels, threshold_value)
     acc = ((preds == labels).sum() / preds.shape[0]).item()
     return acc
 

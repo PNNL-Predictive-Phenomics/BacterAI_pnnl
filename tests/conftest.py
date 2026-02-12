@@ -148,6 +148,38 @@ def sample_batch_df():
 
 
 @pytest.fixture
+def sample_mapped_data_df():
+    """Sample mapped_data dataframe with controls and blanks."""
+    return pd.DataFrame({
+        "experiment_number": [9999, 1, 9998, 2],
+        "glucose": [1, 0, 1, 1],
+        "amino_acid_1": [1, 0, 1, 1],
+        "vitamin_b": [1, 1, 1, 0],
+        "feature": [1.0, 0.5, 0.0, 0.25],
+        "plate_control": [True, False, False, False],
+        "plate_blank": [False, False, True, False],
+        "parent_plate": ["plate_a", "plate_a", "plate_a", "plate_a"],
+        "bad": [0, 0, 0, 0],
+    })
+
+
+@pytest.fixture
+def sample_results_all_df():
+    """Sample results_all dataframe for plotting/aggregation tests."""
+    return pd.DataFrame({
+        "glucose": [1, 0, 1, 0],
+        "amino_acid_1": [1, 1, 0, 0],
+        "vitamin_b": [1, 1, 1, 1],
+        "growth_pred": [0.2, 0.9, 0.1, 0.6],
+        "fitness": [0.2, 0.95, 0.15, 0.55],
+        "depth": [1, 2, 1, 3],
+        "type": ["RANDOM", "ROLLOUT", "GREEDY", "ROLLOUT"],
+        "frontier_type": ["FRONTIER", "FRONTIER", "BEYOND", "FRONTIER"],
+        "is_redo": [False, True, False, False],
+    })
+
+
+@pytest.fixture
 def setup_experiment_dir(temp_experiment_dir, sample_config, sample_ingredients_json):
     """Setup a complete experiment directory structure."""
     # Create config.json
