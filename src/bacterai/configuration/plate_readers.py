@@ -6,6 +6,7 @@ This module handles reading and processing data from various plate readers
 required by BacterAI.
 """
 
+import sys
 import os
 import re
 from typing import Optional, List, Dict, Tuple
@@ -63,41 +64,96 @@ def read_biotek(filename: str, signal: str = '600') -> pd.DataFrame:
     return z_melted
 
 
-def read_tecan(filename: str) -> pd.DataFrame:
+def read_tecan(filename: str, signal: str = '600') -> pd.DataFrame:
     """
     Read Tecan plate reader .asc file and return well data.
     
-    The Tecan format is a simple two-column text file:
+    The Tecan format may be a simple two-column text file if only one measurement is taken:
         Raw data    Well positions
         0.0446      A1
         0.0449      B1
         ...
+    Or it will have multiple measurement columns (and note that the column names must be defined in the measurement protocol by the user prior):
+        Well positions  abs600nm   abs480nm
+        A1  0.0446     0.1234
+        B1  0.0449     0.0099
+        ...
     
     Args:
         filename: Path to Tecan .asc file
+        signal: Wavelength signal to extract (default: '600' for OD600). Can accept list of strings.
         
     Returns:
         DataFrame with columns: well, y (OD value)
     """
-    # Read the file, handling various delimiters (tab, comma, multiple spaces)
-    df = pd.read_csv(filename, sep=r'\s+|,|\t', engine='python')
     
+    # Tecan allows footers and headers, so we need to skip non-data lines near the end of files
+    num_footer = 0
+    footer_lines = []
+    with open(filename, 'r') as f:
+        lines = f.readlines()
+        for line in reversed(lines):
+            if re.search(r',|\t', line):
+                break
+            else:
+                num_footer += 1
+                footer_lines.append(line)
+                
+    # Read the file, handling various delimiters (tab, comma) -- not including spaces
+    # df = pd.read_csv(filename, sep=r'\s+|,|\t', engine='python', skipfooter=num_footer)
+    df = pd.read_csv(filename, sep=r',|\t', engine='python', skipfooter=num_footer)
+
+    # search footer lines for date/time info
+    date_time = None
+    for line in footer_lines:
+        date_match = re.search(r'Date of measurement:\s*(\d{4}-\d{2}-\d{2})', line)
+        time_match = re.search(r'Time of measurement:\s*(\d{2}:\d{2}:\d{2})', line)
+        if date_match and time_match:
+            date_time = f"{date_match.group(1)} {time_match.group(1)}"
+            break
+
     # Expected columns: first is OD values, second is well positions
     if df.shape[1] < 2:
         raise ValueError(f"Tecan file must have at least 2 columns, found {df.shape[1]}")
     
-    # Use first two columns, regardless of header names
-    od_col = df.columns[0]
-    well_col = df.columns[1]
+    # search for column "Well positions", other columns represent one or more measurements
+    well_col = df.columns == 'Well positions'
+    if well_col.sum() == 1:
+        well_col = df.columns[well_col][0]
+        meas_col = df.columns[df.columns != well_col].to_list()
+
+    # from multiple measurement columns, extract target reading for OD
+    if len(meas_col) > 1:
+        target_col = None
+        for col in meas_col:
+            likely_od_terms = '|'.join(signal)
+            if re.search(likely_od_terms, col, re.IGNORECASE):
+                target_col = col
+                break
+        if target_col is None:
+            target_col = meas_col[0]
+    else:
+        target_col = meas_col[0]
     
     # Create clean DataFrame
     result = pd.DataFrame({
         'well': df[well_col].astype(str).str.strip(),
-        'y': pd.to_numeric(df[od_col], errors='coerce')
+        'y': pd.to_numeric(df[target_col], errors='coerce')
     })
+
+    # include additional measure columns
+    # NOTE: if needing to modify the delta-OD methods with more info, modify the extract_tecan_delta_od() function
+    # NOTE: if needing to measure a different phenotype, create a new extract_tecan_*() function and then modify process_tecan_data() accordingly
+    for col in meas_col:
+        if col != target_col:
+            result[col] = pd.to_numeric(df[col], errors='coerce')
     
     # Remove any rows with missing data
     result = result.dropna()
+
+    # add time column if found
+    if date_time is not None:
+        result['Time'] = pd.to_datetime(date_time)
     
     return result
 
@@ -134,8 +190,9 @@ def extract_tecan_delta_od(initial_file: str, final_file: str) -> pd.DataFrame:
     
     # Merge on well
     merged = pd.merge(initial_df, final_df, on='well', suffixes=('_initial', '_final'))
-    
+
     # Calculate delta OD
+    # NOTE: if modifying the delta OD to include other measures, such as evaporation as estimated from increased dye concentration, do it here
     merged['feature'] = merged['y_final'] - merged['y_initial']
     
     # Return only well and feature columns
@@ -144,20 +201,21 @@ def extract_tecan_delta_od(initial_file: str, final_file: str) -> pd.DataFrame:
 
 def process_tecan_data(
     path: str,
-    date: str,
+    date: Optional[str],
     round_number: int,
     feature: str = 'delta_od'
 ) -> pd.DataFrame:
     """
     Process Tecan plate reader data and generate mapped_data CSV.
     
-    Tecan produces simpler output than Biotek - typically just initial and final
+    Tecan produces simpler output than Biotek - typically each time point is saved as
     OD readings in separate .asc files. This function looks for paired files
     (e.g., 'initial_*.asc' and 'final_*.asc' or similar naming patterns).
+    Failing that, it will use alphabetical sorting, which will work because each file name should have a simplified date/time stamp.
     
     Args:
         path: Overall experimental path
-        date: Date that the experiment request was made
+        date: Date that the experiment request was made (optional)
         round_number: Round for the experiment
         feature: Feature to extract (currently only 'delta_od' supported)
         
@@ -167,9 +225,24 @@ def process_tecan_data(
     if feature != 'delta_od':
         raise NotImplementedError(f"Tecan reader currently only supports 'delta_od', not '{feature}'")
     
-    experiment_request_path = os.path.join(path, "experiment_request", date)
+    # Determine experiment_request path - try with date subfolder first, then fall back to direct path
+    if date:
+        date_based_path = os.path.join(path, "experiment_request", date)
+        if os.path.exists(date_based_path):
+            experiment_request_path = date_based_path
+        else:
+            # Date provided but folder doesn't exist - fall back to direct path
+            experiment_request_path = os.path.join(path, "experiment_request")
+    else:
+        # No date provided - check either RoundN/experiment_request/ or experiment_request/RoundN/
+        experiment_request_path = os.path.join(path, "experiment_request")
+        if os.path.exists(experiment_request_path):
+            experiment_request_path = os.path.join(experiment_request_path, f"Round{round_number}")
+        else:
+            experiment_request_path = os.path.join(path, f"Round{round_number}", "experiment_request")
+    
     plate_maps_path = os.path.join(experiment_request_path, "plate_maps")
-    round_folder = os.path.join(path, f"Round{round_number}")
+    # round_folder = os.path.join(path, f"Round{round_number}")
 
     # Load plate maps and file ID mappings
     instructions = [d for d in os.listdir(plate_maps_path) if os.path.isdir(os.path.join(plate_maps_path, d))]
@@ -177,40 +250,45 @@ def process_tecan_data(
     map_files = [pd.read_csv(os.path.join(plate_maps_path, instruction, "map.csv")) for instruction in instructions]
     maps_combined = pd.concat(map_files)
 
-    plate_to_file_id_files = [pd.read_csv(os.path.join(plate_maps_path, instruction, "plate_to_file_id.csv")) 
+    plate_to_file_id_files = [pd.read_csv(os.path.join(plate_maps_path, instruction, f"{instruction}_plate_to_file_id.csv")) 
                                for instruction in instructions]
     plate_to_file_id_combined = pd.concat(plate_to_file_id_files)
 
-    # Get unique file IDs from worklists
-    worklists_path = os.path.join(experiment_request_path, "worklists")
-    unique_file_ids = []
-    for instruction in instructions:
-        csv_files = [f for f in os.listdir(os.path.join(worklists_path, instruction)) if f.endswith('.csv')]
-        unique_ids = {re.split(r'[_.,]', f)[0] for f in csv_files}
-        unique_file_ids += unique_ids
+    # Get unique file IDs from the plate_to_file_id mappings
+    unique_file_ids = plate_to_file_id_combined['file_id'].unique().tolist()
     
     data_path = os.path.join(experiment_request_path, "data")
 
     # Process each file ID
     final_dfs = []
     for fid in unique_file_ids:
-        # Load exception file if exists
-        exception_file = [f for f in os.listdir(data_path) if fid in f and "exception" in f]
+        # # Load exception file if exists
+        # exception_file = [f for f in os.listdir(data_path) if fid in f and "exception" in f]
         
-        exceptions = []
-        if len(exception_file) >= 1:
-            for eid in exception_file:
-                exception = pd.read_csv(os.path.join(data_path, eid))
-                exceptions.append(exception)
-            exceptions = pd.concat(exceptions, ignore_index=True)
-        else:
-            exceptions = None
+        # exceptions = []
+        # if len(exception_file) >= 1:
+        #     for eid in exception_file:
+        #         exception = pd.read_csv(os.path.join(data_path, eid))
+        #         exceptions.append(exception)
+        #     exceptions = pd.concat(exceptions, ignore_index=True)
+        # else:
+        #     exceptions = None
+        exceptions = None   # there should be no exceptions for Tecan data, errors usually halt a run
        
         # Find Tecan .asc files - look for initial and final pairs
         tecan_files = [f for f in os.listdir(data_path) if fid in f and f.endswith('.asc')]
         
+        all_plate_bad = False
+
         if len(tecan_files) == 0:
-            raise ValueError(f"No .asc files found for file ID: {fid}")
+            # No file - create empty DF with all wells marked as bad (so will be flagged for redo)
+            print(f"Warning: No .asc files found for file ID: {fid}. All wells will be marked for redo", file=sys.stderr)
+            all_plate_bad = True
+            final_df = pd.DataFrame({
+                'well': [f"{row}{col:d}" for row in 'ABCDEFGH' for col in range(1,13)],
+                'feature': [0.0]*96
+            })
+            # raise ValueError(f"No .asc files found for file ID: {fid}")
         elif len(tecan_files) == 1:
             # Single file - treat as final OD only (no delta calculation possible)
             # Just use raw values as "feature"
@@ -235,14 +313,24 @@ def process_tecan_data(
                 initial_file = os.path.join(data_path, sorted_files[0])
                 final_file = os.path.join(data_path, sorted_files[1])
             
-            final_df = extract_tecan_delta_od(initial_file, final_file)
+            if feature == 'delta_od':
+                final_df = extract_tecan_delta_od(initial_file, final_file)
         else:
-            raise ValueError(f"Expected 1 or 2 .asc files for {fid}, found {len(tecan_files)}: {tecan_files}")
+            # More than two files - use alphabetical order and pick first and last
+            # This assumes that files are named with date/time stamps, a reasonable assumption
+            sorted_files = sorted(tecan_files)
+            initial_file = os.path.join(data_path, sorted_files[0])
+            final_file = os.path.join(data_path, sorted_files[-1])
+
+            if feature == 'delta_od':
+                final_df = extract_tecan_delta_od(initial_file, final_file)
         
         # Add metadata
         final_df['file_id'] = fid
         if exceptions is not None:
             final_df['bad'] = final_df['well'].isin(exceptions['Destination Well']).astype(int)
+        elif all_plate_bad == True:
+            final_df['bad'] = 1
         else:
             final_df['bad'] = 0
         
@@ -253,6 +341,11 @@ def process_tecan_data(
     
     # Merge with plate maps
     result = pd.merge(final_dfs, plate_to_file_id_combined, on='file_id', how='left')
+
+    # if column "environment" exists, remove it to avoid duplication issues in final mapped_data
+    if 'environment' in maps_combined.columns:
+        maps_combined = maps_combined.drop(columns=['environment'])
+
     result = pd.merge(result, maps_combined, left_on=['parent_plate', 'well'], 
                      right_on=['parent_plate', 'parent_well'], how='left')
     
@@ -260,7 +353,11 @@ def process_tecan_data(
 
     # Extract experiment number and fill controls with 9999
     result['experiment_number'] = result['solution_id'].str.extract(r'expt(\d+)').fillna(value=9999).astype(int)
-    
+
+    # flag negative delta OD results as bad (except for plate blanks which could reasonably be negative)
+    if feature == 'delta_od':
+        result.loc[(result['feature'] < 0) & (result['plate_blank'] == False), 'bad'] = 1
+
     # Keep only required columns
     names_to_keep = ['feature', 'bad', 'plate_control', 'plate_blank', 'parent_plate', 
                      'experiment_number', 'strain', 'environment']
@@ -271,7 +368,7 @@ def process_tecan_data(
 
 def process_biotek_data(
     path: str,
-    date: str,
+    date: Optional[str],
     round_number: int,
     signal: int,
     feature: str
@@ -281,7 +378,7 @@ def process_biotek_data(
     
     Args:
         path: Overall experimental path
-        date: Date that the experiment request was made
+        date: Date that the experiment request was made (optional)
         round_number: Round for the experiment
         signal: Wavelength of plate reader measurements
         feature: Feature to extract ('delta_od', 'growth_rate', 'lag_time')
@@ -289,7 +386,18 @@ def process_biotek_data(
     Returns:
         DataFrame ready to save as mapped_data CSV
     """
-    experiment_request_path = os.path.join(path, "experiment_request", date)
+    # Determine experiment_request path - try with date subfolder first, then fall back to direct path
+    if date:
+        date_based_path = os.path.join(path, "experiment_request", date)
+        if os.path.exists(date_based_path):
+            experiment_request_path = date_based_path
+        else:
+            # Date provided but folder doesn't exist - fall back to direct path
+            experiment_request_path = os.path.join(path, "experiment_request")
+    else:
+        # No date provided - use direct path
+        experiment_request_path = os.path.join(path, "experiment_request")
+    
     plate_maps_path = os.path.join(experiment_request_path, "plate_maps")
     round_folder = os.path.join(path, f"Round{round_number}")
 
