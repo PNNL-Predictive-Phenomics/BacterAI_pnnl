@@ -373,9 +373,10 @@ def process_data(
             output_file = Path(output)
         else:
             # Use default naming from save_mapped_data
+            from datetime import datetime
             round_dir = exp_path / f"Round{round_number}"
-            date_str = date if date else sys.time.strftime("%Y%m%d")
-            output_file = round_dir / f"mapped_data_{date_str}_{reader_type}_{feature}_data.csv"
+            date_str = date if date else datetime.now().strftime("%Y%m%d")
+            output_file = round_dir / f"mapped_data_{date_str}_{reader_type}_{feature}.csv"
         
         # Ensure output directory exists
         output_file.parent.mkdir(parents=True, exist_ok=True)
