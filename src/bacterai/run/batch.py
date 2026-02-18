@@ -209,7 +209,7 @@ def create_simulation_based_batch(model, settings, ingredients_pd, ingredients_l
     
     # Build starting media based on ingredient type
     starting_media_down, starting_media_up = build_starting_media(ingredients_pd, ingredients_list)
-    
+
     # Determine simulation parameters
     if settings.direction == SimDirection.DOWN:
         starting_media = starting_media_down
@@ -248,7 +248,7 @@ def create_simulation_based_batch(model, settings, ingredients_pd, ingredients_l
     # Create second batch for UP direction if needed
     if settings.direction == SimDirection.BOTH:
         direction = SimDirection.UP
-        starting_media = np.zeros(len(ingredients_list))
+        starting_media = starting_media_up
         batch2, _, metrics = make_batch(
             model,
             starting_media,
