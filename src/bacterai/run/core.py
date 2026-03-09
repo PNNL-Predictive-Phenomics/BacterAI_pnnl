@@ -113,6 +113,69 @@ def auto_process_plate_data(experiment_path: str, round_number: int, verbose: bo
     return False
 
 
+def compute_depth(results, ingredients_pd, n_ingredients):
+    """Compute standardized experiment depth: distance from ideal conditions.
+
+    Each ingredient's contribution is normalized to [0, 1] based on its
+    metadata (NOMINAL_VALUE, MIN_VALUE, MAX_VALUE):
+      - Supportive (nominal == max): depth_i = (max - value) / max
+        e.g., glucose at 4 mM → 0, glucose at 0 → 1
+      - Stress (nominal == min == 0): depth_i = value / max
+        e.g., NaCl at 0 → 0, NaCl at 125 mM → 1
+      - Centered (nominal between min and max, e.g., pH):
+        depth_i = |value - nominal| / max(nominal - min, max - nominal)
+      - Constant (max == min or max == 0): depth_i = 0
+
+    Parameters
+    ----------
+    results : pd.DataFrame
+        DataFrame where the first ``n_ingredients`` columns hold condition values.
+    ingredients_pd : pd.DataFrame
+        Ingredients metadata with INGREDIENT, NOMINAL_VALUE, MIN_VALUE, MAX_VALUE.
+    n_ingredients : int
+        Number of leading columns in ``results`` that are ingredient values.
+
+    Returns
+    -------
+    pd.Series
+        Per-row depth (sum of normalized deviations from ideal).
+    """
+    # Build lookup keyed on ingredient name
+    meta = ingredients_pd.set_index("INGREDIENT")[["NOMINAL_VALUE", "MIN_VALUE", "MAX_VALUE"]]
+
+    ingredient_cols = results.columns[:n_ingredients]
+    depth = pd.Series(0.0, index=results.index)
+
+    for col in ingredient_cols:
+        values = results[col].astype(float)
+
+        if col not in meta.index:
+            # Unrecognised column (e.g. transfer-learning padding) — skip
+            continue
+
+        nom = float(meta.loc[col, "NOMINAL_VALUE"])
+        mn  = float(meta.loc[col, "MIN_VALUE"])
+        mx  = float(meta.loc[col, "MAX_VALUE"])
+
+        if mx == mn or mx == 0:
+            # Constant ingredient — no contribution
+            continue
+        elif nom == mx:
+            # Supportive: ideal at max, removing hurts
+            di = (mx - values) / mx
+        elif nom == mn:
+            # Stress: ideal at min, adding hurts
+            di = values / mx
+        else:
+            # Centered (e.g. pH): ideal at nominal, deviation in either direction hurts
+            max_deviation = max(nom - mn, mx - nom)
+            di = (values - nom).abs() / max_deviation
+
+        depth += di.round(3)
+
+    return depth
+
+
 def process_results(
     folder,
     prev_folder,
@@ -120,6 +183,7 @@ def process_results(
     new_round_n,
     ingredient_names,
     threshold,
+    ingredients_pd=None,
     n_redos=0,
     redo_threshold=[0, 1],
     redo_prev_round=False,
@@ -198,8 +262,12 @@ def process_results(
             )
             plotting.plot_redos(folder, prev_results, redo_results, ingredient_names)
 
-    # Process results
-    results["depth"] = results.iloc[:, :n_ingredients].sum(axis=1)
+    # Process results — compute depth as standardized distance from ideal conditions
+    if ingredients_pd is not None:
+        results["depth"] = compute_depth(results, ingredients_pd, n_ingredients)
+    else:
+        # Fallback for legacy binary-only experiments
+        results["depth"] = results.iloc[:, :n_ingredients].sum(axis=1)
     results = results.sort_values(["fitness", "depth"], ascending=False)
     if "frontier_type" not in results.columns:
         results["frontier_type"] = "FRONTIER"
@@ -302,7 +370,7 @@ def process_results(
     top_10 = results_grow_only.iloc[:10, :]
     print("Media Results (Top 10):")
     for idx, (_, row) in enumerate(top_10.iterrows()):
-        print(f"{idx+1:2}. Fitness: {row['fitness']:.3f}, Depth: {row['depth']:2}")
+        print(f"{idx+1:2}. Fitness: {row['fitness']:.3f}, Depth: {row['depth']:.2f}")
         for l in row[:n_ingredients][row[:n_ingredients] == 1].index:
             print(f"\t{l}")
 
@@ -519,6 +587,7 @@ def execute_experiment(experiment_path: str, plot_only: bool = False):
             settings.round_number,
             ingredients_list,
             settings.grow_threshold,
+            ingredients_pd=ingredients_pd,
             n_redos=settings.redo_size,
             redo_threshold=settings.redo_threshold,
             redo_prev_round=redo_entire_round,

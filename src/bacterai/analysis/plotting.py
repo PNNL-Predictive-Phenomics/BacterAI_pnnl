@@ -119,8 +119,11 @@ def plot_results(folder, results, threshold):
             color = COLORS[group_name[0]]
             grows = data[data["fitness"] >= threshold]
             no_grows = data[data["fitness"] < threshold]
-            data_g = collections.Counter(list(grows["depth"]))
-            data_ng = collections.Counter(list(no_grows["depth"]))
+            # Bin depth into integer buckets for histogram display
+            grows_binned = grows["depth"].apply(lambda x: int(round(x)))
+            no_grows_binned = no_grows["depth"].apply(lambda x: int(round(x)))
+            data_g = collections.Counter(list(grows_binned))
+            data_ng = collections.Counter(list(no_grows_binned))
             bottom = [data_g[k] if k in data_g else 0 for k in data_ng.keys()]
             if len(no_grows) > 0:
                 legend_labels.append(f"{group_name[0].title()} - No Grow")
@@ -145,10 +148,13 @@ def plot_results(folder, results, threshold):
                 )
 
         axs[row_idx, 1].set_title(f"Depth - {frontier_type.title()}")
-        axs[row_idx, 1].set_xlabel("Depth (n_removed)")
+        axs[row_idx, 1].set_xlabel("Depth (distance from ideal)")
         axs[row_idx, 1].set_ylabel("Count")
-        axs[row_idx, 1].set_xticks(np.arange(0, 21) + 2 * width / 2)
-        axs[row_idx, 1].set_xticklabels(np.arange(0, 21))
+        # Dynamically size x-axis to data range
+        all_depths = group_results["depth"].apply(lambda x: int(round(x)))
+        max_depth = max(all_depths.max(), 1) if len(all_depths) > 0 else 20
+        axs[row_idx, 1].set_xticks(np.arange(0, max_depth + 1) + 2 * width / 2)
+        axs[row_idx, 1].set_xticklabels(np.arange(0, max_depth + 1))
         axs[row_idx, 1].legend(legend_labels)
 
     plt.suptitle(f"Experiment: {folder}")
