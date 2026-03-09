@@ -307,7 +307,7 @@ def process_results(
             print(f"\t{l}")
 
     print(f"Total unique experiments: {len(used_experiments)}")
-    if redo_experiments:
+    if redo_experiments is not None and not redo_experiments.empty:
         print(
             f"Total redo experiments chosen: {len(redo_experiments)} ({len(results_bad)} 'bad' repeats)"
         )
@@ -497,7 +497,7 @@ def execute_experiment(experiment_path: str, plot_only: bool = False):
                 print(f"    --date <DATE> --round {settings.round_number - 1} \\")
                 print(f"    --signal <WAVELENGTH> --feature delta_od")
                 print("\nRequired directory structure:")
-                print(f"  {settings.experiment_path}/experiment_request/<DATE>/")
+                print(f"  {settings.experiment_path}/Round<N>/experiment_request/")
                 print("    ├── data/              (plate reader files: .xlsx or .asc)")
                 print("    ├── plate_maps/        (map.csv, plate_to_file_id.csv)")
                 print("    └── worklists/         (CSV files for file ID tracking)")
