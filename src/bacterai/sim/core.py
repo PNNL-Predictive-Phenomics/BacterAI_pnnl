@@ -211,9 +211,10 @@ def perform_simulations(
     n_rollout_trajectories=1,
     go_beyond_frontier=True,
 ):
-    """Performs simulations and generate a batch of experiments to determine the
+    """
+    Performs simulations and generates a batch of experiments to determine the
     'growth frontier' of a bacteria. The simulations determine available actions
-    and chooses the next best action to take from the current state. Depending on the
+    and choose the next best action to take from the current state. Depending on the
     simulation type, this method differs. If there are no actions that result in a
     predicted growth, the simulation terminates and adds the desired state to the
     batch to test.
@@ -233,6 +234,10 @@ def perform_simulations(
         a rollout simulation.
     sim_type : SimType
         The type of simulations to run.
+        # Track all unique accepted frontier states
+        accepted_frontier_states = []
+        accepted_frontier_keys = set()
+        frontier_state_counter = 0
     sim_direction : SimDirection
         The directions in which the simulations run.
     new_round_n : int
@@ -264,6 +269,7 @@ def perform_simulations(
     batch_frontier_types = []
     terminating_growths = []
     terminating_variances = []
+    frontiers = []
 
     desc = f"Performing {sim_type.name} Sims ({sim_direction.name})"
     tq = tqdm(total=n, desc=desc)
@@ -272,15 +278,23 @@ def perform_simulations(
     loops = 1
     n_found_but_exists = 0
     adaptive_choice_history = []
+    
+    starting_state_rounded = state.copy()
+    starting_state_rounded = tuple(np.round(state, decimals=6))
+    batch_set.add(starting_state_rounded)
 
     while len(batch) < n and not_timed_out:
         tq.desc = f"{desc} ({loops} loops)"
+
+        frontier_for_start = 1
+
         current_state = state.copy()
 
         current_grow_pred = 0
         current_grow_var = 0
         while True:
             # print(f"Current state: {current_state}")
+
             choices = []
             next_values = dict()
             for i, val in enumerate(current_state):
@@ -301,15 +315,40 @@ def perform_simulations(
                         idx_level = [np.argmin(np.abs(levels - val))]
                     idx_level = idx_level[0]
                     if sim_direction == SimDirection.DOWN and idx_level > 0:
-                        choices.append(i)
-                        next_values[i] = levels[idx_level - 1]
+                        candidate = levels[idx_level - 1]
+                        candidate_state = current_state.copy()
+                        candidate_state[i] = candidate
+                        candidate_key = tuple(np.round(candidate_state, decimals=6))
+                        if candidate_key not in batch_set or not unique:
+                            choices.append(i)
+                            next_values[i] = candidate
                     elif sim_direction == SimDirection.UP and idx_level < n_states - 1:
-                        choices.append(i)
-                        next_values[i] = levels[idx_level + 1]
-            choices = np.array(choices)
-            if choices.size == 0:
-                break
+                        candidate = levels[idx_level + 1]
+                        candidate_state = current_state.copy()
+                        candidate_state[i] = candidate
+                        candidate_key = tuple(np.round(candidate_state, decimals=6))
+                        if candidate_key not in batch_set or not unique:
+                            choices.append(i)
+                            next_values[i] = candidate
 
+            choices = np.array(choices)
+
+            # if no available actions, check if we can start from a frontier state (only if going beyond frontier is allowed)
+            # terminate if not going beyond frontier or if exhausted all viable frontier states
+            if choices.size == 0:
+                #print(f"\n[DEBUG] No available actions from current state: {current_state}")
+                if go_beyond_frontier:
+                    # print(f"\n[DEBUG] Attempting to use frontier states as starting points...")
+                    if len(frontiers) > 0 and frontier_for_start <= len(frontiers):
+                        current_state = frontiers[frontier_for_start - 1]
+                        frontier_for_start += 1
+                        continue
+                    elif len(frontiers) == 0 or frontier_for_start > len(frontiers):
+                        # print(f"\n[DEBUG] No viable frontier states available. Terminating simulation.")
+                        break
+                else:
+                    break
+            
             candidate_states = np.tile(current_state, (choices.size, 1))
             if sim_type == SimType.RANDOM:
                 action = np.random.choice(choices, 1, False)[0]  # Random one-step action
@@ -366,10 +405,13 @@ def perform_simulations(
             old_growth_result = current_grow_pred
             old_growth_var = current_grow_var
 
+
             # Set new state values
             new_state = candidate_states[best_action_idx]  # Take best action
             new_growth_result = float(results[best_action_idx])
             new_growth_var = float(results_vars[best_action_idx])
+            
+            # print(f"Best new state: {new_state}.  pred: {new_growth_result}, pred_var: {new_growth_var}")
 
             is_down = sim_direction == SimDirection.DOWN
             grows_present = (results >= threshold).sum() > 0
@@ -383,15 +425,11 @@ def perform_simulations(
                 current_grow_pred = new_growth_result
                 current_grow_var = new_growth_var
 
-            elif (is_down and (not grows_present or new_state.sum() == 0)) or (
-                not is_down and (grows_present or new_state.sum() == len(new_state))
-            ):
-                # If going DOWN terminate if:
-                #   - no more grows present or removed all ingredients
-                #   - Use old state (last known growth predicted), or
-                # If going UP terminate if:
-                #   - there are grows present or added all ingredients
-                #   - Use new state (first known growth predicted)
+            elif (is_down and not grows_present) or (not is_down and grows_present):
+                # Terminate if going DOWN and more grows present
+                # Terminate if going UP terminate and there are grows present
+                # NOTE: we need to add a third condition: terminate if we reach the end where ALL ingredients are opposite from their starting points
+                # for that, we will need to define the endpoint states as an array
                 if is_down:
                     f_state, b_state = old_state, new_state
                     f_grow_result, b_grow_result = old_growth_result, new_growth_result
@@ -400,6 +438,8 @@ def perform_simulations(
                     f_state, b_state = new_state, old_state
                     f_grow_result, b_grow_result = new_growth_result, old_growth_result
                     f_grow_var, b_grow_var = new_growth_var, old_growth_var
+
+                frontiers.append(f_state)
 
                 if go_beyond_frontier:
                     # Add both the "frontier" and "beyond frontier" states
@@ -416,23 +456,26 @@ def perform_simulations(
                 for st, gr, va, ft in zip(
                     states, growth_preds, var_preds, frontier_types
                 ):
-                    key = tuple(st)
-                    if key not in batch_set or not unique:
-                        batch.append(st)
+                    # Round state to avoid floating-point precision issues
+                    st_rounded = np.round(st, decimals=6)
+                    key = tuple(st_rounded)
+                    if not unique or key not in batch_set:
+                        # print(f"[DEBUG] Adding state: unique={unique}, key in batch_set={key in batch_set}")
+                        batch.append(st_rounded)
                         terminating_growths.append(gr)
                         terminating_variances.append(va)
                         batch_frontier_types.append(ft)
                         batch_set.add(key)
                         tq.update()
                         st_print = np.round(st, decimals=2)  # round decimals for printing
-                        print(f"\n\tADDED: {st} - {ft}")
+                        print(f"\n\tADDED: {st_rounded} - {ft}")
                         if sim_type == SimType.ROLLOUT_PROB:
                             n_found_but_exists -= 1
                             n_found_but_exists = max(n_found_but_exists, 0)
                     else:
                         if sim_type == SimType.ROLLOUT_PROB:
                             n_found_but_exists += 1
-                        print(f"\n\tEXISTS: {st} - {ft}")
+                        print(f"\n\tEXISTS: {st_rounded} - {ft}")
 
                     if len(batch) >= n:
                         break
