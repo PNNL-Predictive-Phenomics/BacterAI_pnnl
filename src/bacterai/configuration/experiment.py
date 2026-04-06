@@ -45,6 +45,16 @@ class ExperimentConfig:
     EXPECTED_KEYS = set(SCHEMA.keys())
 
     @staticmethod
+    def _is_placeholder_header(value: Any) -> bool:
+        """Return True when a cell/header looks like a pandas placeholder column name."""
+        if value is None:
+            return True
+        s = str(value).strip().lower()
+        if not s:
+            return True
+        return bool(re.match(r"^unnamed:\s*\d+$", s))
+
+    @staticmethod
     def detect_format(df: pd.DataFrame) -> str:
         cols_norm = [normalize_key(c) for c in df.columns]
         horiz_score = sum(1 for c in cols_norm if c in ExperimentConfig.EXPECTED_KEYS)
@@ -90,7 +100,11 @@ class ExperimentConfig:
         vert: Dict[str, Any] = {}
         header_key = normalize_key(key_col)
         header_val = val_col
-        if header_key in ExperimentConfig.EXPECTED_KEYS and not is_nullish(header_val):
+        if (
+            header_key in ExperimentConfig.EXPECTED_KEYS
+            and not is_nullish(header_val)
+            and not ExperimentConfig._is_placeholder_header(header_val)
+        ):
             vert[header_key] = header_val
 
         for _, row in df.iterrows():

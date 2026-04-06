@@ -12,10 +12,56 @@ from typing import Any, Dict, Optional, Union, List
 
 from bacterai.configuration import ExperimentConfig, IngredientsConfig
 from bacterai.configuration.plate_readers import process_biotek_data, process_tecan_data
-from bacterai.setup import write_experiment_files, scan_next_index
+from bacterai.setup import write_experiment_files
 from bacterai.run.core import execute_experiment
 from bacterai.run.paths import get_round
-from .prompts import prompt_nonempty, prompt_yes_no, prompt_for_ingredients, handle_existing_directory
+from .prompts import (
+    prompt_yes_no,
+    prompt_for_ingredients,
+    prompt_missing_experiment_path_source,
+    prompt_experiment_folder_name,
+    prompt_full_experiment_path,
+    prompt_overwrite_nonempty_directory,
+)
+
+
+def _directory_contains_files(exp_dir: Path) -> bool:
+    """Return True when a directory has any entries."""
+    return any(exp_dir.iterdir())
+
+
+def _resolve_missing_experiment_directory() -> Path:
+    """Prompt for experiment directory when experiment_path is missing."""
+    source = prompt_missing_experiment_path_source()
+    if source == "current":
+        folder_name = prompt_experiment_folder_name()
+        return (Path.cwd() / folder_name).resolve()
+    return prompt_full_experiment_path()
+
+
+def _prepare_target_directory(initial_path: Path) -> Path:
+    """Prepare a target experiment directory, prompting on non-empty existing paths."""
+    exp_dir = initial_path.expanduser().resolve()
+
+    while True:
+        if exp_dir.exists():
+            if not exp_dir.is_dir():
+                raise ValueError(f"Experiment path is not a directory: {exp_dir}")
+
+            if _directory_contains_files(exp_dir):
+                overwrite = prompt_overwrite_nonempty_directory(exp_dir)
+                if overwrite:
+                    shutil.rmtree(exp_dir)
+                    exp_dir.mkdir(parents=True, exist_ok=True)
+                    return exp_dir
+
+                exp_dir = prompt_full_experiment_path().expanduser().resolve()
+                continue
+
+            return exp_dir
+
+        exp_dir.mkdir(parents=True, exist_ok=True)
+        return exp_dir
 
 
 def prepare_experiment_directories(configs: List[Dict[str, Any]]) -> List[tuple[Dict[str, Any], Path]]:
@@ -24,55 +70,12 @@ def prepare_experiment_directories(configs: List[Dict[str, Any]]) -> List[tuple[
     Returns list of (config, exp_dir) tuples ready for file writing.
     """
     experiments = []
-    base_dir = None
     
     for cfg in configs:
         if cfg.get("experiment_path"):
-            # Config has a path - use it
-            exp_dir = Path(cfg["experiment_path"]).expanduser().resolve()
-            
-            # Handle existing directory
-            if exp_dir.exists():
-                action = handle_existing_directory(exp_dir)
-                if action == 'skip':
-                    continue
-                elif action == 'use_new_path':
-                    new_path_str = prompt_nonempty("Enter new experiment path: ")
-                    exp_dir = Path(new_path_str).expanduser().resolve()
-                    if exp_dir.exists():
-                        action = handle_existing_directory(exp_dir)
-                        if action == 'skip':
-                            continue
-                # If action is 'overwrite' or we fall through, continue to directory creation
-            
-            # Create/recreate directory
-            if exp_dir.exists():
-                shutil.rmtree(exp_dir)
-            exp_dir.mkdir(parents=True, exist_ok=True)
-                
+            exp_dir = _prepare_target_directory(Path(cfg["experiment_path"]))
         else:
-            # Config missing path - need base_dir
-            if base_dir is None:
-                base_dir_str = prompt_nonempty("Enter a base directory for experiments (e.g., ~/Desktop/experiments): ")
-                base_dir = Path(base_dir_str).expanduser().resolve()
-                if not base_dir.exists():
-                    base_dir.mkdir(parents=True, exist_ok=True)
-            
-            # Find next available experiment directory
-            next_idx = scan_next_index(base_dir)
-            exp_dir = base_dir / f"experiment_{next_idx}"
-            
-            # Handle existing directory
-            if exp_dir.exists():
-                action = handle_existing_directory(exp_dir)
-                if action == 'skip':
-                    continue
-                # For auto-generated paths, we don't offer 'use_new_path' since the path is auto-generated
-                
-            # Create/recreate directory
-            if exp_dir.exists():
-                shutil.rmtree(exp_dir)
-            exp_dir.mkdir(parents=True, exist_ok=True)
+            exp_dir = _prepare_target_directory(_resolve_missing_experiment_directory())
         
         experiments.append((cfg, exp_dir))
     

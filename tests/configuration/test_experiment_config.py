@@ -36,3 +36,14 @@ def test_parse_configs_horizontal_basic(temp_experiment_dir):
     cfgs = ExperimentConfig.parse_configs(str(path), sheet=None, force_format="horizontal")
     assert cfgs[0]["batch_size"] == 96
     assert cfgs[0]["redo_threshold"] == [0.0, 1.0]
+
+
+def test_parse_configs_vertical_ignores_placeholder_header_for_experiment_path(temp_experiment_dir):
+    path = temp_experiment_dir / "exp_vertical_placeholder.csv"
+    path.write_text("experiment_path,\ningredients_file,\nbatch_size,96\n")
+
+    cfgs = ExperimentConfig.parse_configs(str(path), sheet=None, force_format="vertical")
+
+    assert len(cfgs) == 1
+    assert cfgs[0]["experiment_path"] is None
+    assert cfgs[0]["batch_size"] == 96
