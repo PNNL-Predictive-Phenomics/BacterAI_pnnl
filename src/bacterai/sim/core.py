@@ -283,8 +283,18 @@ def perform_simulations(
     starting_state_rounded = tuple(np.round(state, decimals=6))
     batch_set.add(starting_state_rounded)
 
+    max_stale_loops = max(50, n * 1000)
+    stale_loops = 0
+
     while len(batch) < n and not_timed_out:
         tq.desc = f"{desc} ({loops} loops)"
+
+        #if stale_loops >= max_stale_loops:
+        #    print(f"\n\tWARNING: No new states found after {stale_loops} consecutive loops. "
+        #          f"Stopping early with {len(batch)}/{n} experiments.")
+        #    break
+
+        batch_size_before = len(batch)
 
         frontier_for_start = 1
 
@@ -316,27 +326,19 @@ def perform_simulations(
                     idx_level = idx_level[0]
                     if sim_direction == SimDirection.DOWN and idx_level > 0:
                         candidate = levels[idx_level - 1]
-                        candidate_state = current_state.copy()
-                        candidate_state[i] = candidate
-                        candidate_key = tuple(np.round(candidate_state, decimals=6))
-                        if candidate_key not in batch_set or not unique:
-                            choices.append(i)
-                            next_values[i] = candidate
+                        choices.append(i)
+                        next_values[i] = candidate
                     elif sim_direction == SimDirection.UP and idx_level < n_states - 1:
                         candidate = levels[idx_level + 1]
-                        candidate_state = current_state.copy()
-                        candidate_state[i] = candidate
-                        candidate_key = tuple(np.round(candidate_state, decimals=6))
-                        if candidate_key not in batch_set or not unique:
-                            choices.append(i)
-                            next_values[i] = candidate
+                        choices.append(i)
+                        next_values[i] = candidate
 
             choices = np.array(choices)
 
             # if no available actions, check if we can start from a frontier state (only if going beyond frontier is allowed)
             # terminate if not going beyond frontier or if exhausted all viable frontier states
             if choices.size == 0:
-                #print(f"\n[DEBUG] No available actions from current state: {current_state}")
+                # print(f"\n[DEBUG] No available actions from current state: {current_state}")
                 if go_beyond_frontier:
                     # print(f"\n[DEBUG] Attempting to use frontier states as starting points...")
                     if len(frontiers) > 0 and frontier_for_start <= len(frontiers):
@@ -411,10 +413,14 @@ def perform_simulations(
             new_growth_result = float(results[best_action_idx])
             new_growth_var = float(results_vars[best_action_idx])
             
-            # print(f"Best new state: {new_state}.  pred: {new_growth_result}, pred_var: {new_growth_var}")
+            # print(f"\t[DEBUG] Best new state: {new_state}.  pred: {new_growth_result}, pred_var: {new_growth_var}")
 
             is_down = sim_direction == SimDirection.DOWN
-            grows_present = (results >= threshold).sum() > 0
+            n_grow = (results >= threshold).sum()
+            n_no_grow = (results < threshold).sum()
+            grows_present = n_grow > 0
+
+            #print(f"\t[DEBUG] Step predictions: {n_grow} grow, {n_no_grow} no-grow out of {len(results)} candidates (threshold={threshold})")
 
             if (is_down and grows_present) or (not is_down and not grows_present):
                 # Keep going if grows are present and DOWN direction, or
@@ -439,7 +445,9 @@ def perform_simulations(
                     f_grow_result, b_grow_result = new_growth_result, old_growth_result
                     f_grow_var, b_grow_var = new_growth_var, old_growth_var
 
-                frontiers.append(f_state)
+                f_key = tuple(np.round(f_state, decimals=6))
+                if f_key not in {tuple(np.round(f, decimals=6)) for f in frontiers}:
+                    frontiers.append(f_state)
 
                 if go_beyond_frontier:
                     # Add both the "frontier" and "beyond frontier" states
@@ -460,7 +468,7 @@ def perform_simulations(
                     st_rounded = np.round(st, decimals=6)
                     key = tuple(st_rounded)
                     if not unique or key not in batch_set:
-                        # print(f"[DEBUG] Adding state: unique={unique}, key in batch_set={key in batch_set}")
+                        #print(f"[DEBUG] Adding state: unique={unique}, key in batch_set={key in batch_set}")
                         batch.append(st_rounded)
                         terminating_growths.append(gr)
                         terminating_variances.append(va)
@@ -480,6 +488,11 @@ def perform_simulations(
                     if len(batch) >= n:
                         break
                 break
+
+        if len(batch) > batch_size_before:
+            stale_loops = 0
+        else:
+            stale_loops += 1
 
         if timeout is not None:
             not_timed_out = (time.time() - start_time) <= timeout
