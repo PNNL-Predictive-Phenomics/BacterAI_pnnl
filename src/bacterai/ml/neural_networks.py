@@ -11,6 +11,7 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
+from sklearn.metrics import r2_score
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -235,6 +236,25 @@ def train(
     if print_status:
         print(f"Final 10-Moving Avg Epoch MSE: {final_moving_avg}")
 
+    # Compute final R2 on train and test data
+    model.eval()
+    with torch.no_grad():
+        all_train_X = torch.stack([data_train[i][0] for i in range(len(data_train))]).to(DEVICE)
+        all_train_y = torch.stack([data_train[i][1] for i in range(len(data_train))]).cpu().numpy()
+        train_preds = model.forward(all_train_X).cpu().numpy().flatten()
+        train_r2 = r2_score(all_train_y, train_preds)
+        if print_status:
+            print(f"Final Train R2: {train_r2:.4f}")
+
+        if compute_test_stats and len(data_test) > 0:
+            all_test_X = torch.stack([data_test[i][0] for i in range(len(data_test))]).to(DEVICE)
+            all_test_y = torch.stack([data_test[i][1] for i in range(len(data_test))]).cpu().numpy()
+            test_preds = model.forward(all_test_X).cpu().numpy().flatten()
+            test_r2 = r2_score(all_test_y, test_preds)
+            if print_status:
+                print(f"Final Test R2: {test_r2:.4f}")
+    model.train()
+
     return final_moving_avg
 
 
@@ -322,10 +342,18 @@ def train_bagged(
         models.append(model)
         avg_mse.append(tr_mse)
 
+    # Compute final R2 across all bags
+    all_preds = np.zeros((len(X_train), len(models)))
+    for i, m in enumerate(models):
+        all_preds[:, i] = m.evaluate(X_train)
+    bagged_preds = np.mean(all_preds, axis=1)
+    final_r2 = r2_score(y_train_true, bagged_preds)
+
     end_time = time.time()
     print(
-        f"\nAverage Training MSE ({end_time - start_time:.1f}s): {sum(avg_mse)/len(avg_mse):.4f}\n"
+        f"\nAverage Training MSE ({end_time - start_time:.1f}s): {sum(avg_mse)/len(avg_mse):.4f}"
     )
+    print(f"Final Bagged Train R2: {final_r2:.4f}\n")
     return models
 
 

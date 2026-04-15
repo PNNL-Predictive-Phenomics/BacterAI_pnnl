@@ -3,7 +3,7 @@ import torch
 import gpytorch
 import numpy as np
 
-from sklearn.metrics import mean_squared_error  # Importing mean_squared_error
+from sklearn.metrics import mean_squared_error, r2_score
 from scipy.stats import multivariate_normal
 
 # Code built from generative AI, based on operations and parameters from gpr_lib.R
@@ -67,7 +67,9 @@ def train_new_GP(X, y, model_path, d=0.1, g=0.1, max_iter=100, lr=0.1, verbosity
         likelihood.eval()
         y_pred = model(train_x).mean
         final_mse = mean_squared_error(train_y.numpy(), y_pred.numpy())
+        final_r2 = r2_score(train_y.numpy(), y_pred.numpy())
     print(f'Final MSE: {final_mse:.4f}')
+    print(f'Final R2: {final_r2:.4f}')
     
     torch.save(model.state_dict(), os.path.join(model_path, "gpr_model.pth"))
     torch.save(likelihood.state_dict(), os.path.join(model_path, "gpr_likelihood.pth"))
