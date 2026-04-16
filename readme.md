@@ -2,155 +2,198 @@
     <img src="https://user-images.githubusercontent.com/4694385/225218387-ff83524a-bdcc-4751-b2c7-0fab567f50eb.png" alt="bacterai_logo_2000" style="width: 60%;">
 </p>
 
-## BacterAI
+# BacterAI
 BacterAI was first developed by the Jensen Lab at the University of Michigan.
 This repository represents an extension of BacterAI produced by Pacific Northwest National Laboratory.
+See example.md for example workflow.
 
-### Installation
-To install requirements using Conda, follow these steps to create a new environment named `bacterai` using the `bacterai_env.yml` file:
+This document summarizes:
+1. How to clone the repo and run the CLI locally
+2. What the current CLI does
+3. Command reference and usage examples
+
+---
+
+## 0) Clone and Run Locally
+
+### Prerequisites
+
+- `git`
+- Python `3.12+`
+- One environment manager (`conda` or `venv`)
+
+### Option A: Conda setup (recommended for this repo)
 
 ```bash
+git clone https://github.com/PNNL-Predictive-Phenomics/BacterAI_pnnl.git
+cd BacterAI_pnnl
+
 conda env create --name bacterai --file bacterai_env.yml
-```
-
-To activate the environment:
-```bash
 conda activate bacterai
+
+pip install -e .
+bacterai -h
 ```
 
-To deactivate the environment:
+### Option B: Python venv setup
+
 ```bash
-conda deactivate
+git clone https://github.com/PNNL-Predictive-Phenomics/BacterAI_pnnl.git
+cd BacterAI_pnnl
+
+python3.12 -m venv .venv
+source .venv/bin/activate
+
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python -m pip install -e .
+
+bacterai -h
 ```
 
-### Experimental Set-up
+### Verify CLI install
 
----
-
-### Setting up an experiment
-
-#### Create an Experiment Folder Structure
-Place the necessary configuration files and optional ingredient files within the experiment folder. 
-Customize the `config.json` file for the specific experiment you'd like to run (see Config section below). 
-Ensure the experimental file paths in the `config.json` file are absolute paths.
-
-Structure:
-```plaintext
-EXPT_FOLDER
-  |-- config.json
-  |-- ingredients.json
-  |-- transfer_model_folder (optional)
-  |   `-- transfer models
-  |-- transfer_data_folder (optional)
-  |   `-- transfer learning data
+```bash
+bacterai -h
+bacterai experiment -h
 ```
 
-> **Note:** You can create your JSON files using R commands.
-```R
-library(jsonlite)
-ingredients_sheet <- "path/to/experiment/ingredients.xlsx"
+If your shell does not find `bacterai`, use:
 
-readxl::read_excel(ingredients_sheet, sheet = 1, na = 'NA') |>
-  list(ingredients = _) |>
-  toJSON(dataframe = 'rows', pretty = T, auto_unbox = T, null = 'null', na = 'null') |>
-  write(file = file.path(getwd(), 'ingredients.json'))
+```bash
+python -m bacterai.main -h
 ```
 
 ---
 
-### First Run
+## 1) What This CLI Does
 
-To start the first round (`Round 1`), use the following steps. 
-> **Note:** The `tee` command in a Unix-like system allows you to view standard output while saving it to a log file.
+The `bacterai` CLI is a unified interface for preparing, running, and post-processing BacterAI experiments.
 
-*All commands assume that the conda environment is already loaded.*
+At a high level it helps you:
+- Convert experiment spreadsheets into `config.json` files
+- Convert ingredient spreadsheets into `ingredients.json`
+- Interactively scaffold experiment folders and write config/ingredient files
+- Execute experiment rounds (`Round1`, `Round2`, ...)
+- Process raw plate reader data (Biotek/Tecan) into `mapped_data_*.csv` for model training
 
-#### Ensure `run.py` has execute permissions:
-```bash
-chmod u+x run.py
-```
-
-#### Commands:
-```bash
-cd /path/to/bacterai/code
-
-EXPT=/path/to/experiment
-N=1
-python run.py $EXPT/config.json --round $N | tee $EXPT/stdout_R${N}.log
-```
-
-#### Output of Round 1
-
-If training bagged neural nets:
-```plaintext
-EXPT_FOLDER
-  |-- config.json
-  |-- ingredients.json
-  |-- Round1
-  |   |-- random_train_kickstart*.csv (for round 1)
-  |   |-- run_metrics.json
-  |   |-- batch_meta_[datetime].csv
-  |   |-- batch_dp_custom_ingredientsR1_[datetime].csv
-  |   |-- nn_models
-  |   |   |-- bag_model_1.pkl
-  |   |   |-- bag_model_2.pkl
-  |   |   |-- ...
-  |   |   `-- bag_model_n.pkl
-```
-
-If training Gaussian process regression (GPR) models:
-```plaintext
-EXPT_FOLDER
-  |-- config.json
-  |-- ingredients.json
-  |-- Round1
-  |   |-- random_train_kickstart*.csv (for round 1)
-  |   |-- run_metrics.json
-  |   |-- batch_meta_[datetime].csv
-  |   |-- batch_dp_custom_ingredientsR1_[datetime].csv
-  |   |-- gpr_model
-  |   |   |-- gpr_model.pth
-  |   |   `-- gpr_likelihood.pth
-```
-
-#### Final Output after Full Round 1
-The model-specific files will be utilized in the next round of BacterAI.
-The most important file is the `batch_meta` CSV file.
-This file contains the set of experiments that BacterAI has requested to be run.
-These experiments will need to be converted into a more detailed protocol, either for an autonomous laboratory system, or for a human researcher.
-The `Plateplan` application may be utilized for this but are not part of the BacterAI documentation.
-`Plateplan` instructions are often embedded in larger custom Python script which can handle the idiosyncrasies of each experiment
-(*e.g.,* which "ingredients" are liquid-dispensable reagents vs. which are conditions which might be controlled by other means).
+### CLI entrypoint
+- Console script: `bacterai`
+- Backed by: `src/bacterai/main.py` (`bacterai.main:main` in `pyproject.toml`)
 
 ---
 
-### Runs 2+
+## 3) Command Reference
 
-For subsequent rounds (`Round 2` and beyond), you need to import raw data, extract relevant features, and generate a mapped data table that BacterAI requires.
-The resulting CSV should have the term `mapped_data` somewhere in the filename, and it should go into the same round where the original request came from.
+Use help anytime:
 
-The example below uses the function `biotek_feature_extract.py` to process the data from a Biotek plate reader and find the difference between the
-original and final optical density (OD).
-In the example, this function placed the `mapped_data` file back into the `Round1` folder. 
-The wavelength (`--signal` or `-s`) for almost any optical density measurement will be 600 nm.
-
-#### Commands:
 ```bash
-cd /path/to/bacterai/code
+bacterai -h
+bacterai <command> -h
+```
 
-EXPT=/path/to/experiment
-N=2
-PREV_N=$(expr $N - 1)
-run_date="YYYY-MM-DD"
+## 3.1 `experiment`
+Convert experiment setup sheets (`.csv`/`.xlsx`) into one or more `config.json` files.
 
-python biotek_feature_extract.py $EXPT -d run_date -r $PREV_N -s 600 -f "delta_od"
+```bash
+bacterai experiment <input> [--sheet <name_or_index>] [--outfile-name config.json] [--force-format vertical|horizontal] [--verbose]
+```
 
-python run.py $EXPT/config.json --round $N | tee $EXPT/stdout_R${N}.log
+- Prompts for handling existing directories
+- Writes one config per experiment directory
+- `--force-format` helps when auto-detection is ambiguous
+
+Example:
+```bash
+bacterai experiment ./inputs/experiment_design.xlsx --sheet 0 --verbose
+```
+
+## 3.2 `setup`
+Interactive end-to-end setup for experiment configs and ingredients.
+
+```bash
+bacterai setup <input> [--sheet <name_or_index>] [--outfile-name config.json] [--force-format vertical|horizontal] [--verbose]
+```
+
+- Uses same experiment parsing as `experiment`
+- If `experiment_path` is missing, prompts to use current working directory (then asks for experiment folder name) or provide a full experiment folder path
+- Creates the experiment folder path if it does not exist
+- If target folder already exists and contains files, prompts to overwrite or provide a different full path
+- Prompts whether ingredients are shared across experiments or individual
+- Writes both config and ingredient files through setup utilities
+
+Example:
+```bash
+bacterai setup ./inputs/experiment_design.xlsx --sheet Planning
+```
+
+## 3.3 `ingredients`
+Convert ingredient sheets (`.csv`/`.xlsx`) to JSON payload.
+
+```bash
+bacterai ingredients <input> [--sheet <name_or_index>] [--output <path.json>] [--id-map <map.csv>] [--verbose]
+```
+
+- If `--output` is omitted, JSON is printed to stdout
+- `--id-map` can map ingredient names to IDs
+
+Example:
+```bash
+bacterai ingredients ./inputs/ingredients.xlsx --sheet 1 --output ./exp1/ingredients.json
+```
+
+## 3.4 `run`
+Execute a BacterAI experiment round from an experiment directory.
+
+```bash
+bacterai run <experiment_path> [--plot-only] [--verbose]
+```
+
+- Verifies experiment path exists
+- Auto-detects next round number using existing `Round*` folders
+- Executes full pipeline unless `--plot-only` is set
+
+Example:
+```bash
+bacterai run /path/to/experiment --verbose
+```
+
+## 3.5 `process_data`
+Process raw plate reader files and write mapped data CSV for training.
+
+```bash
+bacterai process_data {biotek|tecan} [path] --round <N> --feature <name> [--date <id>] [--signal <int>] [--output <csv>] [--verbose]
+```
+
+- Supports experiment request layouts at either:
+  - `<experiment_path>/experiment_request/`
+  - `<experiment_path>/RoundN/experiment_request/`
+- `--signal` is required for `biotek` and ignored for `tecan`
+- Default output name (if not provided):
+  - `RoundN/mapped_data_<date_or_today>_<reader>_<feature>_data.csv`
+
+Example (Biotek):
+```bash
+bacterai process_data biotek /path/to/experiment --date 2026-03-12 --round 1 --signal 600 --feature delta_od --verbose
+```
+
+Example (Tecan):
+```bash
+bacterai process_data tecan /path/to/experiment --round 1 --feature delta_od
 ```
 
 ---
 
-### Config settings
+## 3.6 Practical workflow (typical)
+
+1. `bacterai experiment ...` or `bacterai setup ...`
+2. `bacterai run <experiment_path>` for Round 1
+3. Collect plate reader outputs externally
+4. `bacterai process_data ... --round 1 ...`
+5. `bacterai run <experiment_path>` for Round 2
+6. Repeat processing and run for subsequent rounds
+
+### 3.7 Config settings
 The config file represents the main way to control the experiment.
 
 ```json

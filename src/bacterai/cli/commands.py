@@ -10,20 +10,6 @@ import traceback
 from pathlib import Path
 from typing import Any, Dict, Optional, Union, List
 
-from bacterai.configuration import ExperimentConfig, IngredientsConfig
-from bacterai.configuration.plate_readers import process_biotek_data, process_tecan_data
-from bacterai.setup import write_experiment_files
-from bacterai.run.core import execute_experiment
-from bacterai.run.paths import get_round
-from .prompts import (
-    prompt_yes_no,
-    prompt_for_ingredients,
-    prompt_missing_experiment_path_source,
-    prompt_experiment_folder_name,
-    prompt_full_experiment_path,
-    prompt_overwrite_nonempty_directory,
-)
-
 
 def _directory_contains_files(exp_dir: Path) -> bool:
     """Return True when a directory has any entries."""
@@ -32,6 +18,12 @@ def _directory_contains_files(exp_dir: Path) -> bool:
 
 def _resolve_missing_experiment_directory() -> Path:
     """Prompt for experiment directory when experiment_path is missing."""
+    from .prompts import (
+        prompt_experiment_folder_name,
+        prompt_full_experiment_path,
+        prompt_missing_experiment_path_source,
+    )
+
     source = prompt_missing_experiment_path_source()
     if source == "current":
         folder_name = prompt_experiment_folder_name()
@@ -41,6 +33,8 @@ def _resolve_missing_experiment_directory() -> Path:
 
 def _prepare_target_directory(initial_path: Path) -> Path:
     """Prepare a target experiment directory, prompting on non-empty existing paths."""
+    from .prompts import prompt_full_experiment_path, prompt_overwrite_nonempty_directory
+
     exp_dir = initial_path.expanduser().resolve()
 
     while True:
@@ -93,6 +87,8 @@ def experiment(
     Convert experiment settings (CSV/XLSX) to JSON file(s).
     Prints status messages and writes files. If verbose is True, also prints file contents.
     """
+    from bacterai.configuration.experiment import ExperimentConfig
+
     cfgs = ExperimentConfig.parse_configs(
         input_path=input_path,
         sheet=sheet,
@@ -144,6 +140,8 @@ def ingredients(
     Writes to output if provided, otherwise prints to stdout.
     If verbose is True, also prints contents when writing to a file.
     """
+    from bacterai.configuration.ingredients import IngredientsConfig
+
     result = IngredientsConfig.parse_ingredients(
         input_path=input_path,
         sheet=sheet,
@@ -172,6 +170,10 @@ def setup(
     Orchestrate interactive experiment setup with user prompts.
     This function handles all user interaction for experiment setup.
     """
+    from bacterai.configuration.experiment import ExperimentConfig
+    from bacterai.setup import write_experiment_files
+    from .prompts import prompt_for_ingredients, prompt_yes_no
+
     configs = ExperimentConfig.parse_configs(
         input_path=input_path,
         sheet=sheet,
@@ -228,6 +230,8 @@ def run(
     Execute an experiment round using BacterAI models and simulations.
     The round number is automatically determined based on existing Round folders.
     """
+    from bacterai.run.core import execute_experiment
+    from bacterai.run.paths import get_round
     
     # Check if the experiment directory exists
     if not os.path.exists(experiment_path):
@@ -289,6 +293,7 @@ def process_data(
         output: Optional output filename override
         verbose: Print detailed processing information
     """
+    from bacterai.configuration.plate_readers import process_biotek_data, process_tecan_data
     
     # Validate inputs
     reader_type = reader_type.lower()

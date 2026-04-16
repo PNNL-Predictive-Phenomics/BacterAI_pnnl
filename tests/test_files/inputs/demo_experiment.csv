@@ -1,0 +1,20 @@
+﻿experiment_path,
+ingredients_file,
+grow_threshold,0.25
+nickname,Test
+batch_size,90
+timeout_min,60
+model_type,0
+direction,0
+beyond_frontier,TRUE
+use_unique,FALSE
+n_rollouts,2
+check nn code: n_bags,25
+optional: transfer_model_folder,null
+optional: transfer_data_dir,null
+redo_size,10
+redo_threshold,"[0, 0.4]"
+optional: aas_only,FALSE
+separate_redos,FALSE
+simulation_types,[2]
+random_walk_increment,10

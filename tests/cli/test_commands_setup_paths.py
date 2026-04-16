@@ -1,12 +1,13 @@
 """Tests for setup path resolution behavior in CLI commands."""
 
 from src.bacterai.cli import commands
+from src.bacterai.cli import prompts
 
 
 def test_missing_path_uses_current_location_and_folder_name(monkeypatch, temp_experiment_dir):
     monkeypatch.setattr(commands.Path, "cwd", lambda: temp_experiment_dir)
-    monkeypatch.setattr(commands, "prompt_missing_experiment_path_source", lambda: "current")
-    monkeypatch.setattr(commands, "prompt_experiment_folder_name", lambda: "experiment_alpha")
+    monkeypatch.setattr(prompts, "prompt_missing_experiment_path_source", lambda: "current")
+    monkeypatch.setattr(prompts, "prompt_experiment_folder_name", lambda: "experiment_alpha")
 
     experiments = commands.prepare_experiment_directories([{"experiment_path": None}])
 
@@ -20,8 +21,8 @@ def test_missing_path_uses_current_location_and_folder_name(monkeypatch, temp_ex
 def test_missing_path_uses_full_path_and_creates_directory(monkeypatch, temp_experiment_dir):
     target_path = temp_experiment_dir / "nested" / "experiment_beta"
 
-    monkeypatch.setattr(commands, "prompt_missing_experiment_path_source", lambda: "full_path")
-    monkeypatch.setattr(commands, "prompt_full_experiment_path", lambda: target_path)
+    monkeypatch.setattr(prompts, "prompt_missing_experiment_path_source", lambda: "full_path")
+    monkeypatch.setattr(prompts, "prompt_full_experiment_path", lambda: target_path)
 
     experiments = commands.prepare_experiment_directories([{"experiment_path": None}])
 
@@ -42,7 +43,7 @@ def test_existing_empty_directory_does_not_prompt_overwrite(monkeypatch, temp_ex
         called["overwrite"] += 1
         return False
 
-    monkeypatch.setattr(commands, "prompt_overwrite_nonempty_directory", _should_not_be_called)
+    monkeypatch.setattr(prompts, "prompt_overwrite_nonempty_directory", _should_not_be_called)
 
     experiments = commands.prepare_experiment_directories([{"experiment_path": str(existing)}])
 
@@ -56,7 +57,7 @@ def test_existing_nonempty_directory_overwrite_yes_recreates(monkeypatch, temp_e
     existing.mkdir(parents=True)
     (existing / "old.txt").write_text("old")
 
-    monkeypatch.setattr(commands, "prompt_overwrite_nonempty_directory", lambda _: True)
+    monkeypatch.setattr(prompts, "prompt_overwrite_nonempty_directory", lambda _: True)
 
     experiments = commands.prepare_experiment_directories([{"experiment_path": str(existing)}])
 
@@ -74,8 +75,8 @@ def test_existing_nonempty_directory_overwrite_no_prompts_new_full_path(monkeypa
 
     replacement = temp_experiment_dir / "replacement" / "experiment_gamma"
 
-    monkeypatch.setattr(commands, "prompt_overwrite_nonempty_directory", lambda _: False)
-    monkeypatch.setattr(commands, "prompt_full_experiment_path", lambda: replacement)
+    monkeypatch.setattr(prompts, "prompt_overwrite_nonempty_directory", lambda _: False)
+    monkeypatch.setattr(prompts, "prompt_full_experiment_path", lambda: replacement)
 
     experiments = commands.prepare_experiment_directories([{"experiment_path": str(existing)}])
 

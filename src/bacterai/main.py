@@ -5,14 +5,6 @@ import argparse
 import sys
 from typing import Optional, Union
 
-from bacterai.cli import (
-    ingredients as cli_ingredients,
-    setup as cli_setup,
-    experiment as cli_experiment,
-    run as cli_run,
-    process_data as cli_process_data
-)
-
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -183,6 +175,8 @@ def _coerce_sheet_arg(raw: Optional[str]) -> Optional[Union[str, int]]:
 
 
 def experiment_wrapper(args) -> None:
+    from bacterai.cli.commands import experiment as cli_experiment
+
     sheet = _coerce_sheet_arg(args.sheet)
     cli_experiment(
         input_path=args.input,
@@ -194,6 +188,8 @@ def experiment_wrapper(args) -> None:
 
 
 def setup_wrapper(args) -> None:
+    from bacterai.cli.commands import setup as cli_setup
+
     sheet = _coerce_sheet_arg(args.sheet)
     cli_setup(
         input_path=args.input,
@@ -205,6 +201,8 @@ def setup_wrapper(args) -> None:
 
 
 def ingredients_wrapper(args) -> None:
+    from bacterai.cli.commands import ingredients as cli_ingredients
+
     sheet = _coerce_sheet_arg(args.sheet)
     cli_ingredients(
         input_path=args.input,
@@ -216,6 +214,8 @@ def ingredients_wrapper(args) -> None:
 
 
 def run_wrapper(args) -> None:
+    from bacterai.cli.commands import run as cli_run
+
     cli_run(
         experiment_path=args.experiment_path,
         plot_only=args.plot_only,
@@ -224,6 +224,8 @@ def run_wrapper(args) -> None:
 
 
 def process_data_wrapper(args) -> None:
+    from bacterai.cli.commands import process_data as cli_process_data
+
     cli_process_data(
         reader_type=args.reader_type,
         path=args.path,
