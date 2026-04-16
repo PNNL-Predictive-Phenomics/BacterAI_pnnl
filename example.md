@@ -224,10 +224,14 @@ The required file structure is:
 my_experiment/
 ├── config.json
 ├── ingredients.json
-├── experiment_request/ # will need to be in r1 as sub folder
-    ├── data/
-    ├── plate_maps/
-    └── worklists/
+├── experiment_request/
+│   ├── data/
+│   │   └── testfid.xlsx*
+│   ├── plate_maps/
+│   │   ├── map.csv*
+│   │   └── plate_to_file_id.csv*
+│   └── worklists/
+│       └── testfid.csv*
 └── Round1/
     ├── batch_dp.csv
     ├── batch_meta.csv
@@ -237,6 +241,7 @@ my_experiment/
         ├── gpr_likelihood.pth
         └── gpr_model.pth
 ```
+* These files are generated with a third party software. 
 
 ### Command (BioTek Example)
 
@@ -303,54 +308,40 @@ bacterai run /path/to/my_experiment --verbose
 
 ```
 Starting BacterAI run for round 2
-Experiment directory: /path/to/my_experiment
-Reading configuration from: /path/to/my_experiment/config.json
-Loading ingredients from: /path/to/my_experiment/ingredients.json
-
-Found existing Round1 data
-Loading training data from: /path/to/my_experiment/Round1/mapped_data_2026-04-16_biotek_delta_od_data.csv
-Loaded 90 experiments for training
-
+Experiment directory: path/to/experiment
+Plot only: False
+Picking 10 more random experiments to redo.
+Redoing 10 experiments from previous round.
+Media Results (Top 10):
+ 1. Fitness: 1.031, Depth: 2.72
+        o2
+ 2. Fitness: 1.024, Depth: 3.56
+        o2
+ 3. Fitness: 1.024, Depth: 3.05
+        o2
+ 4. Fitness: 1.023, Depth: 1.61
+ 5. Fitness: 1.023, Depth: 2.33
+ 6. Fitness: 1.019, Depth: 2.77
+        o2
+ 7. Fitness: 1.017, Depth: 3.30
+ 8. Fitness: 1.017, Depth: 1.50
+ 9. Fitness: 1.014, Depth: 2.65
+        o2
+10. Fitness: 1.014, Depth: 2.51
+Total unique experiments: 54
+Total redo experiments chosen: 10 (0 'bad' repeats)
 Training GPR model...
-  - Model R²: 0.87
-  - Cross-validation R²: 0.82
+Iter 1/100 | Train loss: 1.2888
+Iter 2/100 | Train loss: 1.2020
+...
 
-Running Round 2...
-  - Batch size: 90 experiments
-  - Simulation type: ROLLOUT
-  - Beyond frontier: TRUE
-  - N rollouts: 2
-
-Simulating 90 new experiments...
-  - High-fitness predictions found: 32
-  - Conditions beyond frontier: 15
-
-Round 2 batch generated
-Output directory created: /path/to/my_experiment/Round2/
+Iter 99/100 | Train loss: -2.5310
+Iter 100/100 | Train loss: -2.5316
+Final MSE: 0.0003
+Final R2: 0.1484
+Creating simulation-based batch...
+0 SimType.ROLLOUT 90 90 0
 ```
-
-### Generated Files for Round 2
-
-```
-my_experiment/
-├── config.json
-├── ingredients.json
-├── Round1/
-│   ├── batch_config_round1.json
-│   ├── mapped_data_2026-04-16_biotek_delta_od_data.csv
-│   └── Round1_plots/
-└── Round2/
-    ├── batch_config_round2.json
-    ├── experiment_designs.csv
-    ├── experiment_request/
-    │   ├── plate_maps/
-    │   └── worklists/
-    └── Round2_plots/
-        ├── model_predictions_vs_observed.png
-        ├── acquisition_function.png
-        └── next_experiments.png
-```
-
 ---
 
 ## Step 5: Repeat for Additional Rounds

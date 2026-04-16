@@ -143,6 +143,11 @@ def rollout_trajectory(model, states, ingredients_pd, n_trajectories, threshold,
                     rewards[k] = v + [step] * remaining
             break
 
+        # Identify exhausted rows (no available actions) before applying moves
+        exhausted_rows = np.array(
+            [i for i, ra in enumerate(available_actions) if not ra], dtype=int
+        )
+
         for row_idx, row_actions in enumerate(available_actions):
             if not row_actions:
                 continue
@@ -155,9 +160,12 @@ def rollout_trajectory(model, states, ingredients_pd, n_trajectories, threshold,
         # Obtain results below threshold
         no_grows = np.argwhere(results < threshold)[:, 0]
 
+        # Combine exhausted rows and no-grow rows — both are finished trajectories
+        rows_to_remove = np.unique(np.concatenate([exhausted_rows, no_grows])).astype(int)
+
         # Add reward for finished trajectories to the proper state
         new_state_boundaries = states_boundaries.copy()
-        for result_idx in no_grows:
+        for result_idx in rows_to_remove:
             for i in range(len(states_boundaries) - 1):
                 lb = states_boundaries[i]
                 ub = states_boundaries[i + 1]
@@ -168,7 +176,7 @@ def rollout_trajectory(model, states, ingredients_pd, n_trajectories, threshold,
         states_boundaries = new_state_boundaries
 
         # Remove finished trajectories
-        trajectory_states = np.delete(trajectory_states, no_grows, axis=0)
+        trajectory_states = np.delete(trajectory_states, rows_to_remove, axis=0)
         step += 1
 
     rewards = np.array(list(rewards.values()))
@@ -283,16 +291,16 @@ def perform_simulations(
     starting_state_rounded = tuple(np.round(state, decimals=6))
     batch_set.add(starting_state_rounded)
 
-    max_stale_loops = max(50, n * 1000)
+    max_stale_loops = max(100, n * 10)
     stale_loops = 0
 
     while len(batch) < n and not_timed_out:
         tq.desc = f"{desc} ({loops} loops)"
 
-        #if stale_loops >= max_stale_loops:
-        #    print(f"\n\tWARNING: No new states found after {stale_loops} consecutive loops. "
-        #          f"Stopping early with {len(batch)}/{n} experiments.")
-        #    break
+        if stale_loops >= max_stale_loops:
+            print(f"\n\tWARNING: No new states found after {stale_loops} consecutive loops. "
+                  f"Stopping early with {len(batch)}/{n} experiments.")
+            break
 
         batch_size_before = len(batch)
 
