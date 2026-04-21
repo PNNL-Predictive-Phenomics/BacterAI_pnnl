@@ -395,8 +395,12 @@ def process_biotek_data(
             # Date provided but folder doesn't exist - fall back to direct path
             experiment_request_path = os.path.join(path, "experiment_request")
     else:
-        # No date provided - use direct path
+        # No date provided - check either experiment_request/RoundN/ or RoundN/experiment_request/
         experiment_request_path = os.path.join(path, "experiment_request")
+        if os.path.exists(experiment_request_path):
+            experiment_request_path = os.path.join(experiment_request_path, f"Round{round_number}")
+        else:
+            experiment_request_path = os.path.join(path, f"Round{round_number}", "experiment_request")
     
     plate_maps_path = os.path.join(experiment_request_path, "plate_maps")
     round_folder = os.path.join(path, f"Round{round_number}")
