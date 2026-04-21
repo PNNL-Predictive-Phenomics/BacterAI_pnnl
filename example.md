@@ -148,8 +148,8 @@ If you would like to setup your `config.json` and `ingredients.json` separately,
       "CL_ATOMS": 0
     },
     {
-      "ID": "P_putida_AVS10",
-      "INGREDIENT": "P_putida_AVS10",
+      "ID": "P_putida_strain",
+      "INGREDIENT": "P_putida_strain",
       "TYPE": "strain",
       "NOMINAL_VALUE": 60.0,
       "MIN_VALUE": 60.0,
@@ -219,68 +219,76 @@ my_experiment/
 
 After collecting plate reader data externally, process it to create the training data CSV.
 
+Because each BacterAI run contains a stochastic simulation element, please copy the following prepared folder for which data have already been generated for a run similar to the example above.
+
+```bash
+cp -R tests/vignette_experiment/ /path/to/vignette_experiment
+```
+
 The required file structure is:
 ```
 my_experiment/
 ├── config.json
 ├── ingredients.json
-├── experiment_request/
-│   ├── data/
-│   │   └── testfid.xlsx*
-│   ├── plate_maps/
-│   │   ├── map.csv*
-│   │   └── plate_to_file_id.csv*
-│   └── worklists/
-│       └── testfid.csv*
 └── Round1/
     ├── batch_dp.csv
     ├── batch_meta.csv
     ├── random_train_kickstart_others.csv
     ├── run_metrics.json
-    └── gpr_model/          
+    ├── experiment_request/
+    │   ├── data/
+    │   │   └── testfid.xlsx*
+    │   ├── plate_maps/
+    │   │   ├── map.csv*
+    │   │   └── plate_to_file_id.csv*
+    │   └── worklists/
+    │       └── testfid.csv*
+    └── gpr_model/
         ├── gpr_likelihood.pth
         └── gpr_model.pth
 ```
-* These files are generated with a third party software. 
+\* These files are generated with a third party software. 
 
 ### Command (BioTek Example)
 
 ```bash
-bacterai process_data biotek /path/to/my_experiment --round 1 --signal 600 --feature delta_od --verbose
+bacterai process_data biotek /path/to/vignette_experiment --round 1 --signal 600 --feature delta_od --verbose
 ```
 
 ### Expected Output
 
 ```
 Processing Biotek data:
-  Experiment path: /path/to/my_experiment
+  Experiment path: /path/to/vignette_experiment
   Date: Not specified (using direct experiment_request path)
   Round: 1
   Feature: delta_od
   Signal: 600nm
 
-Successfully processed 60 experiments (60 unique experiments)
-Output written to: my/path/experiment/Round1/mapped_data_{date}_biotek_delta_od_data.csv
+Successfully processed 100 experiments (100 unique experiments)
+Output written to: path/to/vignette_experiment/Round1/mapped_data_{date}_biotek_delta_od_data.csv
 
 Data preview (first 5 rows):
-    feature  bad plate_control plate_blank       parent_plate  experiment_number       strain environment
-0  0.227000    0          True       False  Test_Plate_Round1               9999  Test_strain         PH5
-1  0.218560    0         False        True  Test_Plate_Round1               9999  Test_strain         PH5
-2  0.223625    0         False       False  Test_Plate_Round1                 76  Test_strain         PH5
-3  0.216506    0         False        True  Test_Plate_Round1               9999  Test_strain         PH5
-4  0.212810    0         False       False  Test_Plate_Round1                 80  Test_strain         PH7
+   feature  bad plate_control plate_blank                                       parent_plate  experiment_number       strain environment
+0    0.143    0          True       False  <plate-id-code>               9999  Test_strain         PH5
+1    0.024    0         False        True  <plate-id-code>               9999  Test_strain         PH5
+2   -0.003    1         False       False  <plate-id-code>                 76  Test_strain         PH5
+3    0.013    0         False        True  <plate-id-code>               9999  Test_strain         PH5
+4    0.003    1         False       False  <plate-id-code>                 90  Test_strain         PH5
 
 Columns: feature, bad, plate_control, plate_blank, parent_plate, experiment_number, strain, environment
-Shape (incl. controls): (84, 8)
+Shape (incl. controls): (133, 8)
 ```
 
 ### Generated mapped_data_*.csv (excerpt)
 
 ```csv
 feature,bad,plate_control,plate_blank,parent_plate,experiment_number,strain,environment
-0.227,0,True,False,Test_Plate_Round1,9999,Test_strain,PH5
-0.21856,0,False,True,Test_Plate_Round1,9999,Test_strain,PH5
-0.223625,0,False,False,Test_Plate_Round1,76,Test_strain,PH5
+0.143,0,True,False,<plate-id-code>,9999,Test_strain,PH5
+0.024,0,False,True,<plate-id-code>,9999,Test_strain,PH5
+-0.003,1,False,False,<plate-id-code>,76,Test_strain,PH5
+0.013,0,False,True,<plate-id-code>,9999,Test_strain,PH5
+0.003,1,False,False,<plate-id-code>,90,Test_strain,PH5
 ...
 ```
 
@@ -301,7 +309,7 @@ After processing the plate reader data from Round 1, run Round 2 to explore the 
 ### Command
 
 ```bash
-bacterai run /path/to/my_experiment --verbose
+bacterai /path/to/vignette_experiment --verbose
 ```
 
 ### Expected Output
@@ -310,35 +318,39 @@ bacterai run /path/to/my_experiment --verbose
 Starting BacterAI run for round 2
 Experiment directory: path/to/experiment
 Plot only: False
-Picking 10 more random experiments to redo.
 Redoing 10 experiments from previous round.
 Media Results (Top 10):
- 1. Fitness: 1.031, Depth: 2.72
-        o2
- 2. Fitness: 1.024, Depth: 3.56
-        o2
- 3. Fitness: 1.024, Depth: 3.05
-        o2
- 4. Fitness: 1.023, Depth: 1.61
- 5. Fitness: 1.023, Depth: 2.33
- 6. Fitness: 1.019, Depth: 2.77
-        o2
- 7. Fitness: 1.017, Depth: 3.30
- 8. Fitness: 1.017, Depth: 1.50
- 9. Fitness: 1.014, Depth: 2.65
-        o2
-10. Fitness: 1.014, Depth: 2.51
-Total unique experiments: 54
+ 1. Fitness: 5.786, Depth: 1.16
+	O2
+ 2. Fitness: 5.498, Depth: 0.99
+	O2
+ 3. Fitness: 5.405, Depth: 0.97
+	O2
+ 4. Fitness: 5.117, Depth: 1.47
+	O2
+ 5. Fitness: 4.880, Depth: 1.28
+	O2
+ 6. Fitness: 4.870, Depth: 0.36
+	O2
+ 7. Fitness: 4.818, Depth: 0.29
+	O2
+ 8. Fitness: 4.725, Depth: 0.87
+	O2
+ 9. Fitness: 4.200, Depth: 1.44
+	O2
+10. Fitness: 4.200, Depth: 0.56
+	O2
+Total unique experiments: 100
 Total redo experiments chosen: 10 (0 'bad' repeats)
 Training GPR model...
-Iter 1/100 | Train loss: 1.2888
-Iter 2/100 | Train loss: 1.2020
+Iter 1/100 | Train loss: 3.4354
+Iter 2/100 | Train loss: 3.1748
 ...
 
-Iter 99/100 | Train loss: -2.5310
-Iter 100/100 | Train loss: -2.5316
-Final MSE: 0.0003
-Final R2: 0.1484
+Iter 99/100 | Train loss: 1.8823
+Iter 100/100 | Train loss: 1.8823
+Final MSE: 0.6771
+Final R2: 0.7319
 Creating simulation-based batch...
 0 SimType.ROLLOUT 90 90 0
 ```
@@ -351,7 +363,7 @@ Process data from Round 2 and continue iterating:
 ### Process Round 2 Data
 
 ```bash
-bacterai process_data biotek /path/to/my_experiment --round 2 --signal 600 --feature delta_od --date 2026-04-18
+bacterai process_data biotek /path/to/my_experiment --round 2 --signal 600 --feature delta_od
 ```
 
 ### Run Round 3

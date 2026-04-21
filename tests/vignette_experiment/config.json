@@ -1,0 +1,22 @@
+{
+  "experiment_path": "/Users/ston832/Library/CloudStorage/OneDrive-PNNL/Documents/projects/ppi/data/P_putida_AG5577_baseline",
+  "ingredients_file": "ingredients.json",
+  "grow_threshold": 0.25,
+  "nickname": "Test",
+  "batch_size": 90,
+  "timeout_min": 60,
+  "model_type": 0,
+  "direction": 0,
+  "beyond_frontier": true,
+  "use_unique": false,
+  "n_rollouts": 2,
+  "n_bags": 25,
+  "transfer_model_folder": null,
+  "transfer_data_dir": null,
+  "redo_size": 10,
+  "redo_threshold": [0.0, 0.4],
+  "aas_only": false,
+  "separate_redos": false,
+  "simulation_types": [2],
+  "random_walk_increment": 10
+}
