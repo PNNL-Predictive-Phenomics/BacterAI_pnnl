@@ -269,7 +269,7 @@ Successfully processed 100 experiments (100 unique experiments)
 Output written to: path/to/vignette_experiment/Round1/mapped_data_{date}_biotek_delta_od_data.csv
 
 Data preview (first 5 rows):
-   feature  bad plate_control plate_blank                                       parent_plate  experiment_number       strain environment
+   feature  bad plate_control plate_blank     parent_plate  experiment_number       strain environment
 0    0.143    0          True       False  <plate-id-code>               9999  Test_strain         PH5
 1    0.024    0         False        True  <plate-id-code>               9999  Test_strain         PH5
 2   -0.003    1         False       False  <plate-id-code>                 76  Test_strain         PH5
