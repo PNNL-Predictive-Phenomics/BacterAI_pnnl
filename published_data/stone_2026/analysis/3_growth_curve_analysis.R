@@ -33,22 +33,22 @@ read_biotek <- function(filename, signal = '600') {
 }
 
 # load data
-ra <- rbind(fread('../data/Round1/results_all.csv'),
-            fread('../data/Round2/results_all.csv'),
-            fread('../data/Round3/results_all.csv'))
+ra <- rbind(fread('../expt_rounds/Round1/results_all.csv'),
+            fread('../expt_rounds/Round2/results_all.csv'),
+            fread('../expt_rounds/Round3/results_all.csv'))
 
-ingred <- readxl::read_excel('../data/ingredients.xlsx', sheet = 1) |> setDT()
+ingred <- readxl::read_excel('../expt_rounds/ingredients.xlsx', sheet = 1) |> setDT()
 ingred <- ingred[INGREDIENT %in% names(ra)]
 
 # load growth curve data -- the above results data helps determine which experiments are bad
-gc <- rbind(read_biotek('../data/experiment_request/2025-04-15/data/c2af7184_data.xlsx')[, round := 1],
-            read_biotek('../data/experiment_request/2025-09-11/data/25e5dbfa.xlsx')[, round := 2],
-            read_biotek('../data/experiment_request/2025-09-22/data/aab1ab3c_data.xlsx')[, round := 3])
+gc <- rbind(read_biotek('../expt_rounds/experiment_request/2025-04-15/data/c2af7184_data.xlsx')[, round := 1],
+            read_biotek('../expt_rounds/experiment_request/2025-09-11/data/25e5dbfa.xlsx')[, round := 2],
+            read_biotek('../expt_rounds/experiment_request/2025-09-22/data/aab1ab3c_data.xlsx')[, round := 3])
 
 # load plate maps
-pm <- rbind(fread('../data/experiment_request/2025-04-15/plate_maps/PpAG5577$6b89594af61d036c3b9a9bf72cdc3e522d6dbea0/map.csv')[, round := 1],
-            fread('../data/experiment_request/2025-09-11/plate_maps/PpAG5577$6e84dc13d2d930cba3b2b5d36efc0767f5b7919d/map.csv')[, round := 2],
-            fread('../data/experiment_request/2025-09-22/plate_maps/PpAG5577$f6b26280bf6fe89f524b965dae10494d99fadb4a/map.csv')[, round := 3],
+pm <- rbind(fread('../expt_rounds/experiment_request/2025-04-15/plate_maps/PpAG5577$6b89594af61d036c3b9a9bf72cdc3e522d6dbea0/map.csv')[, round := 1],
+            fread('../expt_rounds/experiment_request/2025-09-11/plate_maps/PpAG5577$6e84dc13d2d930cba3b2b5d36efc0767f5b7919d/map.csv')[, round := 2],
+            fread('../expt_rounds/experiment_request/2025-09-22/plate_maps/PpAG5577$f6b26280bf6fe89f524b965dae10494d99fadb4a/map.csv')[, round := 3],
             fill = T)
 
 pm[, environment := toupper(environment)]

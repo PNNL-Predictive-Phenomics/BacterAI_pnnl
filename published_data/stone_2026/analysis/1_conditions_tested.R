@@ -8,13 +8,13 @@ library(ggplot2)
 source('calc_depth_function.R')
 
 # load data
-ra <- rbind(fread('../data/Round1/results_all.csv'),
-            fread('../data/Round2/results_all.csv'),
-            fread('../data/Round3/results_all.csv'))
+ra <- rbind(fread('../expt_rounds/Round1/results_all.csv'),
+            fread('../expt_rounds/Round2/results_all.csv'),
+            fread('../expt_rounds/Round3/results_all.csv'))
 
-r4 <- fread('../data/Round4/batch_meta_2026-01-09T14.55.04.356154.csv')
+r4 <- fread('../expt_rounds/Round4/batch_meta_2026-01-09T14.55.04.356154.csv')
 
-ingred <- readxl::read_excel('../data/ingredients.xlsx', sheet = 1) |> setDT()
+ingred <- readxl::read_excel('../expt_rounds/ingredients.xlsx', sheet = 1) |> setDT()
 ingred <- ingred[INGREDIENT %in% names(ra)]
 
 

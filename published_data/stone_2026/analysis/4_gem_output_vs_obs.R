@@ -8,11 +8,11 @@ source('calc_depth_function.R')
 # load experiment data
 # "feature" column = raw delta OD
 # "fitness" column = delta OD normalized to average positive plate control (should be consistent across plates)
-ra <- rbind(fread('../data/Round1/results_all.csv'),
-            fread('../data/Round2/results_all.csv'),
-            fread('../data/Round3/results_all.csv'))
+ra <- rbind(fread('../expt_rounds/Round1/results_all.csv'),
+            fread('../expt_rounds/Round2/results_all.csv'),
+            fread('../expt_rounds/Round3/results_all.csv'))
 
-ingred <- readxl::read_excel('../data/ingredients.xlsx', sheet = 1) |> setDT()
+ingred <- readxl::read_excel('../expt_rounds/ingredients.xlsx', sheet = 1) |> setDT()
 ingred <- ingred[INGREDIENT %in% names(ra)]
 
 apc <- fread('positive_ctrls.csv')
@@ -20,7 +20,7 @@ apc_mgr <- fread('positive_ctrls_mgr.csv')
 mgr <- fread('max_growth_rates.csv')
 
 # load GEM-model OD output
-get_batch <- function(data = '../data/Batch_growth_predictions_AG5577_3_rounds.xlsx', round = 1) {
+get_batch <- function(data = '../expt_rounds/Batch_growth_predictions_AG5577_3_rounds.xlsx', round = 1) {
     readxl::read_excel(data, sheet = sprintf('round%i', round)) |> 
         setDT() |> 
         (\(.) if(round > 1) subset(., select = -1) else .)() |> 

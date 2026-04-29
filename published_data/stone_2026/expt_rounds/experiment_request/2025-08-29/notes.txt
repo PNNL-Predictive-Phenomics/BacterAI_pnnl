@@ -1,0 +1,11 @@
+For the second round run, there is data for an earlier date and for another later date.
+
+The later date represents the correct run.
+
+The earlier date uses media made with trace minerals, even though these were supposed to be a changeable variable from BacterAI.
+
+As a result, the earlier data represents experiments with trace minerals in every well.
+
+It was still necessary to test this run because we utilized a 1-day pre-incubation procedure with Oxyrase that I wanted to test.
+
+The later run represents the same experiments but using minimal media that do not have trace minerals in them -- allowing them to be modulated separately in each experiment.
