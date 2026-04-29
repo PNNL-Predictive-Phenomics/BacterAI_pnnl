@@ -1,0 +1,323 @@
+Media Results (Top 10):
+ 1. Fitness: 5.392, Depth: 30.85
+	mme_trace_minerals
+ 2. Fitness: 5.302, Depth: 46.7
+ 3. Fitness: 4.845, Depth: 88.7
+ 4. Fitness: 4.721, Depth: 29.65
+	mme_trace_minerals
+ 5. Fitness: 4.569, Depth: 57.449999999999996
+	O2
+ 6. Fitness: 4.257, Depth: 110.45
+ 7. Fitness: 4.257, Depth: 57.849999999999994
+	O2
+ 8. Fitness: 4.236, Depth: 92.39999999999999
+ 9. Fitness: 4.229, Depth: 29.550000000000004
+	ammonium_chloride
+10. Fitness: 4.222, Depth: 127.75
+Total unique experiments: 273
+Iter 1/100 | Train loss: 3.1002
+Iter 2/100 | Train loss: 2.8640
+Iter 3/100 | Train loss: 2.6646
+Iter 4/100 | Train loss: 2.4974
+Iter 5/100 | Train loss: 2.3581
+Iter 6/100 | Train loss: 2.2428
+Iter 7/100 | Train loss: 2.1477
+Iter 8/100 | Train loss: 2.0697
+Iter 9/100 | Train loss: 2.0059
+Iter 10/100 | Train loss: 1.9539
+Iter 11/100 | Train loss: 1.9114
+Iter 12/100 | Train loss: 1.8769
+Iter 13/100 | Train loss: 1.8486
+Iter 14/100 | Train loss: 1.8256
+Iter 15/100 | Train loss: 1.8066
+Iter 16/100 | Train loss: 1.7910
+Iter 17/100 | Train loss: 1.7781
+Iter 18/100 | Train loss: 1.7673
+Iter 19/100 | Train loss: 1.7582
+Iter 20/100 | Train loss: 1.7504
+Iter 21/100 | Train loss: 1.7437
+Iter 22/100 | Train loss: 1.7378
+Iter 23/100 | Train loss: 1.7326
+Iter 24/100 | Train loss: 1.7279
+Iter 25/100 | Train loss: 1.7236
+Iter 26/100 | Train loss: 1.7196
+Iter 27/100 | Train loss: 1.7158
+Iter 28/100 | Train loss: 1.7122
+Iter 29/100 | Train loss: 1.7087
+Iter 30/100 | Train loss: 1.7054
+Iter 31/100 | Train loss: 1.7021
+Iter 32/100 | Train loss: 1.6988
+Iter 33/100 | Train loss: 1.6955
+Iter 34/100 | Train loss: 1.6923
+Iter 35/100 | Train loss: 1.6890
+Iter 36/100 | Train loss: 1.6858
+Iter 37/100 | Train loss: 1.6825
+Iter 38/100 | Train loss: 1.6793
+Iter 39/100 | Train loss: 1.6761
+Iter 40/100 | Train loss: 1.6728
+Iter 41/100 | Train loss: 1.6696
+Iter 42/100 | Train loss: 1.6663
+Iter 43/100 | Train loss: 1.6631
+Iter 44/100 | Train loss: 1.6599
+Iter 45/100 | Train loss: 1.6567
+Iter 46/100 | Train loss: 1.6536
+Iter 47/100 | Train loss: 1.6505
+Iter 48/100 | Train loss: 1.6474
+Iter 49/100 | Train loss: 1.6443
+Iter 50/100 | Train loss: 1.6413
+Iter 51/100 | Train loss: 1.6384
+Iter 52/100 | Train loss: 1.6355
+Iter 53/100 | Train loss: 1.6326
+Iter 54/100 | Train loss: 1.6298
+Iter 55/100 | Train loss: 1.6271
+Iter 56/100 | Train loss: 1.6244
+Iter 57/100 | Train loss: 1.6218
+Iter 58/100 | Train loss: 1.6192
+Iter 59/100 | Train loss: 1.6167
+Iter 60/100 | Train loss: 1.6142
+Iter 61/100 | Train loss: 1.6118
+Iter 62/100 | Train loss: 1.6095
+Iter 63/100 | Train loss: 1.6073
+Iter 64/100 | Train loss: 1.6051
+Iter 65/100 | Train loss: 1.6030
+Iter 66/100 | Train loss: 1.6010
+Iter 67/100 | Train loss: 1.5991
+Iter 68/100 | Train loss: 1.5973
+Iter 69/100 | Train loss: 1.5955
+Iter 70/100 | Train loss: 1.5939
+Iter 71/100 | Train loss: 1.5923
+Iter 72/100 | Train loss: 1.5908
+Iter 73/100 | Train loss: 1.5894
+Iter 74/100 | Train loss: 1.5882
+Iter 75/100 | Train loss: 1.5870
+Iter 76/100 | Train loss: 1.5858
+Iter 77/100 | Train loss: 1.5848
+Iter 78/100 | Train loss: 1.5838
+Iter 79/100 | Train loss: 1.5829
+Iter 80/100 | Train loss: 1.5821
+Iter 81/100 | Train loss: 1.5813
+Iter 82/100 | Train loss: 1.5806
+Iter 83/100 | Train loss: 1.5800
+Iter 84/100 | Train loss: 1.5794
+Iter 85/100 | Train loss: 1.5788
+Iter 86/100 | Train loss: 1.5783
+Iter 87/100 | Train loss: 1.5778
+Iter 88/100 | Train loss: 1.5774
+Iter 89/100 | Train loss: 1.5770
+Iter 90/100 | Train loss: 1.5766
+Iter 91/100 | Train loss: 1.5763
+Iter 92/100 | Train loss: 1.5760
+Iter 93/100 | Train loss: 1.5757
+Iter 94/100 | Train loss: 1.5754
+Iter 95/100 | Train loss: 1.5751
+Iter 96/100 | Train loss: 1.5749
+Iter 97/100 | Train loss: 1.5747
+Iter 98/100 | Train loss: 1.5745
+Iter 99/100 | Train loss: 1.5744
+Iter 100/100 | Train loss: 1.5742
+Final MSE: 0.0322
+0 SimType.ROLLOUT 100 100 0
+Performing ROLLOUT Sims (DOWN) (1 loops)      0 / 100
+	ADDED: [ 0.   2.   2.8  0.8  8.4  1.   7.  37.5 12.5  0.8  0.2  0.4] - FRONTIER
+
+	ADDED: [ 0.   2.   2.8  0.8  8.4  1.   7.  37.5 12.5  0.8  0.2  0.3] - BEYOND
+Performing ROLLOUT Sims (DOWN) (2 loops)      2 / 100
+	ADDED: [ 0.   2.4  0.8  0.8  8.4  1.   9.  50.  12.5  0.2  0.3  0.5] - FRONTIER
+
+	ADDED: [ 0.   2.4  0.8  0.8  8.4  1.   9.  50.  25.   0.2  0.3  0.5] - BEYOND
+Performing ROLLOUT Sims (DOWN) (3 loops)      4 / 100Warning: SVD convergence issue. Increasing jitter to 0.0001
+
+	ADDED: [ 0.    1.2   1.6   1.    9.6   0.75  9.   37.5  37.5   0.5   0.3   0.5 ] - FRONTIER
+
+	ADDED: [ 0.    1.2   1.6   1.    9.6   0.75  9.   37.5  37.5   0.5   0.25  0.5 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (4 loops)      6 / 100
+	ADDED: [ 0.    0.8   2.4   1.6   8.4   1.25  5.   50.   25.    0.7   0.2   0.6 ] - FRONTIER
+
+	ADDED: [ 0.    0.8   2.4   1.6   7.2   1.25  5.   50.   25.    0.7   0.2   0.6 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (5 loops)      8 / 100
+	ADDED: [ 0.    4.    3.2   1.2  10.8   2.25  9.   12.5  12.5   0.9   0.5   1.  ] - FRONTIER
+
+	ADDED: [ 0.    4.    2.8   1.2  10.8   2.25  9.   12.5  12.5   0.9   0.5   1.  ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (6 loops)      10 / 100
+	ADDED: [ 0.    3.2   2.4   1.8  10.8   2.25  9.   37.5  12.5   0.9   0.45  0.9 ] - FRONTIER
+
+	ADDED: [ 0.    3.2   2.4   1.8  10.8   2.25  9.   37.5  12.5   0.9   0.4   0.9 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (7 loops)      12 / 100
+	ADDED: [ 0.    3.6   3.6   1.4  10.8   2.25  9.   12.5  12.5   0.7   0.4   0.7 ] - FRONTIER
+
+	ADDED: [ 0.   3.6  3.6  1.4 10.8  2.   9.  12.5 12.5  0.7  0.4  0.7] - BEYOND
+Performing ROLLOUT Sims (DOWN) (8 loops)      14 / 100
+	ADDED: [ 1.   3.6  3.6  1.6 12.   2.5  7.  25.  12.5  0.7  0.5  0.9] - FRONTIER
+
+	ADDED: [ 0.   3.6  3.6  1.6 12.   2.5  7.  25.  12.5  0.7  0.5  0.9] - BEYOND
+Performing ROLLOUT Sims (DOWN) (9 loops)      16 / 100
+	ADDED: [ 0.    1.6   0.8   1.4   3.6   0.25  5.   75.   25.    0.6   0.    0.2 ] - FRONTIER
+
+	ADDED: [ 0.    1.6   0.8   1.4   2.4   0.25  5.   75.   25.    0.6   0.    0.2 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (10 loops)      18 / 100
+	ADDED: [ 1.   0.   1.2  0.6 10.8  1.5  5.  37.5 25.   0.4  0.2  0.6] - FRONTIER
+
+	ADDED: [ 1.   0.   0.8  0.6 10.8  1.5  5.  37.5 25.   0.4  0.2  0.6] - BEYOND
+Performing ROLLOUT Sims (DOWN) (11 loops)      20 / 100
+	ADDED: [ 0.    1.2   2.    1.4   7.2   1.75  5.   37.5  25.    0.8   0.2   0.6 ] - FRONTIER
+
+	ADDED: [ 0.    0.8   2.    1.4   7.2   1.75  5.   37.5  25.    0.8   0.2   0.6 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (12 loops)      22 / 100
+	ADDED: [ 0.   3.2  3.6  0.8  4.8  1.5  5.  50.  50.   0.4  0.4  0.6] - FRONTIER
+
+	ADDED: [ 0.   3.2  3.6  0.8  4.8  1.5  5.  50.  50.   0.4  0.4  0.5] - BEYOND
+Performing ROLLOUT Sims (DOWN) (13 loops)      24 / 100
+	ADDED: [ 0.   2.   1.6  1.   7.2  0.5  9.  37.5 12.5  0.8  0.1  0.3] - FRONTIER
+
+	ADDED: [ 0.   2.   1.6  1.   7.2  0.5  9.  37.5 25.   0.8  0.1  0.3] - BEYOND
+Performing ROLLOUT Sims (DOWN) (14 loops)      26 / 100
+	ADDED: [ 0.    3.6   3.2   1.8   8.4   2.5   7.   25.   25.    1.    0.45  0.8 ] - FRONTIER
+
+	ADDED: [ 0.    3.6   3.2   1.6   8.4   2.5   7.   25.   25.    1.    0.45  0.8 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (15 loops)      28 / 100
+	ADDED: [ 0.    2.4   1.6   0.    8.4   1.    5.   37.5  12.5   0.4   0.05  0.4 ] - FRONTIER
+
+	ADDED: [ 0.    2.    1.6   0.    8.4   1.    5.   37.5  12.5   0.4   0.05  0.4 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (16 loops)      30 / 100
+	ADDED: [ 1.   3.2  3.6  1.8 10.8  2.5  7.  12.5 12.5  0.9  0.5  0.9] - FRONTIER
+
+	ADDED: [ 1.   3.2  3.6  1.8 10.8  2.5  7.  25.  12.5  0.9  0.5  0.9] - BEYOND
+Performing ROLLOUT Sims (DOWN) (17 loops)      32 / 100
+	ADDED: [ 0.   0.4  1.2  0.4  8.4  1.5  5.  87.5 37.5  0.5  0.4  0.3] - FRONTIER
+
+	ADDED: [ 0.   0.4  0.8  0.4  8.4  1.5  5.  87.5 37.5  0.5  0.4  0.3] - BEYOND
+Performing ROLLOUT Sims (DOWN) (18 loops)      34 / 100
+	ADDED: [ 0.    3.2   3.6   1.6   9.6   1.5   9.   25.    0.    0.9   0.35  0.9 ] - FRONTIER
+
+	ADDED: [ 0.    3.2   3.6   1.6   9.6   1.5   9.   37.5   0.    0.9   0.35  0.9 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (19 loops)      36 / 100
+	ADDED: [ 1.    3.6   2.8   1.8   8.4   1.5   5.   25.   25.    0.8   0.45  1.  ] - FRONTIER
+
+	ADDED: [ 1.    3.6   2.8   1.8   8.4   1.5   5.   37.5  25.    0.8   0.45  1.  ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (20 loops)      38 / 100
+	ADDED: [ 0.    3.6   4.    1.8  10.8   2.5   9.   12.5  12.5   0.8   0.45  0.9 ] - FRONTIER
+
+	ADDED: [ 0.    3.2   4.    1.8  10.8   2.5   9.   12.5  12.5   0.8   0.45  0.9 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (21 loops)      40 / 100
+	ADDED: [ 0.    1.6   1.2   1.8   6.    0.25  5.   50.   75.    0.4   0.3   0.1 ] - FRONTIER
+
+	ADDED: [ 0.    1.6   0.8   1.8   6.    0.25  5.   50.   75.    0.4   0.3   0.1 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (22 loops)      42 / 100
+	ADDED: [ 0.    1.2   1.6   1.2   4.8   1.25  7.   50.   25.    0.2   0.35  0.6 ] - FRONTIER
+
+	ADDED: [ 0.    1.2   1.6   1.    4.8   1.25  7.   50.   25.    0.2   0.35  0.6 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (23 loops)      44 / 100
+	ADDED: [0.  4.  3.2 1.2 8.4 1.5 9.  0.  0.  0.8 0.5 0.9] - FRONTIER
+
+	ADDED: [ 0.   4.   3.2  1.2  8.4  1.5  9.  12.5  0.   0.8  0.5  0.9] - BEYOND
+Performing ROLLOUT Sims (DOWN) (24 loops)      46 / 100
+	ADDED: [ 0.    4.    3.6   1.4   7.2   2.25  9.   12.5   0.    0.7   0.45  0.9 ] - FRONTIER
+
+	ADDED: [ 0.    4.    3.6   1.4   7.2   2.25  9.   25.    0.    0.7   0.45  0.9 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (25 loops)      48 / 100
+	ADDED: [ 0.    2.    2.    1.    9.6   1.75  9.   25.    0.    1.    0.2   0.8 ] - FRONTIER
+
+	ADDED: [ 0.    2.    2.    0.8   9.6   1.75  9.   25.    0.    1.    0.2   0.8 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (26 loops)      50 / 100
+	ADDED: [ 0.   3.6  1.6  1.2  8.4  1.5  7.  25.  25.   0.5  0.2  0.5] - FRONTIER
+
+	ADDED: [ 0.   3.6  1.6  1.2  8.4  1.5  7.  37.5 25.   0.5  0.2  0.5] - BEYOND
+Performing ROLLOUT Sims (DOWN) (27 loops)      52 / 100
+	ADDED: [ 0.    2.4   3.6   1.6   7.2   1.75  5.   75.   25.    1.    0.3   0.9 ] - FRONTIER
+
+	ADDED: [ 0.    2.4   3.6   1.6   6.    1.75  5.   75.   25.    1.    0.3   0.9 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (28 loops)      54 / 100
+	ADDED: [ 0.    2.    2.    1.6   8.4   2.25  7.   75.   12.5   0.8   0.45  0.6 ] - FRONTIER
+
+	ADDED: [ 0.    2.    2.    1.6   8.4   2.25  5.   75.   12.5   0.8   0.45  0.6 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (29 loops)      56 / 100
+	ADDED: [ 1.    3.6   3.6   2.   12.    2.25  7.   25.   12.5   0.9   0.4   0.9 ] - FRONTIER
+
+	ADDED: [ 1.    3.6   3.6   2.   10.8   2.25  7.   25.   12.5   0.9   0.4   0.9 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (30 loops)      58 / 100
+	ADDED: [ 0.    3.6   3.6   1.6   8.4   2.5   7.   12.5   0.    1.    0.45  0.5 ] - FRONTIER
+
+	ADDED: [ 0.    3.6   3.6   1.6   8.4   2.25  7.   12.5   0.    1.    0.45  0.5 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (31 loops)      60 / 100
+	ADDED: [ 0.    3.2   3.6   1.4   6.    1.5   9.   37.5  25.    0.7   0.25  0.8 ] - FRONTIER
+
+	ADDED: [ 0.    3.2   3.6   1.4   4.8   1.5   9.   37.5  25.    0.7   0.25  0.8 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (32 loops)      62 / 100
+	ADDED: [ 0.    3.6   2.    1.4   8.4   1.75  5.   62.5  25.    0.6   0.3   0.5 ] - FRONTIER
+
+	ADDED: [ 0.    3.6   2.    1.4   8.4   1.75  5.   62.5  25.    0.6   0.25  0.5 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (33 loops)      64 / 100
+	ADDED: [ 0.    2.8   3.6   1.    8.4   1.75  9.    0.   25.    0.6   0.4   1.  ] - FRONTIER
+
+	ADDED: [ 0.    2.8   3.6   1.    8.4   1.75  9.    0.   25.    0.6   0.4   0.9 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (34 loops)      66 / 100
+	ADDED: [ 0.    2.    0.8   0.8   8.4   0.75  9.   37.5  50.    0.7   0.15  0.5 ] - FRONTIER
+
+	ADDED: [ 0.    2.    0.8   0.8   8.4   0.75  9.   50.   50.    0.7   0.15  0.5 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (35 loops)      68 / 100
+	ADDED: [ 0.    2.8   2.8   1.4  10.8   2.    9.    0.   12.5   0.9   0.45  1.  ] - FRONTIER
+
+	ADDED: [ 0.    2.8   2.8   1.4  10.8   2.    7.    0.   12.5   0.9   0.45  1.  ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (36 loops)      70 / 100
+	ADDED: [ 1.   3.6  4.   2.  12.   2.5  9.  25.   0.   1.   0.5  1. ] - FRONTIER
+
+	ADDED: [ 1.    3.6   4.    2.   12.    2.25  9.   25.    0.    1.    0.5   1.  ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (37 loops)      72 / 100
+	ADDED: [ 0.   2.8  2.   1.2  6.   1.5  7.  25.  25.   0.6  0.4  0.6] - FRONTIER
+
+	ADDED: [ 0.   2.8  2.   1.2  6.   1.5  5.  25.  25.   0.6  0.4  0.6] - BEYOND
+Performing ROLLOUT Sims (DOWN) (38 loops)      74 / 100
+	ADDED: [ 1.   3.6  4.   2.  10.8  2.5  9.   0.   0.   1.   0.5  1. ] - FRONTIER
+
+	ADDED: [1.  3.6 4.  2.  9.6 2.5 9.  0.  0.  1.  0.5 1. ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (39 loops)      76 / 100
+	ADDED: [ 0.    1.2   1.6   0.4   4.8   1.25  9.   62.5  25.    0.3   0.25  0.7 ] - FRONTIER
+
+	ADDED: [ 0.    1.2   1.6   0.4   4.8   1.25  9.   75.   25.    0.3   0.25  0.7 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (40 loops)      78 / 100
+	ADDED: [0.00e+00 2.00e+00 1.60e+00 1.20e+00 2.40e+00 2.50e-01 5.00e+00 6.25e+01
+ 5.00e+01 3.00e-01 5.00e-02 2.00e-01] - FRONTIER
+
+	ADDED: [0.00e+00 2.00e+00 1.20e+00 1.20e+00 2.40e+00 2.50e-01 5.00e+00 6.25e+01
+ 5.00e+01 3.00e-01 5.00e-02 2.00e-01] - BEYOND
+Performing ROLLOUT Sims (DOWN) (41 loops)      80 / 100
+	ADDED: [ 1.   4.   4.   2.  10.8  2.5  9.   0.   0.   1.   0.5  1. ] - FRONTIER
+
+	ADDED: [ 0.   4.   4.   2.  10.8  2.5  9.   0.   0.   1.   0.5  1. ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (42 loops)      82 / 100
+	ADDED: [ 0.    4.    2.4   1.2   9.6   1.75  9.    0.   12.5   0.8   0.4   0.8 ] - FRONTIER
+
+	ADDED: [ 0.    4.    2.4   1.2   9.6   1.75  9.    0.   25.    0.8   0.4   0.8 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (43 loops)      84 / 100
+	ADDED: [ 0.    3.6   4.    1.8  10.8   2.25  7.   12.5  12.5   0.8   0.45  0.9 ] - FRONTIER
+
+	ADDED: [ 0.    3.6   4.    1.8  10.8   2.25  7.   12.5  25.    0.8   0.45  0.9 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (44 loops)      86 / 100
+	ADDED: [ 0.    2.8   1.6   1.2   9.6   0.75  9.   25.   12.5   0.6   0.25  0.5 ] - FRONTIER
+
+	ADDED: [ 0.    2.8   1.6   1.2   8.4   0.75  9.   25.   12.5   0.6   0.25  0.5 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (45 loops)      88 / 100
+	ADDED: [ 0.    3.6   3.2   1.4   7.2   2.    7.   37.5  12.5   0.9   0.45  0.7 ] - FRONTIER
+
+	ADDED: [ 0.    3.6   3.2   1.4   7.2   2.    7.   37.5  12.5   0.8   0.45  0.7 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (46 loops)      90 / 100
+	ADDED: [ 0.    3.6   2.4   1.2  10.8   1.75  7.   62.5   0.    0.8   0.4   0.6 ] - FRONTIER
+
+	ADDED: [ 0.   3.6  2.4  1.2 10.8  1.5  7.  62.5  0.   0.8  0.4  0.6] - BEYOND
+Performing ROLLOUT Sims (DOWN) (47 loops)      92 / 100
+	ADDED: [ 0.    1.2   1.6   0.2   8.4   1.5   7.   37.5  37.5   0.4   0.25  0.7 ] - FRONTIER
+
+	ADDED: [ 0.    1.2   1.6   0.2   8.4   1.5   7.   37.5  50.    0.4   0.25  0.7 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (48 loops)      94 / 100
+	ADDED: [ 0.    2.4   2.4   1.    8.4   1.75  9.   37.5  37.5   0.8   0.45  0.6 ] - FRONTIER
+
+	ADDED: [ 0.    2.4   2.4   1.    8.4   1.75  9.   37.5  50.    0.8   0.45  0.6 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (49 loops)      96 / 100
+	ADDED: [ 0.    2.8   2.8   1.4   8.4   1.75  9.   12.5   0.    0.8   0.35  0.9 ] - FRONTIER
+
+	ADDED: [ 0.    2.8   2.8   1.2   8.4   1.75  9.   12.5   0.    0.8   0.35  0.9 ] - BEYOND
+Performing ROLLOUT Sims (DOWN) (50 loops)      98 / 100
+	ADDED: [ 0.    3.6   4.    1.8   9.6   2.25  9.   12.5  12.5   0.8   0.45  0.9 ] - FRONTIER
+
+	ADDED: [ 0.    3.6   4.    1.8   9.6   2.25  9.   12.5  12.5   0.8   0.45  0.8 ] - BEYOND
+perform_simulations function took 1993597.61 ms

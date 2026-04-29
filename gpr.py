@@ -113,8 +113,30 @@ def sample_GP(model, likelihood, X, n_samples=1):
     ## then a good diagnostic is to look at the eignevalues -- large negative values indicate instability
     #print("Covariance matrix eigenvalues:", np.linalg.eigvalsh(cov))
 
-    # Sample from the multivariate normal distribution
-    samples = np.atleast_1d(multivariate_normal.rvs(mean, cov, size=n_samples))
+    # Sample from the multivariate normal distribution with robust error handling
+    max_attempts = 3
+    jitter_values = [1e-6, 1e-4, 1e-3]  # Progressively larger jitter values
+    
+    for attempt in range(max_attempts):
+        try:
+            # Try to sample from the multivariate normal distribution
+            samples = np.atleast_1d(multivariate_normal.rvs(mean, cov, size=n_samples))
+            break
+        except np.linalg.LinAlgError as e:
+            if attempt < max_attempts - 1:
+                # Increase jitter and try again
+                additional_jitter = jitter_values[attempt + 1] - jitter_values[attempt]
+                cov += additional_jitter * np.eye(cov.shape[0])
+                print(f"Warning: SVD convergence issue. Increasing jitter to {jitter_values[attempt + 1]}")
+            else:
+                # Last resort: sample from independent normals using diagonal covariance only
+                print(f"Warning: SVD failed after {max_attempts} attempts. Falling back to diagonal covariance.")
+                variances_diag = np.diag(cov)
+                samples = np.array([np.random.normal(mean, np.sqrt(variances_diag)) for _ in range(n_samples)])
+                if n_samples == 1:
+                    samples = samples.flatten()
+                break
+    
     variances = np.diag(cov)
     
     return samples, variances

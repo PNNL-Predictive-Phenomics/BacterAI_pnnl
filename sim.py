@@ -1,5 +1,6 @@
 from enum import Enum
 import time
+import sys
 
 import numpy as np
 import pandas as pd
@@ -258,6 +259,7 @@ def perform_simulations(
         to test and their associated metadata (simulation parameters, predicted
         growth, etc.)
     """
+    
     if batch_set == None:
         batch_set = set()
     batch = []
@@ -266,7 +268,7 @@ def perform_simulations(
     terminating_variances = []
 
     desc = f"Performing {sim_type.name} Sims ({sim_direction.name})"
-    tq = tqdm(total=n, desc=desc)
+    #tq = tqdm(total=n, desc=desc, file=sys.stdout)
     not_timed_out = True
     start_time = time.time()
     loops = 1
@@ -274,13 +276,14 @@ def perform_simulations(
     adaptive_choice_history = []
 
     while len(batch) < n and not_timed_out:
-        tq.desc = f"{desc} ({loops} loops)"
+        #tq.desc = f"{desc} ({loops} loops)"
+        desc_loop = f"{desc} ({loops} loops)"
+        print(f"\r{desc_loop}      {len(batch)} / {n}", end = "", flush = True)
         current_state = state.copy()
-
         current_grow_pred = 0
         current_grow_var = 0
         while True:
-            # print(f"Current state: {current_state}")
+            #print(f"Current state: {current_state}")
             choices = []
             next_values = dict()
             for i, val in enumerate(current_state):
@@ -311,6 +314,7 @@ def perform_simulations(
                 break
 
             candidate_states = np.tile(current_state, (choices.size, 1))
+
             if sim_type == SimType.RANDOM:
                 action = np.random.choice(choices, 1, False)[0]  # Random one-step action
                 candidate_states[0, action] = next_values[action]  # Take action
@@ -423,7 +427,7 @@ def perform_simulations(
                         terminating_variances.append(va)
                         batch_frontier_types.append(ft)
                         batch_set.add(key)
-                        tq.update()
+                        #tq.update()
                         st_print = np.round(st, decimals=2)  # round decimals for printing
                         print(f"\n\tADDED: {st} - {ft}")
                         if sim_type == SimType.ROLLOUT_PROB:
@@ -444,7 +448,7 @@ def perform_simulations(
 
     duration = time.time() - start_time
 
-    tq.close()
+    #tq.close()
     if batch:
         batch = pd.DataFrame(np.vstack(batch))
         batch["type"] = sim_type.name

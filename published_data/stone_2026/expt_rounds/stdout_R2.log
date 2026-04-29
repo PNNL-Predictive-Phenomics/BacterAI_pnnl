@@ -1,0 +1,327 @@
+Media Results (Top 10):
+ 1. Fitness: 5.786, Depth: 159.23237050699998
+	O2
+ 2. Fitness: 5.498, Depth: 137.53949055599998
+	O2
+ 3. Fitness: 5.405, Depth: 113.29929403300001
+	O2
+ 4. Fitness: 5.117, Depth: 165.98389762599996
+	O2
+ 5. Fitness: 4.880, Depth: 144.24123005200002
+	O2
+ 6. Fitness: 4.870, Depth: 154.27227746
+	O2
+ 7. Fitness: 4.818, Depth: 177.46458692899998
+	O2
+ 8. Fitness: 4.725, Depth: 153.34967447699998
+	O2
+ 9. Fitness: 4.200, Depth: 171.92466958100002
+	O2
+10. Fitness: 4.200, Depth: 58.664829860999994
+	O2
+Total unique experiments: 82
+Iter 1/100 | Train loss: 3.9303
+Iter 2/100 | Train loss: 3.6123
+Iter 3/100 | Train loss: 3.3401
+Iter 4/100 | Train loss: 3.1082
+Iter 5/100 | Train loss: 2.9114
+Iter 6/100 | Train loss: 2.7449
+Iter 7/100 | Train loss: 2.6042
+Iter 8/100 | Train loss: 2.4857
+Iter 9/100 | Train loss: 2.3858
+Iter 10/100 | Train loss: 2.3016
+Iter 11/100 | Train loss: 2.2308
+Iter 12/100 | Train loss: 2.1711
+Iter 13/100 | Train loss: 2.1208
+Iter 14/100 | Train loss: 2.0784
+Iter 15/100 | Train loss: 2.0426
+Iter 16/100 | Train loss: 2.0123
+Iter 17/100 | Train loss: 1.9867
+Iter 18/100 | Train loss: 1.9651
+Iter 19/100 | Train loss: 1.9468
+Iter 20/100 | Train loss: 1.9313
+Iter 21/100 | Train loss: 1.9182
+Iter 22/100 | Train loss: 1.9071
+Iter 23/100 | Train loss: 1.8976
+Iter 24/100 | Train loss: 1.8897
+Iter 25/100 | Train loss: 1.8829
+Iter 26/100 | Train loss: 1.8772
+Iter 27/100 | Train loss: 1.8724
+Iter 28/100 | Train loss: 1.8683
+Iter 29/100 | Train loss: 1.8648
+Iter 30/100 | Train loss: 1.8618
+Iter 31/100 | Train loss: 1.8593
+Iter 32/100 | Train loss: 1.8571
+Iter 33/100 | Train loss: 1.8552
+Iter 34/100 | Train loss: 1.8536
+Iter 35/100 | Train loss: 1.8521
+Iter 36/100 | Train loss: 1.8508
+Iter 37/100 | Train loss: 1.8496
+Iter 38/100 | Train loss: 1.8485
+Iter 39/100 | Train loss: 1.8475
+Iter 40/100 | Train loss: 1.8465
+Iter 41/100 | Train loss: 1.8455
+Iter 42/100 | Train loss: 1.8445
+Iter 43/100 | Train loss: 1.8435
+Iter 44/100 | Train loss: 1.8425
+Iter 45/100 | Train loss: 1.8415
+Iter 46/100 | Train loss: 1.8404
+Iter 47/100 | Train loss: 1.8394
+Iter 48/100 | Train loss: 1.8382
+Iter 49/100 | Train loss: 1.8371
+Iter 50/100 | Train loss: 1.8359
+Iter 51/100 | Train loss: 1.8347
+Iter 52/100 | Train loss: 1.8334
+Iter 53/100 | Train loss: 1.8322
+Iter 54/100 | Train loss: 1.8309
+Iter 55/100 | Train loss: 1.8295
+Iter 56/100 | Train loss: 1.8282
+Iter 57/100 | Train loss: 1.8269
+Iter 58/100 | Train loss: 1.8255
+Iter 59/100 | Train loss: 1.8242
+Iter 60/100 | Train loss: 1.8228
+Iter 61/100 | Train loss: 1.8215
+Iter 62/100 | Train loss: 1.8202
+Iter 63/100 | Train loss: 1.8190
+Iter 64/100 | Train loss: 1.8177
+Iter 65/100 | Train loss: 1.8165
+Iter 66/100 | Train loss: 1.8154
+Iter 67/100 | Train loss: 1.8142
+Iter 68/100 | Train loss: 1.8132
+Iter 69/100 | Train loss: 1.8121
+Iter 70/100 | Train loss: 1.8112
+Iter 71/100 | Train loss: 1.8103
+Iter 72/100 | Train loss: 1.8094
+Iter 73/100 | Train loss: 1.8086
+Iter 74/100 | Train loss: 1.8078
+Iter 75/100 | Train loss: 1.8072
+Iter 76/100 | Train loss: 1.8065
+Iter 77/100 | Train loss: 1.8059
+Iter 78/100 | Train loss: 1.8054
+Iter 79/100 | Train loss: 1.8049
+Iter 80/100 | Train loss: 1.8045
+Iter 81/100 | Train loss: 1.8041
+Iter 82/100 | Train loss: 1.8038
+Iter 83/100 | Train loss: 1.8035
+Iter 84/100 | Train loss: 1.8032
+Iter 85/100 | Train loss: 1.8030
+Iter 86/100 | Train loss: 1.8028
+Iter 87/100 | Train loss: 1.8027
+Iter 88/100 | Train loss: 1.8025
+Iter 89/100 | Train loss: 1.8024
+Iter 90/100 | Train loss: 1.8023
+Iter 91/100 | Train loss: 1.8022
+Iter 92/100 | Train loss: 1.8022
+Iter 93/100 | Train loss: 1.8021
+Iter 94/100 | Train loss: 1.8021
+Iter 95/100 | Train loss: 1.8021
+Iter 96/100 | Train loss: 1.8021
+Iter 97/100 | Train loss: 1.8020
+Iter 98/100 | Train loss: 1.8020
+Iter 99/100 | Train loss: 1.8020
+Iter 100/100 | Train loss: 1.8020
+Final MSE: 0.5381
+0 SimType.ROLLOUT 100 100 0
+
+	ADDED: [ 1.   4.   4.   2.  12.   2.5  7.   0.  25.   0.9  0.5  1. ] - FRONTIER
+
+	ADDED: [ 1.   4.   4.   2.  12.   2.5  5.   0.  25.   0.9  0.5  1. ] - BEYOND
+
+	ADDED: [ 0.   2.4  3.2  1.4  9.6  2.5  5.  50.  25.   0.5  0.4  0.9] - FRONTIER
+
+	ADDED: [ 0.   2.4  3.2  1.4  9.6  2.5  5.  50.  25.   0.4  0.4  0.9] - BEYOND
+
+	ADDED: [ 1.    4.    4.    1.8  12.    2.25  7.    0.   12.5   1.    0.5   0.9 ] - FRONTIER
+
+	ADDED: [ 1.    4.    4.    1.8  12.    2.25  7.   12.5  12.5   1.    0.5   0.9 ] - BEYOND
+
+	ADDED: [ 0.   3.6  3.6  2.  10.8  2.5  9.   0.   0.   0.9  0.5  0.9] - FRONTIER
+
+	ADDED: [ 0.   3.6  3.6  2.  10.8  2.5  9.   0.   0.   0.8  0.5  0.9] - BEYOND
+
+	ADDED: [ 1.    4.    4.    2.   12.    2.5   9.    0.   12.5   0.8   0.45  1.  ] - FRONTIER
+
+	ADDED: [ 1.    4.    4.    2.   12.    2.5   9.    0.   25.    0.8   0.45  1.  ] - BEYOND
+
+	ADDED: [ 1.    4.    4.    2.   12.    2.5   9.    0.    0.    0.9   0.45  1.  ] - FRONTIER
+
+	ADDED: [ 1.    4.    4.    2.   12.    2.5   9.   12.5   0.    0.9   0.45  1.  ] - BEYOND
+
+	ADDED: [ 1.   4.   3.6  2.  10.8  2.5  9.  37.5  0.   0.9  0.5  0.9] - FRONTIER
+
+	ADDED: [ 1.   4.   3.6  2.  10.8  2.5  9.  37.5 12.5  0.9  0.5  0.9] - BEYOND
+
+	ADDED: [ 0.    2.4   2.    1.6   8.4   2.25  9.   12.5  50.    0.9   0.4   1.  ] - FRONTIER
+
+	ADDED: [ 0.    2.4   2.    1.6   8.4   2.25  7.   12.5  50.    0.9   0.4   1.  ] - BEYOND
+
+	ADDED: [ 0.    2.8   3.6   0.8  12.    1.75  7.   12.5  50.    0.8   0.35  1.  ] - FRONTIER
+
+	ADDED: [ 0.    2.8   3.6   0.8  12.    1.75  5.   12.5  50.    0.8   0.35  1.  ] - BEYOND
+
+	ADDED: [ 1.   4.   4.   2.  12.   2.5  9.  12.5 12.5  1.   0.5  1. ] - FRONTIER
+
+	ADDED: [ 1.   4.   4.   1.8 12.   2.5  9.  12.5 12.5  1.   0.5  1. ] - BEYOND
+
+	ADDED: [ 0.   3.6  3.6  1.8 12.   2.   9.   0.  12.5  0.9  0.5  0.8] - FRONTIER
+
+	ADDED: [ 0.   3.6  3.6  1.8 12.   2.   9.  12.5 12.5  0.9  0.5  0.8] - BEYOND
+
+	ADDED: [1.   4.   4.   2.   9.6  2.25 7.   0.   0.   0.9  0.5  1.  ] - FRONTIER
+
+	ADDED: [ 1.    4.    4.    2.    9.6   2.25  7.   12.5   0.    0.9   0.5   1.  ] - BEYOND
+
+	ADDED: [ 1.    1.6   3.2   1.8  10.8   2.25  9.   25.    0.    0.6   0.4   1.  ] - FRONTIER
+
+	ADDED: [ 1.    1.6   2.8   1.8  10.8   2.25  9.   25.    0.    0.6   0.4   1.  ] - BEYOND
+
+	ADDED: [ 0.   3.2  3.6  1.  10.8  2.   7.  12.5 37.5  0.7  0.4  1. ] - FRONTIER
+
+	ADDED: [ 0.   3.2  3.6  1.  10.8  2.   5.  12.5 37.5  0.7  0.4  1. ] - BEYOND
+
+	ADDED: [ 0.    2.4   4.    1.8  12.    2.25  5.   50.   50.    0.6   0.45  0.9 ] - FRONTIER
+
+	ADDED: [ 0.    2.    4.    1.8  12.    2.25  5.   50.   50.    0.6   0.45  0.9 ] - BEYOND
+
+	ADDED: [ 1.   4.   3.6  2.  12.   2.5  9.   0.  12.5  1.   0.5  1. ] - FRONTIER
+
+	ADDED: [ 0.   4.   3.6  2.  12.   2.5  9.   0.  12.5  1.   0.5  1. ] - BEYOND
+
+	ADDED: [ 0.    3.2   3.6   1.8  10.8   2.25  7.   25.   25.    0.9   0.4   0.6 ] - FRONTIER
+
+	ADDED: [ 0.    3.2   3.6   1.8  10.8   2.25  7.   25.   25.    0.9   0.4   0.5 ] - BEYOND
+
+	ADDED: [ 0.   3.6  3.6  2.  10.8  2.   7.  12.5 12.5  1.   0.5  0.9] - FRONTIER
+
+	ADDED: [ 0.   3.6  3.6  2.  10.8  2.   7.  12.5 12.5  0.9  0.5  0.9] - BEYOND
+
+	ADDED: [ 0.   2.8  2.   1.4  9.6  1.5  5.  75.  62.5  0.3  0.3  0.7] - FRONTIER
+
+	ADDED: [ 0.   2.8  2.   1.4  9.6  1.5  5.  75.  62.5  0.3  0.3  0.6] - BEYOND
+
+	ADDED: [ 1.   4.   4.   1.8 12.   2.5  9.   0.   0.   1.   0.5  1. ] - FRONTIER
+
+	ADDED: [ 0.   4.   4.   1.8 12.   2.5  9.   0.   0.   1.   0.5  1. ] - BEYOND
+
+	ADDED: [ 1.    3.2   2.8   1.8   8.4   1.75  7.   50.   50.    0.9   0.35  0.8 ] - FRONTIER
+
+	ADDED: [ 1.    3.2   2.8   1.8   8.4   1.5   7.   50.   50.    0.9   0.35  0.8 ] - BEYOND
+
+	ADDED: [ 0.   3.2  3.2  1.8 10.8  2.   5.  25.  25.   0.8  0.4  0.6] - FRONTIER
+
+	ADDED: [ 0.   3.2  3.2  1.8 10.8  2.   5.  25.  37.5  0.8  0.4  0.6] - BEYOND
+
+	ADDED: [ 0.    3.2   3.2   1.8   9.6   2.25  5.   12.5  12.5   0.8   0.5   1.  ] - FRONTIER
+
+	ADDED: [ 0.    3.2   3.2   1.8   9.6   2.25  5.   12.5  12.5   0.7   0.5   1.  ] - BEYOND
+
+	ADDED: [ 0.    4.    2.4   1.6  10.8   2.5   5.   12.5  25.    0.8   0.45  0.9 ] - FRONTIER
+
+	ADDED: [ 0.    3.6   2.4   1.6  10.8   2.5   5.   12.5  25.    0.8   0.45  0.9 ] - BEYOND
+
+	ADDED: [0.   2.4  3.6  1.6  9.6  1.75 5.   0.   0.   0.9  0.35 1.  ] - FRONTIER
+
+	ADDED: [0.   2.4  3.6  1.6  9.6  1.75 5.   0.   0.   0.9  0.3  1.  ] - BEYOND
+
+	ADDED: [ 0.    3.2   3.2   2.    9.6   1.25  9.   75.    0.    1.    0.5   0.9 ] - FRONTIER
+
+	ADDED: [ 0.    3.2   3.2   2.    9.6   1.25  7.   75.    0.    1.    0.5   0.9 ] - BEYOND
+
+	ADDED: [ 1.   4.   2.8  1.4  8.4  2.   5.  25.  12.5  0.7  0.5  1. ] - FRONTIER
+
+	ADDED: [ 1.   4.   2.8  1.2  8.4  2.   5.  25.  12.5  0.7  0.5  1. ] - BEYOND
+
+	ADDED: [ 1.    4.    4.    2.   12.    2.25  9.    0.    0.    1.    0.5   0.9 ] - FRONTIER
+
+	ADDED: [ 1.    3.6   4.    2.   12.    2.25  9.    0.    0.    1.    0.5   0.9 ] - BEYOND
+
+	ADDED: [ 0.    3.6   3.2   1.6  10.8   1.25  5.   12.5  37.5   0.8   0.45  0.7 ] - FRONTIER
+
+	ADDED: [ 0.    3.2   3.2   1.6  10.8   1.25  5.   12.5  37.5   0.8   0.45  0.7 ] - BEYOND
+
+	ADDED: [ 0.    2.4   3.2   0.4   4.8   1.75  5.   25.   12.5   0.5   0.2   0.6 ] - FRONTIER
+
+	ADDED: [ 0.    2.4   3.2   0.2   4.8   1.75  5.   25.   12.5   0.5   0.2   0.6 ] - BEYOND
+
+	ADDED: [ 0.    3.2   2.8   1.8  10.8   1.75  5.   62.5  50.    0.6   0.35  0.9 ] - FRONTIER
+
+	ADDED: [ 0.    2.8   2.8   1.8  10.8   1.75  5.   62.5  50.    0.6   0.35  0.9 ] - BEYOND
+
+	ADDED: [ 1.   4.   4.   2.  12.   2.5  9.   0.   0.   1.   0.5  1. ] - FRONTIER
+
+	ADDED: [ 0.   4.   4.   2.  12.   2.5  9.   0.   0.   1.   0.5  1. ] - BEYOND
+
+	ADDED: [ 0.   3.6  3.6  2.   9.6  2.   9.  12.5 12.5  1.   0.5  1. ] - FRONTIER
+
+	ADDED: [ 0.   3.6  3.6  2.   9.6  2.   7.  12.5 12.5  1.   0.5  1. ] - BEYOND
+
+	ADDED: [ 0.    2.8   3.2   2.   10.8   2.25  9.   12.5   0.    1.    0.35  0.9 ] - FRONTIER
+
+	ADDED: [ 0.    2.8   3.2   2.   10.8   2.25  9.   12.5  12.5   1.    0.35  0.9 ] - BEYOND
+
+	ADDED: [ 1.   4.   3.6  2.  10.8  2.5  9.  12.5  0.   0.9  0.5  1. ] - FRONTIER
+
+	ADDED: [ 1.   4.   3.6  2.  10.8  2.5  9.  12.5  0.   0.8  0.5  1. ] - BEYOND
+
+	ADDED: [  0.     1.6    1.6    0.6    6.     0.25   5.   125.   112.5    0.
+   0.4    0.7 ] - FRONTIER
+
+	ADDED: [  0.     1.6    1.6    0.6    6.     0.25   5.   125.   125.     0.
+   0.4    0.7 ] - BEYOND
+
+	ADDED: [ 1.   3.6  4.   2.  12.   2.5  9.   0.   0.   1.   0.5  1. ] - FRONTIER
+
+	ADDED: [ 1.   3.2  4.   2.  12.   2.5  9.   0.   0.   1.   0.5  1. ] - BEYOND
+
+	ADDED: [ 1.   4.   4.   2.  12.   2.5  9.   0.   0.   1.   0.5  1. ] - FRONTIER
+
+	ADDED: [ 1.   3.6  4.   2.  12.   2.5  9.   0.   0.   1.   0.5  1. ] - BEYOND
+
+	ADDED: [ 0.    4.    3.6   1.8  10.8   2.25  7.   25.    0.    0.9   0.5   0.9 ] - FRONTIER
+
+	ADDED: [ 0.    4.    3.6   1.8  10.8   2.25  7.   25.    0.    0.9   0.45  0.9 ] - BEYOND
+
+	ADDED: [ 1.   2.8  3.2  1.4  8.4  2.5  5.  62.5 25.   0.9  0.3  0.4] - FRONTIER
+
+	ADDED: [ 1.   2.8  3.2  1.2  8.4  2.5  5.  62.5 25.   0.9  0.3  0.4] - BEYOND
+
+	ADDED: [ 1.   3.6  4.   2.  12.   2.5  9.   0.   0.   1.   0.5  1. ] - FRONTIER
+
+	ADDED: [ 1.   3.6  4.   2.  12.   2.5  9.   0.   0.   0.9  0.5  1. ] - BEYOND
+
+	ADDED: [  0.    2.    1.2   1.2   6.    1.5   7.   50.  112.5   0.8   0.4   0.8] - FRONTIER
+
+	ADDED: [  0.    1.6   1.2   1.2   6.    1.5   7.   50.  112.5   0.8   0.4   0.8] - BEYOND
+
+	ADDED: [ 1.   4.   3.6  2.  12.   2.5  9.   0.   0.   1.   0.4  1. ] - FRONTIER
+
+	ADDED: [ 0.   4.   3.6  2.  12.   2.5  9.   0.   0.   1.   0.4  1. ] - BEYOND
+
+	ADDED: [ 0.    2.    3.2   1.4  10.8   2.5   5.   12.5  37.5   0.9   0.35  0.7 ] - FRONTIER
+
+	ADDED: [ 0.    2.    3.2   1.4  10.8   2.5   5.   12.5  50.    0.9   0.35  0.7 ] - BEYOND
+
+	ADDED: [ 1.    4.    3.6   2.   12.    2.25  7.    0.    0.    0.9   0.5   0.9 ] - FRONTIER
+
+	ADDED: [ 0.    4.    3.6   2.   12.    2.25  7.    0.    0.    0.9   0.5   0.9 ] - BEYOND
+
+	ADDED: [ 0.   4.   3.6  2.   8.4  2.   7.  12.5 12.5  0.9  0.4  0.8] - FRONTIER
+
+	ADDED: [ 0.   4.   3.6  2.   8.4  2.   7.  25.  12.5  0.9  0.4  0.8] - BEYOND
+
+	ADDED: [ 0.    3.6   4.    2.    9.6   2.25  7.    0.   12.5   1.    0.5   0.9 ] - FRONTIER
+
+	ADDED: [ 0.    3.6   4.    2.    9.6   2.25  7.    0.   25.    1.    0.5   0.9 ] - BEYOND
+
+	ADDED: [ 1.    4.    3.6   1.8  12.    2.5   7.   12.5  12.5   0.7   0.45  1.  ] - FRONTIER
+
+	ADDED: [ 1.    4.    3.6   1.8  12.    2.5   5.   12.5  12.5   0.7   0.45  1.  ] - BEYOND
+
+	ADDED: [ 0.    3.2   3.6   1.2   7.2   1.75  7.   12.5  25.    0.9   0.5   0.7 ] - FRONTIER
+
+	ADDED: [ 0.    3.2   3.6   1.    7.2   1.75  7.   12.5  25.    0.9   0.5   0.7 ] - BEYOND
+
+	ADDED: [ 1.   4.   2.8  1.8 12.   2.   9.  25.  25.   0.9  0.4  1. ] - FRONTIER
+
+	ADDED: [ 1.   4.   2.8  1.6 12.   2.   9.  25.  25.   0.9  0.4  1. ] - BEYOND
+perform_simulations function took 1094082.44 ms
