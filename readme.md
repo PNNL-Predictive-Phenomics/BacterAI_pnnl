@@ -324,9 +324,3 @@ The config file represents the main way to control the experiment.
   - Larger values increase exploration speed but decrease precision
   - Potential enhancement: make dynamic so increments decrease as rounds increase
 - Default: `10`
-
----
-
-### License
-The software was originally released from the Jensen lab under the MIT license and is available for non-commercial use. 
-Anyone interested in commercial use of BacterAI is encouraged to contact the authors at manager@jensenlab.net
