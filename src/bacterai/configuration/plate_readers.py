@@ -354,9 +354,9 @@ def process_tecan_data(
     # Extract experiment number and fill controls with 9999
     result['experiment_number'] = result['solution_id'].str.extract(r'expt(\d+)').fillna(value=9999).astype(int)
 
-    # flag negative delta OD results as bad (except for plate blanks which could reasonably be negative)
+    # negative delta OD values should be 0
     if feature == 'delta_od':
-        result.loc[(result['feature'] < 0) & (result['plate_blank'] == False), 'bad'] = 1
+        result.loc[(result['feature'] < 0) & (result['plate_blank'] == False), 'feature'] = 0
 
     # Keep only required columns
     names_to_keep = ['feature', 'bad', 'plate_control', 'plate_blank', 'parent_plate', 
@@ -483,6 +483,10 @@ def process_biotek_data(
 
     # Extract experiment number and fill controls with 9999
     result['experiment_number'] = result['solution_id'].str.extract(r'expt(\d+)').fillna(value=9999).astype(int)
+
+    # negative delta OD values should be 0
+    if feature == 'delta_od':
+        result.loc[(result['feature'] < 0) & (result['plate_blank'] == False), 'feature'] = 0
     
     # Keep only required columns
     names_to_keep = ['feature', 'bad', 'plate_control', 'plate_blank', 'parent_plate', 
