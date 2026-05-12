@@ -11,7 +11,7 @@ Adam C. Dama, Kevin S. Kim, Danielle M. Leyva, Annamarie P. Lunkes, Noah S. Schm
 BacterAI maps microbial metabolism without prior knowledge. *Nat Microbiol* **8**, 1018–1025 (2023). 
 https://doi.org/10.1038/s41564-023-01376-0
 
-See example.md for short vignette containing an example workflow of this repository.
+See example.md for short vignette of our workflow.
 
 This document summarizes:
 1. How to clone the repo and run the CLI locally
