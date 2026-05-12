@@ -1,11 +1,17 @@
-<p align="center">
-    <img src="https://user-images.githubusercontent.com/4694385/225218387-ff83524a-bdcc-4751-b2c7-0fab567f50eb.png" alt="bacterai_logo_2000" style="width: 60%;">
-</p>
 
 # BacterAI
-BacterAI was first developed by the Jensen Lab at the University of Michigan.
 This repository represents an extension of BacterAI produced by Pacific Northwest National Laboratory.
-See example.md for example workflow.
+This repository allows for a CLI to control BacterAI and allows users to set their own lists of experimental conditions.
+BacterAI was first developed by the Jensen Lab at the University of Michigan.
+Those who want more information about BacterAI are encouraged to contact the original authors
+at manager@jensenlab.net, read through the original repository (https://github.com/jensenlab/BacterAI)
+as well as the canonical paper:
+
+Adam C. Dama, Kevin S. Kim, Danielle M. Leyva, Annamarie P. Lunkes, Noah S. Schmid, Kenan Jijakli & Paul A. Jensen.
+BacterAI maps microbial metabolism without prior knowledge. *Nat Microbiol* **8**, 1018–1025 (2023). 
+https://doi.org/10.1038/s41564-023-01376-0
+
+See example.md for short vignette containing an example workflow of this repository.
 
 This document summarizes:
 1. How to clone the repo and run the CLI locally
