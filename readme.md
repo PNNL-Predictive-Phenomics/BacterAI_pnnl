@@ -229,8 +229,9 @@ The config file represents the main way to control the experiment.
 
 #### `grow_threshold`
 - Used in `main()` function in `run.py`
-- Default "growth/no-growth" threshold for model training. This is described as the grow threshold but it is more accurate to describe it as the fitness threshold because this represents the values of the fitness (or "y") variable after being normalized by each plate to a generic fitness score.
-- 0.25 was the original default value; 0.1 - 0.12 seem good for M9 media
+- Default "growth/no-growth" threshold for model training. This is described as the grow threshold but it is more accurate to describe it as the fitness threshold because this represents the values of the fitness (or "y") variable after being normalized by each plate to a generic fitness score
+- `0.25` was the original default value; `0.1 - 0.12` seem good for M9 media
+- Setting this value will take either knowledge from piloting trials or looking at the distribution of values from the first round of data. A bimodal distribution of values indicates clusters of growth or non-growth and will allow the user see where a threshold setting is most appropriate
 
 #### `nickname`
 - What to call your experiment
@@ -262,6 +263,7 @@ The config file represents the main way to control the experiment.
 - Indicates whether to put all ingredients in and remove (`DOWN`), leave all out and add-in (`UP`), or split runs to do both
 - `0 = DOWN`, `1 = UP`, `2 = BOTH`
 - Default: `0`
+- This will depend largely on the experiment but users should note that it is important to produce a balanced data set where both growth and no-growth can occur. If the predictive models do not experience enough non-growth conditions, it can be difficult to predict experiments at or beyond the growth frontier and as a result, searches fail to resolve new experiments before timing out
 
 #### `simulation_types`
 - Used in `main()` and `make_batch()` functions in `run.py`; mainly in `perform_simulations()` function in `sim.py`
@@ -269,8 +271,10 @@ The config file represents the main way to control the experiment.
   - `random` performs random take-one-out actions
   - `greedy` takes all leave-one-out actions
   - `rollout` takes all leave-one-out actions, then calls `rollout_trajectory()` function to perform random walks of available actions and ranks those with the most viable "growth pathways"
+  - `rollout_prop` uses a rollout method but uses a mix of deterministic and stochastic exploration using a softmax distribution, producing more stochastic searches if the deterministic search pattern becomes stuck on only a few "new" experiments
 - `0 = RANDOM`, `1 = GREEDY`, `2 = ROLLOUT`, `3 = ROLLOUT_PROB`
 - Default: `2`
+- It is recommended, but not required, that some combination of random and systemic (deterministic) searching be applied in order to allow for sufficient exploration of the parameter space of the experiment. A good combination is using both `RANDOM` and `ROLLOUT_PROB` as seen in Dama `et al.` 
 
 #### `beyond_frontier`
 - Used in `perform_simulations()` function in `sim.py`
@@ -286,7 +290,7 @@ The config file represents the main way to control the experiment.
 #### `n_rollouts`
 - Used in `perform_simulations()` in `sim.py` and within the `rollout_trajectory()` function (called by `perform_simulations()` when `simulation_types = ROLLOUT*`)
 - Number of random-walk rollouts to assess with leave-one-out approaches
-- Default: `1` (must be > 0 if using any rollout type of simulation)
+- Default: `1` (must be > 0 if using any rollout type of simulation). Values of `5-20` may be appropriate
 
 #### `n_bags`
 - Used in `train_bagged()` function in `net.py`
@@ -303,9 +307,9 @@ The config file represents the main way to control the experiment.
 - Default: `None`
 
 #### `redo_size`
-- Pre-specifies the number of experiments to redo from the previous round
+- Pre-specifies the number of experiments to redo from the previous round for QC purposes. At present, these intentional redo experiments are not included in any training data
 - Used in `process_results()` function (`run.py`); in code, assigned to `N_REDOS`
-  - Should likely be `0`, as setting to `None` may redo the entire previous round
+  - Should be `0`, rather than `None` which may force the redo the entire previous round
 - Use in conjunction with `redo_threshold`
 - Default: `0`
 
@@ -313,7 +317,7 @@ The config file represents the main way to control the experiment.
 - Threshold range used to determine which experiments to redo
 - Used in `process_results()` (`run.py`)
   - An intentional QA strategy or a mechanism to refine data for borderline growth conditions
-- Default: `[0, 1]`
+- Default: `[0, 1]` 
 
 #### `aas_only`
 - Determines whether ingredients consist only of amino acids
