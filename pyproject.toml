@@ -1,6 +1,6 @@
 [project]
-name = "bacterai"
-version = "0.1.0"
+name = "bacterai-cli"
+version = "1.0.0"
 description = "Unified configuration tool for experiments and ingredients."
 readme = "README.md"
 requires-python = ">=3.12"
