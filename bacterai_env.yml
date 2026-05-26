@@ -1,7 +1,32 @@
-name: bacterai-rf
+name: bacterai
 channels:
   - conda-forge
-  - defaults
 dependencies:
   - python=3.12
   - pip
+  - numpy
+  - pandas
+  - scipy
+  - scikit-learn
+  - matplotlib
+  - seaborn
+  - tqdm
+  - optuna
+  - torch
+  - pydoe3
+  - gpytorch
+  - openpyxl
+  - r-base>=4.3
+  - r-randomforest
+  - r-tibble
+  - r-moments
+  - r-dplyr
+  - r-furrr
+  - r-progressr
+  - r-here
+  - rpy2>=3.5
+  - c-compiler
+  - cxx-compiler
+  - fortran-compiler
+  - pip:
+      - -e .

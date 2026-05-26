@@ -37,6 +37,11 @@ def train_experiment_model(X_train, y_train, settings, new_round_folder, transfe
         model = GPRModel(models_folder)
         model.train(X_train, y_train)
         return model
+
+    elif settings.transfer_rf_pkl and settings.round_number == 1:
+        # Use timed-hpc transfer RF bridge model for 1st round inference.
+        print(f"Using timed-hpc transfer RF model from {settings.transfer_rf_pkl}")
+        return transfer_model
         
     elif settings.transfer_model_folder and settings.round_number == 1:
         # Use purely pre-trained NN model for 1st round

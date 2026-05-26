@@ -1,0 +1,73 @@
+FROM ubuntu:noble
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+# System + compiler deps needed by numpy/scipy/rpy2 and timed-hpc R packages.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.12 \
+    libpython3.12-dev \
+    python3.12-venv \
+    python-is-python3 \
+    make \
+    gfortran \
+    build-essential \
+    gcc \
+    g++ \
+    cmake \
+    libpcre2-dev \
+    liblzma-dev \
+    libbz2-dev \
+    zlib1g-dev \
+    libicu-dev \
+    libblas-dev \
+    liblapack-dev \
+    libtirpc-dev \
+    libzstd-dev \
+    libcurl4-openssl-dev \
+    libfontconfig1-dev \
+    libxml2-dev \
+    libssl-dev \
+    libfreetype6-dev \
+    libpng-dev \
+    libtiff5-dev \
+    libjpeg-dev \
+    libharfbuzz-dev \
+    libfribidi-dev \
+    software-properties-common \
+    dirmngr \
+    wget \
+    ca-certificates \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1 && \
+    update-alternatives --set python /usr/bin/python3.12
+
+# Use CRAN Ubuntu binaries for deterministic R install.
+RUN wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | tee -a /etc/apt/trusted.gpg.d/cran_ubuntu_key.asc && \
+    add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/" && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    r-base-core=4.4.3-1.2404.0 \
+    r-base-dev=4.4.3-1.2404.0 \
+    r-cran-devtools \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+ENV VIRTUAL_ENV=/opt/venv
+RUN python -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+WORKDIR /workspaces/BacterAI_pnnl
+COPY . /workspaces/BacterAI_pnnl
+
+# Install Python dependencies for both projects.
+RUN python -m pip install --upgrade pip setuptools wheel && \
+    pip install -r timed-hpc/requirements.txt -r requirements.txt && \
+    pip install -e timed-hpc && \
+    pip install -e .
+
+# Install R-side dependencies used by timed-hpc transfer forest code.
+ENV OMICSTL_PKG_ROOT=/workspaces/BacterAI_pnnl/timed-hpc/src/omicstl
+RUN R -q -e 'options(repos = c(CRAN = "https://cloud.r-project.org/")); install.packages("BiocManager", quiet = TRUE)' && \
+    R -q -e 'BiocManager::install(version = "3.20", ask = FALSE, force = TRUE)' && \
+    R -q -e 'source(file.path(Sys.getenv("OMICSTL_PKG_ROOT"), "r", "requirements.R"))'
+
+CMD ["bash"]

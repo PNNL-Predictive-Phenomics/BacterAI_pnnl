@@ -34,6 +34,7 @@ class ExperimentConfig:
         "n_rollouts": "int",
         "n_bags": "int",
         "transfer_model_folder": "str",
+        "transfer_rf_pkl": "str",
         "transfer_data_dir": "str",
         "redo_size": "int",
         "redo_threshold": "list_float",
@@ -73,7 +74,7 @@ class ExperimentConfig:
             val = partial.get(key, None)
             if t == "str":
                 v = clean_str(val)
-                if v is not None and key in {"experiment_path", "transfer_model_folder", "transfer_data_dir"}:
+                if v is not None and key in {"experiment_path", "transfer_model_folder", "transfer_rf_pkl", "transfer_data_dir"}:
                     v = os.path.expanduser(v)
                 out[key] = v
             elif t == "int":

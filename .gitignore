@@ -37,3 +37,4 @@ htmlcov/
 .coverage
 docs/
 .coverage
+.env

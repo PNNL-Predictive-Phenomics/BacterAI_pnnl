@@ -2,7 +2,7 @@
 name = "bacterai-cli"
 version = "1.0.0"
 description = "Unified configuration tool for experiments and ingredients."
-readme = "README.md"
+readme = "readme.md"
 requires-python = ">=3.12"
 dependencies = [
 "pandas>=2.1",
@@ -20,6 +20,11 @@ dependencies = [
 
 [project.scripts]
 bacterai = "bacterai.main:main"
+
+[project.optional-dependencies]
+transfer-rf = [
+"rpy2>=3.5",
+]
 
 [build-system]
 requires = ["hatchling>=1.21.0"]

@@ -386,7 +386,7 @@ def process_results(
     return X_train, y_train, used_experiments, redo_experiments
 
 
-def execute_experiment(experiment_path: str, plot_only: bool = False):
+def execute_experiment(experiment_path: str, plot_only: bool = False, transfer_rf_pkl: str = None):
     # --- NEW LOGIC: Ensure config points to ingredients.json and ingredients.json exists ---
     if 'config_exists' in locals() or 'config_exists' in globals():
         if config_exists:
@@ -627,12 +627,18 @@ def execute_experiment(experiment_path: str, plot_only: bool = False):
                     except Exception as e:
                         print(f"Error converting {ingredients_file} to ingredients.json: {e}")
     # Setup experiment configuration and data
-    settings, ingredients_pd, ingredients_list = setup.setup_experiment(experiment_path)
+    settings, ingredients_pd, ingredients_list = setup.setup_experiment(
+        experiment_path,
+        transfer_rf_pkl=transfer_rf_pkl,
+    )
     n_ingredients = len(ingredients_list)
     
     # Create ingredients mapping for later use
     ingredients_map = dict(zip(range(len(ingredients_list)), ingredients_list)) 
     transfer_model = transfer_learning.load_pretrained_model(settings)
+    if transfer_model is not None and hasattr(transfer_model, "set_feature_names"):
+        transfer_model.set_feature_names(ingredients_list)
+        transfer_learning.validate_timed_rf_bridge(transfer_model, ingredients_list, ingredients_pd)
     
     date = datetime.datetime.now().isoformat().replace(":", ".")
     prev_round_folder, current_round_folder, new_round_folder = paths.setup_round_folders(
@@ -692,7 +698,7 @@ def execute_experiment(experiment_path: str, plot_only: bool = False):
             plot_redos=not settings.separate_redos,
             transfer_padding_needed=transfer_padding_needed,
         )
-    elif settings.transfer_model_folder:
+    elif settings.transfer_model_folder or settings.transfer_rf_pkl:
         # Skip any initial random training if using a pre-trained model
         X_train, y_train, used_experiments, redo_experiments = None, None, None, None
     else:
@@ -731,7 +737,12 @@ def execute_experiment(experiment_path: str, plot_only: bool = False):
         
     
     # CREATE THE BATCHES
-    if settings.round_number == 1 and settings.transfer_data_dir is None and settings.transfer_model_folder is None:
+    if (
+        settings.round_number == 1
+        and settings.transfer_data_dir is None
+        and settings.transfer_model_folder is None
+        and settings.transfer_rf_pkl is None
+    ):
         # Round 1 without transfer learning - use experimental design
         batch_df, batch_used, all_metrics = batch.create_round1_experimental_design(
             settings, ingredients_pd, ingredients_list
