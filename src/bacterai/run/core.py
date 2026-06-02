@@ -386,7 +386,11 @@ def process_results(
     return X_train, y_train, used_experiments, redo_experiments
 
 
-def execute_experiment(experiment_path: str, plot_only: bool = False, transfer_rf_pkl: str = None):
+def execute_experiment(
+    experiment_path: str,
+    plot_only: bool = False,
+    enable_transfer_learning: bool = False,
+):
     # --- NEW LOGIC: Ensure config points to ingredients.json and ingredients.json exists ---
     if 'config_exists' in locals() or 'config_exists' in globals():
         if config_exists:
@@ -629,23 +633,32 @@ def execute_experiment(experiment_path: str, plot_only: bool = False, transfer_r
     # Setup experiment configuration and data
     settings, ingredients_pd, ingredients_list = setup.setup_experiment(
         experiment_path,
-        transfer_rf_pkl=transfer_rf_pkl,
+        transfer_learning=enable_transfer_learning,
     )
     n_ingredients = len(ingredients_list)
     
     # Create ingredients mapping for later use
     ingredients_map = dict(zip(range(len(ingredients_list)), ingredients_list)) 
     transfer_model = transfer_learning.load_pretrained_model(settings)
-    if transfer_model is not None and hasattr(transfer_model, "set_feature_names"):
-        transfer_model.set_feature_names(ingredients_list)
-        transfer_learning.validate_timed_rf_bridge(transfer_model, ingredients_list, ingredients_pd)
-    
+
     date = datetime.datetime.now().isoformat().replace(":", ".")
     prev_round_folder, current_round_folder, new_round_folder = paths.setup_round_folders(
     settings.experiment_path, settings.round_number
 ) 
     if not new_round_folder.exists():
         new_round_folder.mkdir(parents=True)
+
+    if settings.transfer_learning:
+        batch_df, all_metrics = transfer_learning.create_transfer_learning_round1_batch(
+            settings,
+            ingredients_pd,
+            ingredients_list,
+        )
+        run_metrics_path = os.path.join(new_round_folder, "run_metrics.json")
+        with open(run_metrics_path, "w") as f:
+            json.dump(all_metrics, f, indent=4)
+        export.export_to_dp_batch(new_round_folder, batch_df, ingredients_list, date, settings.nickname)
+        return
 
     if settings.round_number > 1:
         # Check if mapped_data exists, if not try to auto-process plate reader data
@@ -698,7 +711,7 @@ def execute_experiment(experiment_path: str, plot_only: bool = False, transfer_r
             plot_redos=not settings.separate_redos,
             transfer_padding_needed=transfer_padding_needed,
         )
-    elif settings.transfer_model_folder or settings.transfer_rf_pkl:
+    elif settings.transfer_model_folder:
         # Skip any initial random training if using a pre-trained model
         X_train, y_train, used_experiments, redo_experiments = None, None, None, None
     else:
@@ -741,7 +754,6 @@ def execute_experiment(experiment_path: str, plot_only: bool = False, transfer_r
         settings.round_number == 1
         and settings.transfer_data_dir is None
         and settings.transfer_model_folder is None
-        and settings.transfer_rf_pkl is None
     ):
         # Round 1 without transfer learning - use experimental design
         batch_df, batch_used, all_metrics = batch.create_round1_experimental_design(

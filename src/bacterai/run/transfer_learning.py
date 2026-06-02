@@ -1,72 +1,264 @@
 """Transfer learning utilities for BacterAI experiments."""
 
 import os
-import re
 import shutil
-import pickle
 import sys
 import types
+import importlib
+import pathlib
+import random
 import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
 from ..analysis import processing as utils
 from ..scripts.size_n_to_m_conversion import fill_new_ingredients
 from ..utils.constants import AA_SHORT, BASE_NAMES
 
 
-class _TransferForestClassifierAdapter:
-    """Provide a TIMEDClassifierRF-like predict API for raw TransferForest pickles."""
+PPUTIDA_FEATURES = [
+    "d_glucose",
+    "sodium_citrate",
+    "sodium_octanoate",
+    "sodium_acetate",
+    "sodium_benzoate",
+    "d_xylose",
+    "l_arabinose",
+    "sodium_chloride",
+    "urea",
+    "ammonium_chloride",
+    "pH",
+]
 
-    def __init__(self, model):
-        self._model = model
-        prediction_mode = getattr(model, "_prediction_mode", None)
-        mode_name = getattr(prediction_mode, "name", str(prediction_mode))
-        self._is_classification = mode_name == "CLASSIFICATION"
 
-        # R-side ensemble weights often do not survive round-trip serialization.
-        ensemble_weights = getattr(model, "ensemble_weights", None)
-        if isinstance(ensemble_weights, list):
-            model.ensemble_weights = [None] * len(ensemble_weights)
+def _bootstrap_omicstl_namespace():
+    """Make omicstl importable from local timed-hpc source without package install."""
+    if "omicstl" in sys.modules:
+        return
 
-    def predict(self, X):
-        preds_dict = self._model.generate_predictions([X])[0]
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    candidates = [
+        os.path.join(this_dir, "..", "..", "..", "timed-hpc", "src", "omicstl"),
+        os.path.join(os.getcwd(), "timed-hpc", "src", "omicstl"),
+    ]
+    for candidate in candidates:
+        pkg_dir = os.path.abspath(candidate)
+        if os.path.isdir(pkg_dir):
+            pkg = types.ModuleType("omicstl")
+            pkg.__path__ = [pkg_dir]
+            sys.modules["omicstl"] = pkg
+            return
 
-        key = next(
-            (k for k in ("pred_ensemble_full", "pred_ensemble") if k in preds_dict),
-            None,
+    raise ImportError("Could not locate local timed-hpc omicstl package under timed-hpc/src/omicstl")
+
+
+def _resolve_timed_hpc_data_dir() -> pathlib.Path:
+    this_dir = pathlib.Path(__file__).resolve().parent
+    candidates = [
+        this_dir.parent.parent.parent / "timed-hpc" / "docs" / "data",
+        pathlib.Path.cwd() / "timed-hpc" / "docs" / "data",
+    ]
+    for path in candidates:
+        if path.exists() and path.is_dir():
+            return path
+    raise FileNotFoundError("Could not locate timed-hpc/docs/data directory")
+
+
+def _safe_float(value, default=0.0):
+    try:
+        if pd.isna(value):
+            return float(default)
+        return float(value)
+    except Exception:
+        return float(default)
+
+
+def _safe_int(value, default=0):
+    try:
+        if pd.isna(value):
+            return int(default)
+        return int(float(value))
+    except Exception:
+        return int(default)
+
+
+def _build_feature_specs(ingredients_pd, ingredients_list):
+    selected_features = [col for col in PPUTIDA_FEATURES if col in ingredients_list]
+    if len(selected_features) < 2:
+        raise ValueError(
+            "Transfer-learning mode requires at least 2 overlapping features with timed-hpc pputida RF features. "
+            f"Found overlap: {selected_features}"
         )
-        if key is None:
-            transfer_keys = sorted(k for k in preds_dict if re.match(r"^pred_\d+$", k))
-            key = transfer_keys[-1] if transfer_keys else next(iter(preds_dict))
 
-        values = preds_dict[key]
-        if self._is_classification:
-            return [int(v) for v in values]
-        return [float(v) for v in values]
+    feature_ranges = {}
+    step_sizes = {}
+    defaults = {}
+
+    for ing in ingredients_list:
+        ing_rows = ingredients_pd[ingredients_pd["INGREDIENT"] == ing]
+        if ing_rows.empty:
+            defaults[ing] = 0.0
+            continue
+
+        row = ing_rows.iloc[0]
+        min_val = _safe_float(row.get("MIN_VALUE"), default=0.0)
+        max_val = _safe_float(row.get("MAX_VALUE"), default=min_val)
+        nominal = _safe_float(row.get("NOMINAL_VALUE"), default=min_val)
+
+        if nominal < min_val:
+            nominal = min_val
+        if nominal > max_val:
+            nominal = max_val
+        defaults[ing] = nominal
+
+        if ing not in selected_features:
+            continue
+
+        feature_ranges[ing] = (min_val, max_val)
+        ing_type = str(row.get("TYPE", "")).strip().lower()
+        n_states = _safe_int(row.get("N_STATES"), default=0)
+        if ing_type == "semi-quantitative" and n_states > 1 and max_val > min_val:
+            step_sizes[ing] = (max_val - min_val) / (n_states - 1)
+
+    return selected_features, feature_ranges, step_sizes, defaults
 
 
-def _ensure_predictable_transfer_rf(loaded_obj):
-    """Return an object exposing predict(X) for timed-hpc transfer RF bridge."""
-    if hasattr(loaded_obj, "predict"):
-        return loaded_obj
-    if hasattr(loaded_obj, "generate_predictions"):
-        return _TransferForestClassifierAdapter(loaded_obj)
-    raise TypeError(
-        "Unsupported transfer_rf_pkl object: expected a classifier with predict(X) "
-        "or a TransferForest-like object with generate_predictions(...)."
+def _import_transfer_recommendation_deps():
+    _bootstrap_omicstl_namespace()
+
+    DatasetContainer = importlib.import_module(
+        "omicstl.simulation_utils.data_utils"
+    ).DatasetContainer
+    fit_rf_model = importlib.import_module(
+        "omicstl.simulation_utils.model_utils"
+    ).fit_rf_model
+    recommend_next_batch = importlib.import_module(
+        "omicstl.simulation_utils.recommendation_utils"
+    ).recommend_next_batch
+    set_seed = importlib.import_module("omicstl.r_utils").set_seed
+    return DatasetContainer, fit_rf_model, recommend_next_batch, set_seed
+
+
+def create_transfer_learning_round1_batch(settings, ingredients_pd, ingredients_list):
+    """Train timed-hpc RF from bundled source/target data and generate Round 1 batch."""
+    if settings.round_number != 1:
+        raise RuntimeError("Transfer-learning mode currently supports Round 1 only.")
+
+    DatasetContainer, fit_rf_model, recommend_next_batch, set_seed = _import_transfer_recommendation_deps()
+    data_dir = _resolve_timed_hpc_data_dir()
+
+    selected_features, feature_ranges, step_sizes, defaults = _build_feature_specs(
+        ingredients_pd,
+        ingredients_list,
     )
 
+    target_raw = pd.read_csv(data_dir / "pputida_target.csv")
+    target_df = target_raw[["fitness"] + selected_features].rename(columns={"fitness": "response"})
 
-def _extract_transfer_rf_feature_names(classifier):
-    """Best-effort extraction of feature names from transfer RF internals."""
-    model_obj = getattr(classifier, "_model", classifier)
-    source_models = getattr(model_obj, "source_models", None)
-    if not source_models:
-        return []
+    tgt_combo, tgt_test = train_test_split(
+        target_df,
+        train_size=130 + 18,
+        test_size=50,
+        random_state=42,
+    )
+    tgt_train, tgt_ensemble = train_test_split(
+        tgt_combo,
+        train_size=130,
+        test_size=18,
+        random_state=42,
+    )
 
-    try:
-        importance = source_models[0].rx2("importance")
-        return list(importance.rownames)
-    except Exception:
-        return []
+    source_files = {
+        "P. putida only": "pputida_source_putida.csv",
+        "All Pseudomonas": "pputida_source_pseudomonas.csv",
+        "All Gammaproteobacteria": "pputida_source_gammaproteobacteria.csv",
+    }
+
+    source_evaluations = {}
+    best_model = None
+    best_source = None
+    best_rmse = float("inf")
+
+    for source_label, source_file in source_files.items():
+        source_raw = pd.read_csv(data_dir / source_file)
+        source_df = source_raw[["Resp"] + selected_features].rename(columns={"Resp": "response"})
+
+        datasets = DatasetContainer(
+            source_data=source_df,
+            target_data=tgt_train,
+            target_ensemble_data=tgt_ensemble,
+            target_test_data=[tgt_test],
+        )
+        datasets.set_response_column("response")
+
+        random.seed(42)
+        np.random.seed(42)
+        set_seed(42)
+        rf_results, rf_model = fit_rf_model(datasets)
+
+        rmse_row = rf_results[rf_results["model_type"] == "pred_ensemble_full"]
+        rmse = float(rmse_row["rmse"].iloc[0]) if len(rmse_row) else float("inf")
+
+        source_evaluations[source_label] = {
+            "source_rows": int(len(source_df)),
+            "rf_rmse": rmse,
+        }
+        if rmse < best_rmse:
+            best_rmse = rmse
+            best_model = rf_model
+            best_source = source_label
+
+    if best_model is None:
+        raise RuntimeError("Failed to train transfer-learning RF model from bundled timed-hpc datasets")
+
+    feature_cols = selected_features
+
+    batch = recommend_next_batch(
+        model_info={"model": best_model, "type": "rf"},
+        existing_data=tgt_combo[["response"] + feature_cols],
+        response_col="response",
+        feature_cols=feature_cols,
+        feature_ranges=feature_ranges,
+        step_sizes=step_sizes,
+        batch_size=settings.batch_size,
+        acquisition="EI",
+        n_candidates=8192,
+        n_mc_samples=50,
+        shortlist_pct=0.05,
+        seed=42,
+        return_candidates=False,
+    )
+
+    for ing in ingredients_list:
+        if ing not in batch.columns:
+            batch[ing] = defaults.get(ing, 0.0)
+
+    ordered_cols = ingredients_list + [
+        col
+        for col in ["predicted_mean", "predicted_std", "acquisition_score", "batch_rank"]
+        if col in batch.columns
+    ]
+    batch = batch[ordered_cols].copy()
+
+    predicted_mean = batch["predicted_mean"] if "predicted_mean" in batch.columns else pd.Series(1.0, index=batch.index)
+    predicted_std = batch["predicted_std"] if "predicted_std" in batch.columns else pd.Series(0.0, index=batch.index)
+
+    batch["type"] = "transfer_rf"
+    batch["direction"] = 2
+    batch["frontier_type"] = "FRONTIER"
+    batch["growth_pred"] = predicted_mean.astype(float).clip(lower=0.0, upper=1.0)
+    batch["var"] = (predicted_std.astype(float) ** 2)
+    batch["is_redo"] = False
+    batch["round"] = 1
+
+    metrics = {
+        "mode": "transfer_learning_rf",
+        "selected_source": best_source,
+        "selected_source_rmse": float(best_rmse),
+        "source_evaluations": source_evaluations,
+        "n_recommendations": int(len(batch)),
+        "feature_columns": feature_cols,
+    }
+    return batch, {"TRANSFER_RF": metrics}
 
 
 def handle_data_dir_transition(settings, new_round_folder, n_ingredients):
@@ -160,59 +352,8 @@ def load_pretrained_model(settings):
     Model or None
         Loaded model if transfer_model_folder is specified, None otherwise
     """
-    if settings.transfer_model_folder is None and settings.transfer_rf_pkl is None:
+    if settings.transfer_model_folder is None:
         return None
-
-    def _bootstrap_omicstl_namespace():
-        """Make omicstl importable from local timed-hpc source without running package __init__."""
-        if "omicstl" in sys.modules:
-            return
-
-        this_dir = os.path.dirname(os.path.abspath(__file__))
-        candidates = [
-            os.path.join(this_dir, "..", "..", "..", "timed-hpc", "src", "omicstl"),
-            os.path.join(os.getcwd(), "timed-hpc", "src", "omicstl"),
-        ]
-        for candidate in candidates:
-            pkg_dir = os.path.abspath(candidate)
-            if os.path.isdir(pkg_dir):
-                pkg = types.ModuleType("omicstl")
-                pkg.__path__ = [pkg_dir]
-                sys.modules["omicstl"] = pkg
-                return
-
-    if settings.transfer_rf_pkl is not None:
-        print(f"Loading timed-hpc transfer RF model from '{settings.transfer_rf_pkl}'")
-        from .models import TimedTransferRFModel
-
-        if not os.path.isfile(settings.transfer_rf_pkl):
-            raise FileNotFoundError(
-                f"timed-hpc RF pickle not found: {settings.transfer_rf_pkl}"
-            )
-
-        try:
-            import importlib
-
-            _bootstrap_omicstl_namespace()
-            timed_classifiers = importlib.import_module("omicstl.classifiers")
-            timed_transfer = importlib.import_module("omicstl.transfer_forest")
-            TIMEDClassifierRF = getattr(timed_classifiers, "TIMEDClassifierRF")
-            load_r_functions = getattr(timed_transfer, "load_r_functions")
-        except Exception as exc:
-            raise ImportError(
-                "timed-hpc dependencies are unavailable. Install omicstl + torch + rpy2 and ensure R is configured."
-            ) from exc
-
-        load_r_functions()
-        try:
-            # Preferred integration path: timed-hpc's stable wrapper contract.
-            classifier = TIMEDClassifierRF.load(settings.transfer_rf_pkl)
-        except Exception:
-            # Compatibility fallback for legacy raw TransferForest pickles.
-            with open(settings.transfer_rf_pkl, "rb") as pkl_file:
-                loaded_obj = pickle.load(pkl_file)
-            classifier = _ensure_predictable_transfer_rf(loaded_obj)
-        return TimedTransferRFModel(classifier)
         
     print(f"Loading pre-trained model from '{settings.transfer_model_folder}'")
     
@@ -228,46 +369,6 @@ def load_pretrained_model(settings):
 
 
 def validate_timed_rf_bridge(model, ingredients_list, ingredients_pd):
-    """Run a lightweight preflight check for timed-hpc RF bridge models.
-
-    The bridge model is R-backed and can fail late if feature schema does not
-    match what the pickle expects. This check validates the model can score a
-    single row with the current ingredient columns.
-    """
-    if model is None or not hasattr(model, "classifier"):
+    """Legacy no-op retained for backward compatibility."""
+    if model is None:
         return
-
-    row = []
-    for ing in ingredients_list:
-        ing_rows = ingredients_pd[ingredients_pd["INGREDIENT"] == ing]
-        if ing_rows.empty:
-            row.append(0.0)
-            continue
-        nominal = ing_rows["NOMINAL_VALUE"].iloc[0]
-        minimum = ing_rows["MIN_VALUE"].iloc[0]
-        value = nominal if pd.notna(nominal) else minimum
-        if pd.isna(value):
-            value = 0.0
-        row.append(float(value))
-
-    test_df = pd.DataFrame([row], columns=ingredients_list)
-    try:
-        model.classifier.predict(test_df)
-    except Exception as exc:
-        expected_features = _extract_transfer_rf_feature_names(model.classifier)
-        details = ""
-        if expected_features:
-            missing = [f for f in expected_features if f not in ingredients_list]
-            extras = [f for f in ingredients_list if f not in expected_features]
-            details = (
-                f" Expected features: {len(expected_features)}; provided ingredients: {len(ingredients_list)}."
-                f" Missing expected features: {len(missing)}; extra provided features: {len(extras)}."
-            )
-            if missing:
-                details += f" Example missing: {missing[:5]}."
-
-        raise RuntimeError(
-            "Timed-hpc RF bridge preflight failed. "
-            "Check environment (omicstl/rpy2/R) and feature schema compatibility."
-            + details
-        ) from exc

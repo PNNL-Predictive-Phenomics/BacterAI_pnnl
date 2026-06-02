@@ -10,7 +10,7 @@ class Settings:
 		self.__dict__.update(kwargs)
 
 
-def setup_experiment(experiment_path: str, transfer_rf_pkl: str = None):
+def setup_experiment(experiment_path: str, transfer_learning: bool = False):
 	"""Setup experiment configuration and data."""
 	round_number = get_round(experiment_path)
 	config = load_experiment_config(experiment_path)
@@ -32,6 +32,7 @@ def setup_experiment(experiment_path: str, transfer_rf_pkl: str = None):
 		'ingredients_file': config.get("ingredients_file"),
 		'transfer_model_folder': config.get("transfer_model_folder"),
 		'transfer_rf_pkl': config.get("transfer_rf_pkl"),
+		'transfer_learning': config.get("transfer_learning", False),
 		'redo_size': config.get("redo_size"),
 		'redo_threshold': config.get("redo_threshold"),
 		'aas_only': config.get("aas_only", False),
@@ -41,10 +42,12 @@ def setup_experiment(experiment_path: str, transfer_rf_pkl: str = None):
 		'random_walk_increment': config.get("random_walk_increment", 10),
 	}
 
-	if transfer_rf_pkl:
-		settings_dict['transfer_rf_pkl'] = transfer_rf_pkl
-		# Explicit CLI override should take precedence over folder-based transfer model loading.
+	if transfer_learning:
+		settings_dict['transfer_learning'] = True
+		# The new transfer-learning mode runs end-to-end RF training/recommendation.
+		# Ignore legacy preloaded transfer-model settings in this mode.
 		settings_dict['transfer_model_folder'] = None
+		settings_dict['transfer_rf_pkl'] = None
     
 	ingredients_pd = load_ingredients_data(experiment_path, config)
 	ingredients_list = ingredients_pd["INGREDIENT"].tolist()

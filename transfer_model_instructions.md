@@ -1,29 +1,36 @@
-# Transfer RF Model Instructions
+# Transfer Learning (RF) Instructions
 
-This document describes how to run BacterAI with timed-hpc transfer random forest (RF) models in Docker.
+This document describes how to run BacterAI in RF transfer-learning mode using timed-hpc logic.
+
+The current transfer mode is:
+
+- Enabled only when `--transfer-learning` is provided.
+- RF-only (no MLP/VAE branches).
+- Trained end-to-end from bundled timed-hpc source/target datasets (users do not provide model/data paths).
 
 ## 1. Build the Docker image
 
-Run this from the repository root:
+Run this from repository root:
 
 ```bash
 docker build -f Dockerfile.transfer-rf -t bacterai-transfer-rf .
 ```
 
-## 2. Start a container with this repo mounted
+## 2. Start an interactive container
 
 ```bash
 docker run --rm -it \
   -v "$PWD":/workspaces/BacterAI_pnnl \
   -w /workspaces/BacterAI_pnnl \
-  bacterai-transfer-rf
+  bacterai-transfer-rf \
+  bash
 ```
 
-Inside the container, this repository is available at:
+Inside container, repo path is:
 
 - `/workspaces/BacterAI_pnnl`
 
-## 3. Verify the run command includes transfer RF support
+## 3. Verify transfer-learning CLI option
 
 ```bash
 bacterai run -h
@@ -31,57 +38,73 @@ bacterai run -h
 
 You should see:
 
-- `--transfer-rf-pkl TRANSFER_RF_PKL`
+- `--transfer-learning`
 
-## 4. Run BacterAI using a transfer RF model
+## 4. Run transfer-learning mode
 
-Template command:
-
-```bash
-bacterai run <experiment_path> \
-  --transfer-rf-pkl <path_to_transfer_rf_model.pkl>
-```
-
-Example command:
+Template:
 
 ```bash
-bacterai run /workspaces/BacterAI_pnnl/tests/test_rf \
-  --transfer-rf-pkl /workspaces/BacterAI_pnnl/timed-hpc/viral_use_case/model_outputs/rf_model.pkl
+bacterai run <experiment_path> --transfer-learning
 ```
 
-## 5. Important schema requirement
+Example:
 
-The transfer RF model must be trained with the same feature columns that your experiment provides.
+```bash
+bacterai run tests/test_rf_experiment --transfer-learning
+```
+Important: If using the above path, ensure round 1 folder is removed
 
-- If the model was trained on proteomics columns (for example, many `*_HUMAN` features) and your experiment has media ingredient columns, prediction will fail.
-- This is expected behavior and indicates a feature schema mismatch, not a Docker or environment issue.
+## 5. Round 1 requirement
 
-## 6. Recommended pre-run check
+Transfer-learning mode currently supports Round 1 only.
 
-Before using a model in production runs, verify:
+If the experiment already contains `Round*` folders, BacterAI may detect a later round and fail with:
 
-1. The `.pkl` loads in the container.
-2. The model accepts a test row with your experiment feature columns.
-3. Expected feature count is aligned with your ingredients schema.
+- `Transfer-learning mode currently supports Round 1 only.`
 
-## 7. Troubleshooting
+To force a clean Round 1 test run:
 
-### Error: timed-hpc dependencies unavailable
+```bash
+rm -rf tests/test_rf_experiment/Round*
+bacterai run tests/test_rf_experiment --transfer-learning
+```
 
-Use the Docker workflow above. The image includes R, rpy2, and timed-hpc runtime dependencies.
+## 6. Feature overlap requirement
 
-### Error: variables in the training data missing in newdata
+Transfer-learning uses pputida RF feature names from timed-hpc and intersects them with your ingredients.
 
-This indicates model-feature mismatch.
+- At least 2 overlapping features are required.
+- If overlap is too small, the run fails with a feature-overlap error.
 
-Fix by using a transfer RF `.pkl` trained on the same feature schema as your BacterAI experiment.
+## 7. Expected outputs
 
-### Error: --transfer-rf-pkl not found
+Round folder outputs:
 
-Ensure you are running the current repository code inside the container and not an older image.
+- `batch_meta_<timestamp>.csv`: main output; use this file.
+- `run_metrics.json`: source/model selection and recommendation metadata.
+- `batch_dp_<...>.csv`: legacy DP export format.
 
-Rebuild with:
+Important: the DP CSV can appear empty/non-informative for transfer-learning results because DP export writes ingredient names only when value equals 0.
+
+## 8. Troubleshooting
+
+### Error: No module named rpy2
+
+Run inside Docker image above. Local env may not include R/rpy2 stack.
+
+### Error: cannot open file .../src/omicstl/r/requirements.R
+
+Use latest code and rebuild image so timed-hpc R bootstrap changes are included:
 
 ```bash
 docker build --no-cache -f Dockerfile.transfer-rf -t bacterai-transfer-rf .
 ```
+
+### Error: Transfer-learning mode currently supports Round 1 only
+
+Remove existing `Round*` folders in the test experiment path and rerun.
+
+### Warning spam from pandas FutureWarning during model_utils concat
+
+This is non-fatal and does not invalidate output artifacts.

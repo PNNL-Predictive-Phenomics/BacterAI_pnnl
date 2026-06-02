@@ -35,6 +35,7 @@ class ExperimentConfig:
         "n_bags": "int",
         "transfer_model_folder": "str",
         "transfer_rf_pkl": "str",
+        "transfer_learning": "bool",
         "transfer_data_dir": "str",
         "redo_size": "int",
         "redo_threshold": "list_float",

@@ -36,13 +36,12 @@ class TransferForest:
         """Initialize a container for random forest based multi-omics transfer learning objects and methods."""
         self.source_models: list = []
         self.transfer_models: list = []
-        self.ensemble_weights: list = []
+        self.latent_encoder = None  # set by fit_rf_model for heterogeneous transfer
 
     def copy(self) -> "TransferForest":
         new_transfer_forest = TransferForest()
         new_transfer_forest.source_models = self.source_models
         new_transfer_forest.transfer_models = self.transfer_models
-        new_transfer_forest.ensemble_weights = self.ensemble_weights
         new_transfer_forest._prediction_mode = self._prediction_mode
         return new_transfer_forest
 
@@ -198,7 +197,6 @@ class TransferForest:
                     rf_source=reference_model
                 ),
             )
-            self.ensemble_weights.append(None)
 
     def generate_predictions(
         self,
@@ -244,10 +242,8 @@ class TransferForest:
                 x_val = robjects.NULL if validation_views is None else pd2df(validation_views[index]),
                 y_val = robjects.NULL if validation_response is None else self._resolve_response(validation_response),
                 x_ensemble = robjects.NULL if ensemble_views is None else pd2df(ensemble_views[index]),
-                y_ensemble = robjects.NULL if ensemble_response is None else self._resolve_response(ensemble_response),
-                ensemble_weights = robjects.NULL if self.ensemble_weights[index] is None else self.ensemble_weights[index]
+                y_ensemble = robjects.NULL if ensemble_response is None else self._resolve_response(ensemble_response)
             ) # type: ignore
-            self.ensemble_weights[index] = res.slots["ensemble_weights"]
             prediction_dicts.append(df2pd(res).to_dict(orient="list"))
 
             if integration_type != self.IntegrationType.WEIGHTED:
@@ -265,8 +261,7 @@ class TransferForest:
                 x_val=pd2df(validation_views[index]),
                 y_val=self._resolve_response(validation_response),
                 x_ensemble = robjects.NULL if ensemble_views is None else ensemble_views[index],
-                y_ensemble = robjects.NULL if ensemble_response is None else ensemble_response,
-                ensemble_weights = robjects.NULL if self.ensemble_weights[index] is None else self.ensemble_weights[index]
+                y_ensemble = robjects.NULL if ensemble_response is None else ensemble_response
             )
             validation_dicts.append(df2pd(res).to_dict(orient="list"))
 

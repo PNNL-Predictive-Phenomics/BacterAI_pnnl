@@ -104,9 +104,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print detailed output during execution",
     )
     run.add_argument(
-        "--transfer-rf-pkl",
-        default=None,
-        help="Optional path to timed-hpc transfer RF .pkl model (overrides config for this run)",
+        "--transfer-learning",
+        action="store_true",
+        help="Enable RF transfer-learning Round 1 generation using bundled timed-hpc source/target data",
     )
     run.set_defaults(func=run_wrapper)
     
@@ -225,7 +225,7 @@ def run_wrapper(args) -> None:
         experiment_path=args.experiment_path,
         plot_only=args.plot_only,
         verbose=args.verbose,
-        transfer_rf_pkl=args.transfer_rf_pkl,
+        transfer_learning=args.transfer_learning,
     )
 
 

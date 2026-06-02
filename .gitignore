@@ -35,6 +35,4 @@ old_tests
 .pytest_cache/
 htmlcov/
 .coverage
-docs/
-.coverage
 .env

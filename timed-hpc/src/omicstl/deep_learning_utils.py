@@ -81,3 +81,36 @@ def freeze_until_layer(model: nn.Module, target_layer: str | None = None) -> Non
             reached_target = True
         if not reached_target:
             param.requires_grad = False
+
+
+def mmd_loss(source: torch.Tensor, target: torch.Tensor, kernel_bw: float = 1.0) -> torch.Tensor:
+    """Maximum Mean Discrepancy between source and target latent distributions.
+
+    Uses an RBF kernel to measure the distance between the distributions of
+    source and target representations. Used for explicit latent space alignment
+    in heterogeneous transfer learning where the KL regularisation alone
+    (VAE) or batch-normalisation alone (MLP) may not be sufficient.
+
+    Args:
+        source: Tensor of shape (n_source, d) — source latent representations.
+        target: Tensor of shape (n_target, d) — target latent representations.
+        kernel_bw: RBF kernel bandwidth. Defaults to 1.0.
+
+    Returns:
+        Scalar MMD loss (non-negative).
+
+    """
+    def rbf(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        dist_sq = torch.cdist(x, y) ** 2
+        return torch.exp(-dist_sq / (2.0 * kernel_bw ** 2))
+
+    n_s = source.shape[0]
+    n_t = target.shape[0]
+    k_ss = rbf(source, source)
+    k_tt = rbf(target, target)
+    k_st = rbf(source, target)
+    return (
+        k_ss.sum() / (n_s * n_s)
+        + k_tt.sum() / (n_t * n_t)
+        - 2.0 * k_st.sum() / (n_s * n_t)
+    ).clamp(min=0.0)

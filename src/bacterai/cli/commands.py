@@ -225,7 +225,7 @@ def run(
     experiment_path: str,
     plot_only: bool = False,
     verbose: bool = False,
-    transfer_rf_pkl: Optional[str] = None,
+    transfer_learning: bool = False,
 ) -> None:
     """
     Execute an experiment round using BacterAI models and simulations.
@@ -253,11 +253,14 @@ def run(
             print(f"Starting BacterAI run for round {next_round}")
             print(f"Experiment directory: {experiment_path}")
             print(f"Plot only: {plot_only}")
-            if transfer_rf_pkl:
-                print(f"Transfer RF pickle override: {transfer_rf_pkl}")
+            print(f"Transfer learning mode: {transfer_learning}")
         
         # Execute the experiment
-        execute_experiment(experiment_path, plot_only, transfer_rf_pkl=transfer_rf_pkl)
+        execute_experiment(
+            experiment_path,
+            plot_only,
+            enable_transfer_learning=transfer_learning,
+        )
         
         if verbose:
             print(f"Run completed successfully for round {next_round}")

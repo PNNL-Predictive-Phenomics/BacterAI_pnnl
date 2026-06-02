@@ -16,7 +16,7 @@ from torch.optim import AdamW
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
 
-from omicstl.deep_learning_utils import PredictionMode, compute_accuracy, compute_mse
+from omicstl.deep_learning_utils import PredictionMode, compute_accuracy, compute_mse, mmd_loss
 from omicstl.mult_mlp import make_joint_model
 from omicstl.mult_vae import make_joint_vae
 
@@ -192,6 +192,22 @@ class MultiViewModel:
                 tensor_views.append(tensor)
             return tensor_views
 
+        def encode(self, views: list[pd.DataFrame]) -> np.ndarray:
+            """Extract latent representations for alignment or RF encoding.
+
+            For VAE models returns the PoE posterior mean (shape n × z_dim).
+            For MLP models returns the fused hidden representation (shape n × hidden_dim).
+            Both are in the shared latent space used by the prediction head.
+            """
+            tensor_views = self.as_tensors(views)
+            self.model.eval()
+            with torch.inference_mode():
+                outputs = self.model(tensor_views)
+                latent = outputs[1]
+                if hasattr(latent, "loc"):   # VAE: Normal distribution
+                    return latent.loc.detach().cpu().numpy()
+                return latent.detach().cpu().numpy()  # MLP: tensor
+
     def with_classification(self) -> "MultiViewModel":
         """Puts the model in classification mode. Should be called before any training."""
         self._prediction_mode = PredictionMode.CLASSIFICATION
@@ -202,13 +218,9 @@ class MultiViewModel:
         self._prediction_mode = PredictionMode.REGRESSION
         return self
 
-    def set_model_dims(self, views: list[pd.DataFrame], output_dim: int) -> None:
-        view_dims = []
-        output_dim: int
-
-        for k in range(len(views)):
-            view_dims.append(views[k].shape[1])
-        if not hasattr(self, "_view_dims"):
+    def set_model_dims(self, views: list[pd.DataFrame], output_dim: int, force: bool = False) -> None:
+        view_dims = [views[k].shape[1] for k in range(len(views))]
+        if not hasattr(self, "_view_dims") or force:
             self._view_dims = view_dims
 
         if not self._prediction_mode:
@@ -298,6 +310,7 @@ class TransferVAE(MultiViewModel):
         weight_decay: float = 1e-4,
         source_model: str | None = None,
         device=None,
+        heterogeneous: bool = False,
     ) -> None:
         if hasattr(self, "_view_dims"):
             view_dims = self._view_dims
@@ -320,7 +333,27 @@ class TransferVAE(MultiViewModel):
             if not hasattr(self, source_model):
                 raise AttributeError(f"Model '{source_model}' does not exist in the object")
             source_model_object = getattr(self, source_model)
-            model.load_state_dict(source_model_object.model.state_dict())
+            src_state = source_model_object.model.state_dict()
+            tgt_state = model.state_dict()
+            transferred, skipped = 0, 0
+            for key, val in src_state.items():
+                # In heterogeneous TL, always skip the input layer (fc1) regardless
+                # of whether shapes happen to match — the same shape does NOT mean
+                # the same features, so fc1 weights would be meaningless on target.
+                if heterogeneous and ".fc1." in key:
+                    skipped += 1
+                    continue
+                if key in tgt_state and tgt_state[key].shape == val.shape:
+                    tgt_state[key] = val
+                    transferred += 1
+                else:
+                    skipped += 1
+            model.load_state_dict(tgt_state)
+            logger.info(
+                "VAE weight transfer: %d layers copied, %d skipped "
+                "(heterogeneous=%s; fc1 always skipped when True)",
+                transferred, skipped, heterogeneous,
+            )
 
         optimizer = AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
 
@@ -343,7 +376,11 @@ class TransferVAE(MultiViewModel):
     ):
         """Wraps the model loss to improve readability and reduce code duplication for training loop."""
         yhat, poe_dist, yhats, dists = model_object.model(views)
-        loss = model_object.model.loss(response, yhat, poe_dist, yhats, dists, var_beta=0.01, gamma = gamma)
+        loss = model_object.model.loss(response, yhat, poe_dist, yhats, dists, var_beta=0.01, gamma=gamma)
+        src_h = getattr(model_object, "_source_hiddens", None)
+        mmd_w = getattr(model_object, "_mmd_weight", 0.0)
+        if src_h is not None and mmd_w > 0.0:
+            loss = loss + mmd_w * mmd_loss(poe_dist.loc, src_h)
         return loss, yhat
 
 
@@ -382,6 +419,7 @@ class TransferMLP(MultiViewModel):
         weight_decay = 1e-4,
         source_model: str | None = None,
         device=None,
+        heterogeneous: bool = False,
     ) -> None:
         if hasattr(self, "_view_dims"):
             view_dims = self._view_dims
@@ -405,7 +443,27 @@ class TransferMLP(MultiViewModel):
             if not hasattr(self, source_model):
                 raise AttributeError(f"Model '{source_model}' does not exist in the object")
             source_model_object = getattr(self, source_model)
-            model.load_state_dict(source_model_object.model.state_dict())
+            src_state = source_model_object.model.state_dict()
+            tgt_state = model.state_dict()
+            transferred, skipped = 0, 0
+            for key, val in src_state.items():
+                # In heterogeneous TL, always skip the input layer (fc_layers.0)
+                # regardless of whether shapes happen to match — same shape does NOT
+                # mean same features, so these weights would be meaningless on target.
+                if heterogeneous and ".fc_layers.0." in key:
+                    skipped += 1
+                    continue
+                if key in tgt_state and tgt_state[key].shape == val.shape:
+                    tgt_state[key] = val
+                    transferred += 1
+                else:
+                    skipped += 1
+            model.load_state_dict(tgt_state)
+            logger.info(
+                "MLP weight transfer: %d layers copied, %d skipped "
+                "(heterogeneous=%s; fc_layers.0 always skipped when True)",
+                transferred, skipped, heterogeneous,
+            )
 
         optimizer = AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
         mode = "min" if self._prediction_mode == PredictionMode.REGRESSION else "max"
@@ -427,6 +485,10 @@ class TransferMLP(MultiViewModel):
         gamma: float = 2,
     ):
         """Wraps the model loss to improve readability and reduce code duplication for training loop."""
-        yhat, _, yhats, _ = model_object.model(views)
-        _, _, loss = model_object.model.loss(response, yhat, yhats, gamma = gamma)
+        yhat, h, yhats, _ = model_object.model(views)
+        _, _, loss = model_object.model.loss(response, yhat, yhats, gamma=gamma)
+        src_h = getattr(model_object, "_source_hiddens", None)
+        mmd_w = getattr(model_object, "_mmd_weight", 0.0)
+        if src_h is not None and mmd_w > 0.0:
+            loss = loss + mmd_w * mmd_loss(h, src_h)
         return loss, yhat

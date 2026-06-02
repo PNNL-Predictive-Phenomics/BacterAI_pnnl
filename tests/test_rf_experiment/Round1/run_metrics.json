@@ -1,0 +1,27 @@
+{
+    "TRANSFER_RF": {
+        "mode": "transfer_learning_rf",
+        "selected_source": "All Gammaproteobacteria",
+        "selected_source_rmse": 0.06306826357569659,
+        "source_evaluations": {
+            "P. putida only": {
+                "source_rows": 261,
+                "rf_rmse": 0.06753832737812954
+            },
+            "All Pseudomonas": {
+                "source_rows": 1079,
+                "rf_rmse": 0.06623902281611843
+            },
+            "All Gammaproteobacteria": {
+                "source_rows": 1494,
+                "rf_rmse": 0.06306826357569659
+            }
+        },
+        "n_recommendations": 100,
+        "feature_columns": [
+            "d_glucose",
+            "ammonium_chloride",
+            "pH"
+        ]
+    }
+}

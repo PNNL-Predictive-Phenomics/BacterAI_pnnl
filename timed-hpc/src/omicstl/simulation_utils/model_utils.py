@@ -6,6 +6,7 @@ from typing import Any, NamedTuple, Tuple
 
 import numpy as np
 import pandas as pd
+import torch
 from sklearn.model_selection import KFold, LeaveOneOut, ParameterGrid, StratifiedKFold
 from torch import device
 import re
@@ -331,6 +332,9 @@ def train_model(
     lr: float = 0.001,
     gamma: float = 2,
     weight_decay: float = 1e-4,
+    source_hiddens: "torch.Tensor | None" = None,
+    mmd_weight: float = 0.0,
+    heterogeneous: bool = False,
 ) -> None:
     """Train a model on the provided data.
 
@@ -341,21 +345,36 @@ def train_model(
     model_id: ID to use for the model ("source" or "target")
     source_model: Name of source model for transfer learning
     lr: learning rate
+    source_hiddens: Pre-computed source latent reps for MMD alignment (heterogeneous TL only)
+    mmd_weight: Weight for the MMD alignment loss term (>0 activates MMD)
+    heterogeneous: When True the input layer is always skipped during weight transfer,
+        even when source and target happen to have the same feature count.
 
     """
     train_data = data["training"]
     early_stopping_data = data["early_stopping"]
+    # Force dims update when initialising the target model — its feature set may
+    # differ from the source model that was trained first on this same object.
+    force_dims = source_model is not None
     try:
-        model.set_model_dims([train_data.features], config.output_dim)
+        model.set_model_dims([train_data.features], config.output_dim, force=force_dims)
     except Exception:
         logger.exception("Error setting model dimensions")
 
     if source_model:
-        model.create_model(model_id, source_model=source_model, device=config.torch_device, lr=lr)
+        model.create_model(model_id, source_model=source_model, device=config.torch_device,
+                           lr=lr, heterogeneous=heterogeneous)
 
         if model_id == "target" and config.hyperparams.get("freeze") == "marginal" and hasattr(model, "target"):
             target_container = getattr(model, "target")
             target_container.model.freeze_marginal_layers()
+
+        # Attach MMD alignment tensors to the newly created ModelObject so that
+        # _compute_loss can add the alignment term during target training.
+        if source_hiddens is not None or mmd_weight > 0.0:
+            model_obj = getattr(model, model_id)
+            model_obj._source_hiddens = source_hiddens
+            model_obj._mmd_weight = mmd_weight
     else:
         model.create_model(model_id, device=config.torch_device, lr=lr, weight_decay=weight_decay)
 
@@ -825,6 +844,7 @@ def fit_dl_model(
     model_type: str,
     torch_device: device,
     param_grid: dict[str, float | bool | str] | None = None,
+    mmd_weight: float | None = None,
     **kwargs: float | str,
 ) -> tuple[pd.DataFrame, TransferMLP | TransferVAE, TransferMLP | TransferVAE]:
     """Fit a deep learning model with optional hyperparameter tuning via cross-validation.
@@ -850,47 +870,51 @@ def fit_dl_model(
     response_id = data_container.response_id
     is_classification = data_container.is_classification()
 
-    feature_cols = get_feature_columns(
-        data_container.source_data,
-        response_id=response_id,
-    )
+    source_feature_cols = get_feature_columns(data_container.source_data, response_id=response_id)
+    target_feature_cols = get_feature_columns(data_container.target_data, response_id=response_id)
+    is_heterogeneous = set(source_feature_cols) != set(target_feature_cols)
+    if is_heterogeneous:
+        logger.info(
+            "Heterogeneous transfer detected: source has %d features, target has %d features",
+            len(source_feature_cols), len(target_feature_cols),
+        )
 
-    # Create source partitions
+    # Create source partitions (always use source feature columns)
     source_train_samples, source_validation_samples = split_dataframe_indices(data_container.source_data, 0.9)
 
     source_train_partition = create_data_partition(
         data=data_container.source_data,
-        feature_cols=feature_cols,
+        feature_cols=source_feature_cols,
         response_id=response_id,
         row_ids=source_train_samples,
     )
 
     source_validation_partition = create_data_partition(
         data=data_container.source_data,
-        feature_cols=feature_cols,
+        feature_cols=source_feature_cols,
         response_id=response_id,
         row_ids=source_validation_samples,
     )
 
-    # Create target partitions
+    # Create target partitions (always use target feature columns)
     target_train_samples, target_validation_samples = split_dataframe_indices(data_container.target_data, 0.9)
 
     target_full = create_data_partition(
         data=data_container.target_data,
-        feature_cols=feature_cols,
+        feature_cols=target_feature_cols,
         response_id=response_id,
     )
 
     target_train_partition = create_data_partition(
         data=data_container.target_data,
-        feature_cols=feature_cols,
+        feature_cols=target_feature_cols,
         response_id=response_id,
         row_ids=target_train_samples,
     )
 
     target_validation_partition = create_data_partition(
         data=data_container.target_data,
-        feature_cols=feature_cols,
+        feature_cols=target_feature_cols,
         response_id=response_id,
         row_ids=target_validation_samples,
     )
@@ -900,6 +924,8 @@ def fit_dl_model(
     target_partition_nosource = {"training": target_train_partition, "early_stopping": target_validation_partition}
 
     output_dim = data_container.source_data[response_id].nunique() if is_classification else 1
+
+    best_params_nosource: dict = {}
 
     if param_grid is not None:
         logger.info("Tuning parameters using source data")
@@ -968,6 +994,26 @@ def fit_dl_model(
         logger.warning("No target data found, returning early")
         return results
 
+    # For heterogeneous MLP: extract source latent reps to use as MMD reference
+    # during target training. VAE relies on KL regularisation for alignment; MLP
+    # has no such implicit anchor, so explicit MMD is applied by default.
+    _source_hiddens = None
+    _mmd_weight = 0.0
+    if is_heterogeneous:
+        if model_type == "mult_mlp":
+            _mmd_weight = mmd_weight if mmd_weight is not None else 1.0
+        elif mmd_weight is not None and mmd_weight > 0.0:
+            _mmd_weight = mmd_weight  # user-requested MMD for VAE
+        if _mmd_weight > 0.0:
+            _np_h = model.source.encode([source_train_partition.features])
+            _source_hiddens = torch.tensor(_np_h, dtype=torch.float32)
+            if torch_device is not None:
+                _source_hiddens = _source_hiddens.to(torch_device)
+            logger.info(
+                "Source latent reps extracted for MMD alignment (shape: %s, mmd_weight=%.3f)",
+                _source_hiddens.shape, _mmd_weight,
+            )
+
     logger.info("Transferring to target domain")
     train_model(
         model=model,
@@ -978,6 +1024,9 @@ def fit_dl_model(
         lr=hyperparams.get("lr", 0.01),
         gamma=hyperparams.get("gamma", 2),
         weight_decay=hyperparams.get("weight_decay", 0.01),
+        source_hiddens=_source_hiddens,
+        mmd_weight=_mmd_weight,
+        heterogeneous=is_heterogeneous,
     )
 
     # Target only model
@@ -1024,7 +1073,7 @@ def fit_dl_model(
         test_data = create_data_partition(
             data=test_dataset,
             response_id=response_id,
-            feature_cols=feature_cols,
+            feature_cols=target_feature_cols,
         )
 
         test_context = EvaluationContext(
@@ -1059,14 +1108,20 @@ def fit_dl_model(
 
 def fit_rf_model(
     data_container: DatasetContainer,
+    encoder_model: "TransferVAE | TransferMLP | None" = None,
 ) -> Tuple[pd.DataFrame, TransferForest]:
     """Fit a random forest transfer learning model.
 
     Args:
-                                    data_container: Container with source and target data
+        data_container: Container with source and target data.
+        encoder_model: Optional pre-trained DL model (VAE or MLP) used to project
+            source and target features into a shared latent space when the two
+            datasets have different feature sets (heterogeneous transfer).  Must
+            have been trained with fit_dl_model so that both `encoder_model.source`
+            and `encoder_model.target` encoders exist.
 
     Returns:
-                                    DataFrame with model evaluation results
+        DataFrame with model evaluation results and the fitted TransferForest.
 
     """
     load_r_functions()
@@ -1080,22 +1135,49 @@ def fit_rf_model(
     is_classification = data_container.is_classification()
     logger.info(f"Task type: {'Classification' if is_classification else 'Regression'}")
 
-    feature_cols = get_feature_columns(
-        data=data_container.source_data,
-        response_id=response_id,
-    )
-    logger.info(f"Using {len(feature_cols)} features for modeling")
+    source_feature_cols = get_feature_columns(data=data_container.source_data, response_id=response_id)
+    target_feature_cols = get_feature_columns(data=data_container.target_data, response_id=response_id)
+    is_heterogeneous = set(source_feature_cols) != set(target_feature_cols)
+
+    if is_heterogeneous:
+        if encoder_model is None:
+            raise ValueError(
+                "encoder_model is required for heterogeneous RF transfer learning. "
+                "Train a VAE or MLP model first with fit_dl_model and pass it here."
+            )
+        logger.info(
+            "Heterogeneous RF transfer: encoding to shared latent space via %s",
+            type(encoder_model).__name__,
+        )
+
+    logger.info(f"Using {len(source_feature_cols)} source / {len(target_feature_cols)} target features")
 
     source_data = create_data_partition(
         data=data_container.source_data,
         response_id=response_id,
-        feature_cols=feature_cols,
+        feature_cols=source_feature_cols,
     )
     target_data = create_data_partition(
         data=data_container.target_data,
         response_id=response_id,
-        feature_cols=feature_cols,
+        feature_cols=target_feature_cols,
     )
+
+    # For heterogeneous case: project both datasets into the aligned latent space
+    # so the RF operates on comparable representations.
+    if is_heterogeneous:
+        src_latent = encoder_model.source.encode([source_data.features])
+        tgt_latent = encoder_model.target.encode([target_data.features])
+        latent_cols = [f"z_{i}" for i in range(src_latent.shape[1])]
+        source_data = DataPartition(
+            features=pd.DataFrame(src_latent, columns=latent_cols),
+            response=source_data.response.reset_index(drop=True),
+        )
+        target_data = DataPartition(
+            features=pd.DataFrame(tgt_latent, columns=latent_cols),
+            response=target_data.response.reset_index(drop=True),
+        )
+        logger.info("Encoded to %d-dim latent space for RF", src_latent.shape[1])
     logger.info(f"Source data shape: {source_data.features.shape}, Target data shape: {target_data.features.shape}")
 
     logger.info("Initializing TransferForest model")
@@ -1122,6 +1204,10 @@ def fit_rf_model(
     )
 
     # print("TESTING")
+    # Store encoder reference so predict_rf_model can encode new inputs automatically
+    if is_heterogeneous:
+        transfer_forest.latent_encoder = encoder_model
+
     if hasattr(data_container, "target_test_data") and data_container.target_test_data:
         logger.info(f"Found {len(data_container.target_test_data)} test datasets")
         for i, test_dataset in enumerate(data_container.target_test_data):
@@ -1130,8 +1216,16 @@ def fit_rf_model(
             test_data = create_data_partition(
                 data=test_dataset,
                 response_id=response_id,
-                feature_cols=feature_cols,
+                feature_cols=target_feature_cols,
             )
+            # Encode test data if in heterogeneous mode
+            if is_heterogeneous:
+                tst_latent = encoder_model.target.encode([test_data.features])
+                latent_cols = [f"z_{i}" for i in range(tst_latent.shape[1])]
+                test_data = DataPartition(
+                    features=pd.DataFrame(tst_latent, columns=latent_cols),
+                    response=test_data.response.reset_index(drop=True),
+                )
             logger.info(f"Test data {i} shape: {test_data.features.shape}")
 
             ensemble_views = None
@@ -1140,8 +1234,15 @@ def fit_rf_model(
                 ensemble_data = create_data_partition(
                     data_container.target_ensemble_data,
                     response_id=response_id,
-                    feature_cols=feature_cols
+                    feature_cols=target_feature_cols,
                 )
+                if is_heterogeneous:
+                    ens_latent = encoder_model.target.encode([ensemble_data.features])
+                    latent_cols = [f"z_{j}" for j in range(ens_latent.shape[1])]
+                    ensemble_data = DataPartition(
+                        features=pd.DataFrame(ens_latent, columns=latent_cols),
+                        response=ensemble_data.response.reset_index(drop=True),
+                    )
 
                 ensemble_views = [ensemble_data.features]
                 ensemble_response = ensemble_data.response
@@ -1327,7 +1428,17 @@ def update_rf_model(
     return results, transfer_model
 
 def predict_rf_model(
-    pretrained_model : TransferForest,
-    input_data : pd.DataFrame 
-):
+    pretrained_model: TransferForest,
+    input_data: pd.DataFrame,
+) -> dict:
+    """Predict response values using a pre-trained random forest transfer model.
+
+    If the model was trained in heterogeneous mode (different source/target feature
+    sets), input_data is automatically encoded to the shared latent space via the
+    stored target encoder before prediction.
+    """
+    if getattr(pretrained_model, "latent_encoder", None) is not None:
+        encoded = pretrained_model.latent_encoder.target.encode([input_data])
+        latent_cols = [f"z_{i}" for i in range(encoded.shape[1])]
+        input_data = pd.DataFrame(encoded, columns=latent_cols, index=input_data.index)
     return pretrained_model.generate_predictions([input_data])[0]
