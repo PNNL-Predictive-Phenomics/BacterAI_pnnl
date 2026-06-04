@@ -1,4 +1,4 @@
-name: bacterai-rf
+name: bacterai
 channels:
   - conda-forge
   - defaults
