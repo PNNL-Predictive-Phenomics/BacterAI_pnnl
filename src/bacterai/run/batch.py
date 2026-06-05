@@ -82,7 +82,7 @@ def create_round1_experimental_design(settings, ingredients_pd, ingredients_list
     # Set up ingredients for experimental design
     ingredients_pd.loc[ingredients_pd.TYPE == "quantitative", "N_STATES"] = 3
     total_runs = np.sum(ingredients_pd.astype({"N_STATES": "int64"})["N_STATES"])
-    
+
     if settings.batch_size < 40:
         # Use Plackett-Burman design
         print(f"Using Plackett-Burman design for {settings.batch_size} experiments")
@@ -125,7 +125,7 @@ def create_plackett_burman_design(settings, ingredients_pd, ingredients_list, n_
     batch = pbdesign(n_ingredients)
     batch = pd.DataFrame(batch, columns=ingredients_pd["INGREDIENT"])
     batch = (batch + 1) / 2
-    
+
     # Modify 0/1 values to concentrations
     for ingt in ingredients_list:
         ingt_type = ingredients_pd[ingredients_pd.INGREDIENT == ingt].TYPE.iloc[0]
@@ -155,10 +155,11 @@ def create_space_filling_design(settings, ingredients_pd, ingredients_list, n_in
     batch = ingt_sampler.random_base2(m=np.int64(m_to_use))
     
     # Rescale values to upper and lower bounds
-    l_bounds = ingredients_pd.MIN_VALUE.values
-    u_bounds = ingredients_pd.MAX_VALUE.values
-    u_bounds[ingredients_pd.TYPE.values == "binary"] = 1
-    
+    l_bounds = ingredients_pd.MIN_VALUE.to_numpy(copy=True)
+    u_bounds = ingredients_pd.MAX_VALUE.to_numpy(copy=True)
+    mask = (ingredients_pd["TYPE"].astype(str) == "binary").to_numpy()
+    u_bounds[mask] = 1
+
     batch = qmc.scale(batch, l_bounds, u_bounds)
     batch = pd.DataFrame(batch, columns=ingredients_pd["INGREDIENT"])
     
