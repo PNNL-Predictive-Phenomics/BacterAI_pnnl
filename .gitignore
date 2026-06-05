@@ -12,7 +12,6 @@ plots/
 img/
 benchmark_results/
 models/
-data/
 img/
 benchmark_results/
 models/
@@ -36,3 +35,10 @@ old_tests
 htmlcov/
 .coverage
 .env
+
+# Ignore all data directories by default
+**/data/
+
+# Keep data directories within timed-hpc
+!timed-hpc/**/data/
+!timed-hpc/**/data/**
