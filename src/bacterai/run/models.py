@@ -1,9 +1,15 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 import os
+import pickle
 
 import numpy as np
 import pandas as pd
+
+try:
+    from sklearn.ensemble import RandomForestRegressor
+except Exception:
+    RandomForestRegressor = None
 
 try:
     import torch
@@ -25,6 +31,7 @@ except Exception:
 class ModelType(Enum):
     GPR = 0
     NEURAL_NET = 1
+    TRANSFER_RF = 2
 
 
 class Model(ABC):
@@ -170,8 +177,58 @@ class TimedTransferRFModel(Model):
     def set_feature_names(self, feature_names):
         self.feature_names = list(feature_names)
 
+    @classmethod
+    def load_trained_model(cls, model_path):
+        with open(model_path, "rb") as f:
+            payload = pickle.load(f)
+        classifier = payload["classifier"]
+        feature_names = payload.get("feature_names", [])
+        return cls(classifier=classifier, feature_names=feature_names)
+
+    def save_trained_model(self, model_path):
+        payload = {
+            "classifier": self.classifier,
+            "feature_names": self.feature_names,
+        }
+        with open(model_path, "wb") as f:
+            pickle.dump(payload, f)
+
     def train(self, X_train, y_train, **kwargs):
         raise NotImplementedError("TimedTransferRFModel is inference-only in this bridge mode.")
+
+    @staticmethod
+    def _predict_from_transfer_forest(classifier, X_df):
+        try:
+            prediction_dict = classifier.generate_predictions([X_df])[0]
+        except KeyError as e:
+            # Persisted TransferForest objects need R functions sourced in fresh processes.
+            if "predict_trans_rf" not in str(e):
+                raise
+            try:
+                from omicstl.transfer_forest import load_r_functions
+            except Exception as import_error:
+                raise RuntimeError(
+                    "Failed to import timed-hpc transfer_forest loader for persisted model inference."
+                ) from import_error
+            load_r_functions()
+            prediction_dict = classifier.generate_predictions([X_df])[0]
+        preferred_keys = [
+            "pred_ensemble_full",
+            "pred_0_full",
+            "pred_1_full",
+            "pred_source_full",
+        ]
+
+        for key in preferred_keys:
+            if key in prediction_dict:
+                return np.asarray(prediction_dict[key], dtype=float)
+
+        for key, value in prediction_dict.items():
+            if key.endswith("_prob"):
+                continue
+            return np.asarray(value, dtype=float)
+
+        raise ValueError("TransferForest returned no usable prediction outputs.")
 
     def evaluate(self, X, clip=True):
         if self.feature_names and len(self.feature_names) == X.shape[1]:
@@ -179,7 +236,14 @@ class TimedTransferRFModel(Model):
         else:
             X_df = pd.DataFrame(X)
 
-        predictions = np.asarray(self.classifier.predict(X_df), dtype=float)
+        if hasattr(self.classifier, "predict"):
+            predictions = np.asarray(self.classifier.predict(X_df), dtype=float)
+        elif hasattr(self.classifier, "generate_predictions"):
+            predictions = self._predict_from_transfer_forest(self.classifier, X_df)
+        else:
+            raise AttributeError(
+                "Timed transfer classifier must expose either predict() or generate_predictions()."
+            )
 
         # BacterAI assumes a growth score in [0, 1] for simulation thresholds.
         if getattr(self.classifier, "_is_classification", False):
@@ -193,4 +257,119 @@ class TimedTransferRFModel(Model):
             predictions = np.clip(predictions, 0, 1)
 
         variances = np.zeros_like(predictions, dtype=float)
+        return predictions, variances
+
+
+class IterativeTransferRFModel(Model):
+    """RF model used for iterative transfer-learning simulation rounds."""
+
+    def __init__(self, feature_names=None, input_feature_names=None):
+        self.feature_names = list(feature_names) if feature_names is not None else []
+        self.input_feature_names = list(input_feature_names) if input_feature_names is not None else []
+        self.classifier = None
+        self.is_trained = False
+        super().__init__(None, ModelType.TRANSFER_RF)
+
+    def set_feature_names(self, feature_names):
+        self.feature_names = list(feature_names)
+
+    def set_input_feature_names(self, feature_names):
+        self.input_feature_names = list(feature_names)
+
+    @classmethod
+    def from_classifier(cls, classifier, feature_names=None, input_feature_names=None):
+        obj = cls(feature_names=feature_names, input_feature_names=input_feature_names)
+        obj.classifier = classifier
+        obj.is_trained = True
+        return obj
+
+    @classmethod
+    def load_trained_model(cls, model_path):
+        with open(model_path, "rb") as f:
+            payload = pickle.load(f)
+
+        obj = cls(
+            feature_names=payload.get("feature_names", []),
+            input_feature_names=payload.get("input_feature_names", []),
+        )
+        obj.classifier = payload["classifier"]
+        obj.is_trained = True
+        return obj
+
+    def save_trained_model(self, model_path):
+        if not self.is_trained or self.classifier is None:
+            raise ValueError("Cannot save IterativeTransferRFModel before training.")
+        payload = {
+            "classifier": self.classifier,
+            "feature_names": self.feature_names,
+            "input_feature_names": self.input_feature_names,
+        }
+        with open(model_path, "wb") as f:
+            pickle.dump(payload, f)
+
+    def train(self, X_train, y_train, **kwargs):
+        if RandomForestRegressor is None:
+            raise ImportError("scikit-learn is required for iterative transfer RF training.")
+        if X_train is None or y_train is None or len(X_train) == 0:
+            raise ValueError("IterativeTransferRFModel requires non-empty training data.")
+
+        n_estimators = int(kwargs.get("n_estimators", 400))
+        random_state = int(kwargs.get("random_state", 42))
+        min_samples_leaf = int(kwargs.get("min_samples_leaf", 1))
+
+        self.classifier = RandomForestRegressor(
+            n_estimators=n_estimators,
+            random_state=random_state,
+            n_jobs=-1,
+            min_samples_leaf=min_samples_leaf,
+        )
+        self.classifier.fit(X_train, y_train)
+        self.is_trained = True
+
+    def evaluate(self, X, clip=True):
+        if not self.is_trained or self.classifier is None:
+            raise Exception("Iterative transfer RF model needs to be trained before evaluating.")
+
+        if isinstance(X, pd.DataFrame):
+            X_eval = X.copy()
+        elif self.input_feature_names and len(self.input_feature_names) == X.shape[1]:
+            X_eval = pd.DataFrame(X, columns=self.input_feature_names)
+        elif self.feature_names and len(self.feature_names) == X.shape[1]:
+            X_eval = pd.DataFrame(X, columns=self.feature_names)
+        else:
+            X_eval = pd.DataFrame(X)
+
+        X_pred = X_eval
+        if self.feature_names and isinstance(X_eval, pd.DataFrame):
+            for col in self.feature_names:
+                if col not in X_eval.columns:
+                    X_eval[col] = 0.0
+            X_pred = X_eval[self.feature_names]
+
+        if hasattr(self.classifier, "predict"):
+            predictions = np.asarray(self.classifier.predict(X_pred), dtype=float)
+        elif hasattr(self.classifier, "generate_predictions"):
+            if isinstance(X_pred, pd.DataFrame):
+                X_df = X_pred
+            else:
+                X_df = pd.DataFrame(X_pred)
+            predictions = TimedTransferRFModel._predict_from_transfer_forest(self.classifier, X_df)
+        else:
+            raise AttributeError(
+                "Iterative transfer classifier must expose either predict() or generate_predictions()."
+            )
+
+        # Use tree-level spread as a predictive uncertainty proxy when available.
+        if hasattr(self.classifier, "estimators_") and self.classifier.estimators_:
+            tree_predictions = np.asarray(
+                [estimator.predict(X_eval) for estimator in self.classifier.estimators_],
+                dtype=float,
+            )
+            variances = np.var(tree_predictions, axis=0)
+        else:
+            variances = np.zeros_like(predictions, dtype=float)
+
+        if clip:
+            predictions = np.clip(predictions, 0, 1)
+
         return predictions, variances

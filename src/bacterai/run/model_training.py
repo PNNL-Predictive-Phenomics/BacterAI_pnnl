@@ -3,7 +3,7 @@
 
 import os
 import shutil
-from .models import GPRModel, NeuralNetModel, ModelType
+from .models import GPRModel, NeuralNetModel, IterativeTransferRFModel, TimedTransferRFModel, ModelType
 
 
 def train_experiment_model(X_train, y_train, settings, new_round_folder, transfer_model):
@@ -29,6 +29,33 @@ def train_experiment_model(X_train, y_train, settings, new_round_folder, transfe
         Trained model ready for use
     """
     n_ingredients = len(X_train[0]) if X_train is not None and len(X_train) > 0 else None
+
+    if settings.model_type == ModelType.TRANSFER_RF:
+        if (
+            settings.transfer_learning
+            and settings.round_number == 2
+            and isinstance(transfer_model, TimedTransferRFModel)
+        ):
+            print("Warm-starting Round 2 TRANSFER_RF from timed-hpc transfer artifact...")
+            model = IterativeTransferRFModel.from_classifier(
+                transfer_model.classifier,
+                feature_names=transfer_model.feature_names,
+                input_feature_names=getattr(settings, "ingredient_names", None),
+            )
+        else:
+            print("Training iterative Transfer RF model...")
+            model = IterativeTransferRFModel()
+            model.train(
+                X_train,
+                y_train,
+                n_estimators=max(int(settings.n_bags) * 16, 200),
+                random_state=42,
+                min_samples_leaf=1,
+            )
+        artifact_path = os.path.join(new_round_folder, "transfer_rf_model.pkl")
+        model.save_trained_model(artifact_path)
+        print(f"Saved iterative Transfer RF artifact to {artifact_path}")
+        return model
     
     if settings.model_type == ModelType.GPR:
         # Train GPR Model

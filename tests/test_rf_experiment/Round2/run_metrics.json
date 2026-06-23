@@ -1,0 +1,12 @@
+{
+    "DOWN": {
+        "ROLLOUT": {
+            "k_history": [],
+            "count_history": [],
+            "k_avg": "n/a",
+            "count_avg": "n/a",
+            "total_loops_count": 89,
+            "time_to_finish_sec": 300.39
+        }
+    }
+}

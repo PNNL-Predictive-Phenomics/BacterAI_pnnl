@@ -1,11 +1,11 @@
 {
-  "experiment_path": "/Users/reyn999/Desktop/Projects/BacterAI/BacterAI_pnnl-1/tmp",
+  "experiment_path": "tests/test_rf_experiment",
   "ingredients_file": "ingredients.json",
   "grow_threshold": 0.25,
   "nickname": "Test",
   "batch_size": 100,
   "timeout_min": 60,
-  "model_type": 0,
+  "model_type": 2,
   "direction": 0,
   "beyond_frontier": true,
   "use_unique": false,
@@ -14,14 +14,9 @@
   "transfer_model_folder": null,
   "transfer_data_dir": null,
   "redo_size": 0,
-  "redo_threshold": [
-    0.0,
-    1.0
-  ],
+  "redo_threshold": [0, 1],
   "aas_only": false,
   "separate_redos": false,
-  "simulation_types": [
-    2
-  ],
+  "simulation_types": [2],
   "random_walk_increment": 10
 }

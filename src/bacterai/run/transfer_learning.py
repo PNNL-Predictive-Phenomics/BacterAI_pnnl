@@ -212,6 +212,14 @@ def create_transfer_learning_round1_batch(settings, ingredients_pd, ingredients_
 
     feature_cols = selected_features
 
+    # Persist the timed-hpc transfer RF so later rounds can warm-start native MDP.
+    from .models import TimedTransferRFModel
+    timed_model = TimedTransferRFModel(best_model, feature_names=feature_cols)
+    round_folder = pathlib.Path(settings.experiment_path) / f"Round{settings.round_number}"
+    round_folder.mkdir(parents=True, exist_ok=True)
+    timed_model_path = round_folder / "transfer_timed_hpc_rf_model.pkl"
+    timed_model.save_trained_model(str(timed_model_path))
+
     batch = recommend_next_batch(
         model_info={"model": best_model, "type": "rf"},
         existing_data=tgt_combo[["response"] + feature_cols],
@@ -257,6 +265,7 @@ def create_transfer_learning_round1_batch(settings, ingredients_pd, ingredients_
         "source_evaluations": source_evaluations,
         "n_recommendations": int(len(batch)),
         "feature_columns": feature_cols,
+        "timed_hpc_model_artifact": str(timed_model_path),
     }
     return batch, {"TRANSFER_RF": metrics}
 
@@ -352,13 +361,28 @@ def load_pretrained_model(settings):
     Model or None
         Loaded model if transfer_model_folder is specified, None otherwise
     """
+    # Import here to avoid circular imports
+    from .models import GPRModel, NeuralNetModel, TimedTransferRFModel, ModelType
+
+    if settings.model_type == ModelType.TRANSFER_RF and settings.transfer_learning and settings.round_number > 1:
+        timed_hpc_model_path = os.path.join(
+            settings.experiment_path,
+            "Round1",
+            "transfer_timed_hpc_rf_model.pkl",
+        )
+        if os.path.exists(timed_hpc_model_path):
+            print(f"Loading timed-hpc transfer RF model from '{timed_hpc_model_path}'")
+            return TimedTransferRFModel.load_trained_model(timed_hpc_model_path)
+        print(
+            "Timed-hpc transfer RF artifact not found for warm-start; "
+            "falling back to local iterative TRANSFER_RF training."
+        )
+        return None
+
     if settings.transfer_model_folder is None:
         return None
         
     print(f"Loading pre-trained model from '{settings.transfer_model_folder}'")
-    
-    # Import here to avoid circular imports
-    from .models import GPRModel, NeuralNetModel, ModelType
     
     if settings.model_type == ModelType.GPR:
         return GPRModel.load_trained_models(settings.transfer_model_folder)

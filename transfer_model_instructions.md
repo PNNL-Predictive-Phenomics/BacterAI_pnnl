@@ -6,7 +6,8 @@ The current transfer mode is:
 
 - Enabled only when `--transfer-learning` is provided.
 - RF-only (no MLP/VAE branches).
-- Trained end-to-end from bundled timed-hpc source/target datasets (users do not provide model/data paths).
+- Round 1 direct timed-hpc RF recommendation (EI-based) when `--transfer-learning` is provided.
+- Separate from model_type-based iterative simulation RF.
 
 ## 1. Build the Docker image
 
@@ -55,15 +56,17 @@ bacterai run tests/test_rf_experiment --transfer-learning
 ```
 Important: If using the above path, ensure round 1 folder is removed
 
-## 5. Round 1 requirement
+## 5. Round behavior
 
-Transfer-learning mode currently supports Round 1 only.
+`--transfer-learning` provides a direct timed-hpc transfer bootstrap for Round 1.
+For Round 2+, BacterAI continues with the native MDP loop (`perform_simulations`) using your configured `model_type`.
 
-If the experiment already contains `Round*` folders, BacterAI may detect a later round and fail with:
+If you want iterative transfer RF through `perform_simulations`, use model configuration:
 
-- `Transfer-learning mode currently supports Round 1 only.`
+- `model_type = 2` (`TRANSFER_RF`) in `config.json`
+- Run Round 1 with `--transfer-learning` for hot-start, then run later rounds normally (with or without the flag).
 
-To force a clean Round 1 test run:
+To force a clean Round 1 bootstrap run:
 
 ```bash
 rm -rf tests/test_rf_experiment/Round*
@@ -84,6 +87,10 @@ Round folder outputs:
 - `batch_meta_<timestamp>.csv`: main output; use this file.
 - `run_metrics.json`: source/model selection and recommendation metadata.
 - `batch_dp_<...>.csv`: legacy DP export format.
+- `transfer_timed_hpc_rf_model.pkl`: timed-hpc RF artifact saved from Round 1 bootstrap.
+
+If you run Round 2+ with `model_type = 2` (`TRANSFER_RF`) and keep `--transfer-learning` enabled,
+BacterAI warm-starts the native MDP loop from `Round1/transfer_timed_hpc_rf_model.pkl`.
 
 Important: the DP CSV can appear empty/non-informative for transfer-learning results because DP export writes ingredient names only when value equals 0.
 
@@ -103,7 +110,8 @@ docker build --no-cache -f Dockerfile.transfer-rf -t bacterai-transfer-rf .
 
 ### Error: Transfer-learning mode currently supports Round 1 only
 
-Remove existing `Round*` folders in the test experiment path and rerun.
+This applies to the direct timed-hpc helper used by `--transfer-learning`.
+For iterative RF in the simulation loop, use `model_type = 2` and run without `--transfer-learning`.
 
 ### Warning spam from pandas FutureWarning during model_utils concat
 

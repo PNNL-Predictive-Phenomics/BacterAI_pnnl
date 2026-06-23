@@ -22,6 +22,7 @@
             "d_glucose",
             "ammonium_chloride",
             "pH"
-        ]
+        ],
+        "timed_hpc_model_artifact": "tests/test_rf_experiment/Round1/transfer_timed_hpc_rf_model.pkl"
     }
 }

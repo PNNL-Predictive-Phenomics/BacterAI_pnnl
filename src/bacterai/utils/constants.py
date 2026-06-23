@@ -4,6 +4,8 @@ COLORS = {
     "RANDOM": "dodgerblue",
     "GREEDY": "orangered",
     "REDO": "limegreen",
+    "transfer_rf": "slateblue",
+    "TRANSFER_RF": "slateblue",
 }
 
 AA_NAMES_TEMPEST = [

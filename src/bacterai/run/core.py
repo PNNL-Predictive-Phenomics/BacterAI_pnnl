@@ -635,6 +635,7 @@ def execute_experiment(
         experiment_path,
         transfer_learning=enable_transfer_learning,
     )
+    settings.ingredient_names = ingredients_list
     n_ingredients = len(ingredients_list)
     
     # Create ingredients mapping for later use
@@ -648,7 +649,7 @@ def execute_experiment(
     if not new_round_folder.exists():
         new_round_folder.mkdir(parents=True)
 
-    if settings.transfer_learning:
+    if settings.transfer_learning and settings.round_number == 1:
         batch_df, all_metrics = transfer_learning.create_transfer_learning_round1_batch(
             settings,
             ingredients_pd,
@@ -659,6 +660,9 @@ def execute_experiment(
             json.dump(all_metrics, f, indent=4)
         export.export_to_dp_batch(new_round_folder, batch_df, ingredients_list, date, settings.nickname)
         return
+
+    if settings.transfer_learning and settings.round_number > 1:
+        print("Transfer-learning bootstrap already applied in Round 1; continuing with native MDP loop.")
 
     if settings.round_number > 1:
         # Check if mapped_data exists, if not try to auto-process plate reader data
