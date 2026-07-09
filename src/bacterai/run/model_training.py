@@ -36,7 +36,7 @@ def train_experiment_model(X_train, y_train, settings, new_round_folder, transfe
             and settings.round_number == 2
             and isinstance(transfer_model, TimedTransferRFModel)
         ):
-            print("Warm-starting Round 2 TRANSFER_RF from timed-hpc transfer artifact...")
+            print("Warm-starting Round 2 TRANSFER_RF from Round 1 transfer artifact...")
             model = IterativeTransferRFModel.from_classifier(
                 transfer_model.classifier,
                 feature_names=transfer_model.feature_names,

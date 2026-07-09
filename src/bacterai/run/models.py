@@ -167,12 +167,12 @@ class NeuralNetModel(Model):
 
 
 class TimedTransferRFModel(Model):
-    """Adapter for timed-hpc TransferForest pickle models."""
+    """Adapter for persisted Round 1 transfer RF artifacts."""
 
     def __init__(self, classifier, feature_names=None):
         self.classifier = classifier
         self.feature_names = feature_names or []
-        super().__init__(None, ModelType.NEURAL_NET)
+        super().__init__(None, ModelType.TRANSFER_RF)
 
     def set_feature_names(self, feature_names):
         self.feature_names = list(feature_names)
@@ -198,25 +198,16 @@ class TimedTransferRFModel(Model):
 
     @staticmethod
     def _predict_from_transfer_forest(classifier, X_df):
-        try:
-            prediction_dict = classifier.generate_predictions([X_df])[0]
-        except KeyError as e:
-            # Persisted TransferForest objects need R functions sourced in fresh processes.
-            if "predict_trans_rf" not in str(e):
-                raise
-            try:
-                from omicstl.transfer_forest import load_r_functions
-            except Exception as import_error:
-                raise RuntimeError(
-                    "Failed to import timed-hpc transfer_forest loader for persisted model inference."
-                ) from import_error
-            load_r_functions()
-            prediction_dict = classifier.generate_predictions([X_df])[0]
+        prediction_dict = classifier.generate_predictions([X_df])[0]
         preferred_keys = [
             "pred_ensemble_full",
+            "pred_ensemble",
             "pred_0_full",
+            "pred_0",
             "pred_1_full",
+            "pred_1",
             "pred_source_full",
+            "pred_source",
         ]
 
         for key in preferred_keys:
@@ -224,7 +215,7 @@ class TimedTransferRFModel(Model):
                 return np.asarray(prediction_dict[key], dtype=float)
 
         for key, value in prediction_dict.items():
-            if key.endswith("_prob"):
+            if "_prob" in key:
                 continue
             return np.asarray(value, dtype=float)
 

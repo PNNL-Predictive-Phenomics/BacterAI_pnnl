@@ -21,11 +21,6 @@ dependencies = [
 [project.scripts]
 bacterai = "bacterai.main:main"
 
-[project.optional-dependencies]
-transfer-rf = [
-"rpy2>=3.5",
-]
-
 [build-system]
 requires = ["hatchling>=1.21.0"]
 build-backend = "hatchling.build"

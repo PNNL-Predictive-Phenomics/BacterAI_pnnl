@@ -2,17 +2,16 @@
 
 import os
 import shutil
-import sys
-import types
-import importlib
 import pathlib
-import random
+from datetime import datetime
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from ..analysis import processing as utils
+from ..ml.transfer_forest import TransferForestPython
 from ..scripts.size_n_to_m_conversion import fill_new_ingredients
 from ..utils.constants import AA_SHORT, BASE_NAMES
+from .recommendation import recommend_next_batch
 
 
 PPUTIDA_FEATURES = [
@@ -30,37 +29,16 @@ PPUTIDA_FEATURES = [
 ]
 
 
-def _bootstrap_omicstl_namespace():
-    """Make omicstl importable from local timed-hpc source without package install."""
-    if "omicstl" in sys.modules:
-        return
-
-    this_dir = os.path.dirname(os.path.abspath(__file__))
-    candidates = [
-        os.path.join(this_dir, "..", "..", "..", "timed-hpc", "src", "omicstl"),
-        os.path.join(os.getcwd(), "timed-hpc", "src", "omicstl"),
-    ]
-    for candidate in candidates:
-        pkg_dir = os.path.abspath(candidate)
-        if os.path.isdir(pkg_dir):
-            pkg = types.ModuleType("omicstl")
-            pkg.__path__ = [pkg_dir]
-            sys.modules["omicstl"] = pkg
-            return
-
-    raise ImportError("Could not locate local timed-hpc omicstl package under timed-hpc/src/omicstl")
-
-
-def _resolve_timed_hpc_data_dir() -> pathlib.Path:
+def _resolve_transfer_rf_data_dir() -> pathlib.Path:
     this_dir = pathlib.Path(__file__).resolve().parent
     candidates = [
-        this_dir.parent.parent.parent / "timed-hpc" / "docs" / "data",
-        pathlib.Path.cwd() / "timed-hpc" / "docs" / "data",
+        this_dir.parent / "data" / "transfer_rf",
+        pathlib.Path.cwd() / "src" / "bacterai" / "data" / "transfer_rf",
     ]
     for path in candidates:
         if path.exists() and path.is_dir():
             return path
-    raise FileNotFoundError("Could not locate timed-hpc/docs/data directory")
+    raise FileNotFoundError("Could not locate bundled transfer RF data directory: src/bacterai/data/transfer_rf")
 
 
 def _safe_float(value, default=0.0):
@@ -85,7 +63,7 @@ def _build_feature_specs(ingredients_pd, ingredients_list):
     selected_features = [col for col in PPUTIDA_FEATURES if col in ingredients_list]
     if len(selected_features) < 2:
         raise ValueError(
-            "Transfer-learning mode requires at least 2 overlapping features with timed-hpc pputida RF features. "
+            "Transfer-learning mode requires at least 2 overlapping features with bundled pputida RF features. "
             f"Found overlap: {selected_features}"
         )
 
@@ -122,29 +100,18 @@ def _build_feature_specs(ingredients_pd, ingredients_list):
     return selected_features, feature_ranges, step_sizes, defaults
 
 
-def _import_transfer_recommendation_deps():
-    _bootstrap_omicstl_namespace()
-
-    DatasetContainer = importlib.import_module(
-        "omicstl.simulation_utils.data_utils"
-    ).DatasetContainer
-    fit_rf_model = importlib.import_module(
-        "omicstl.simulation_utils.model_utils"
-    ).fit_rf_model
-    recommend_next_batch = importlib.import_module(
-        "omicstl.simulation_utils.recommendation_utils"
-    ).recommend_next_batch
-    set_seed = importlib.import_module("omicstl.r_utils").set_seed
-    return DatasetContainer, fit_rf_model, recommend_next_batch, set_seed
+def _rmse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    y_true = np.asarray(y_true, dtype=float)
+    y_pred = np.asarray(y_pred, dtype=float)
+    return float(np.sqrt(np.mean((y_true - y_pred) ** 2)))
 
 
 def create_transfer_learning_round1_batch(settings, ingredients_pd, ingredients_list):
-    """Train timed-hpc RF from bundled source/target data and generate Round 1 batch."""
+    """Train native Python transfer RF from bundled source/target data and generate Round 1 batch."""
     if settings.round_number != 1:
         raise RuntimeError("Transfer-learning mode currently supports Round 1 only.")
 
-    DatasetContainer, fit_rf_model, recommend_next_batch, set_seed = _import_transfer_recommendation_deps()
-    data_dir = _resolve_timed_hpc_data_dir()
+    data_dir = _resolve_transfer_rf_data_dir()
 
     selected_features, feature_ranges, step_sizes, defaults = _build_feature_specs(
         ingredients_pd,
@@ -182,21 +149,29 @@ def create_transfer_learning_round1_batch(settings, ingredients_pd, ingredients_
         source_raw = pd.read_csv(data_dir / source_file)
         source_df = source_raw[["Resp"] + selected_features].rename(columns={"Resp": "response"})
 
-        datasets = DatasetContainer(
-            source_data=source_df,
-            target_data=tgt_train,
-            target_ensemble_data=tgt_ensemble,
-            target_test_data=[tgt_test],
+        rf_model = TransferForestPython(
+            n_estimators=500,
+            random_state=42,
+            min_samples_leaf=1,
         )
-        datasets.set_response_column("response")
+        rf_model.fit(
+            source_X=source_df[selected_features],
+            source_y=source_df["response"].to_numpy(dtype=float),
+            target_X=tgt_train[selected_features],
+            target_y=tgt_train["response"].to_numpy(dtype=float),
+        )
 
-        random.seed(42)
-        np.random.seed(42)
-        set_seed(42)
-        rf_results, rf_model = fit_rf_model(datasets)
+        pred_dict = rf_model.generate_predictions(
+            views=[tgt_test[selected_features]],
+            response=tgt_test["response"].to_numpy(dtype=float),
+            validation_views=[tgt_test[selected_features]],
+            validation_response=tgt_test["response"].to_numpy(dtype=float),
+            ensemble_views=[tgt_ensemble[selected_features]],
+            ensemble_response=tgt_ensemble["response"].to_numpy(dtype=float),
+        )[0]
 
-        rmse_row = rf_results[rf_results["model_type"] == "pred_ensemble_full"]
-        rmse = float(rmse_row["rmse"].iloc[0]) if len(rmse_row) else float("inf")
+        pred = np.asarray(pred_dict.get("pred_ensemble", pred_dict.get("pred_0")), dtype=float)
+        rmse = _rmse(tgt_test["response"].to_numpy(dtype=float), pred)
 
         source_evaluations[source_label] = {
             "source_rows": int(len(source_df)),
@@ -208,20 +183,21 @@ def create_transfer_learning_round1_batch(settings, ingredients_pd, ingredients_
             best_source = source_label
 
     if best_model is None:
-        raise RuntimeError("Failed to train transfer-learning RF model from bundled timed-hpc datasets")
+        raise RuntimeError("Failed to train transfer-learning RF model from bundled datasets")
 
     feature_cols = selected_features
 
-    # Persist the timed-hpc transfer RF so later rounds can warm-start native MDP.
+    # Persist transfer RF artifact so later rounds can warm-start native MDP.
     from .models import TimedTransferRFModel
     timed_model = TimedTransferRFModel(best_model, feature_names=feature_cols)
     round_folder = pathlib.Path(settings.experiment_path) / f"Round{settings.round_number}"
     round_folder.mkdir(parents=True, exist_ok=True)
-    timed_model_path = round_folder / "transfer_timed_hpc_rf_model.pkl"
+
+    timed_model_path = round_folder / "transfer_rf_model.pkl"
     timed_model.save_trained_model(str(timed_model_path))
 
     batch = recommend_next_batch(
-        model_info={"model": best_model, "type": "rf"},
+        model=best_model,
         existing_data=tgt_combo[["response"] + feature_cols],
         response_col="response",
         feature_cols=feature_cols,
@@ -265,8 +241,11 @@ def create_transfer_learning_round1_batch(settings, ingredients_pd, ingredients_
         "source_evaluations": source_evaluations,
         "n_recommendations": int(len(batch)),
         "feature_columns": feature_cols,
-        "timed_hpc_model_artifact": str(timed_model_path),
+        "transfer_rf_model_artifact": str(timed_model_path),
+        "implementation": "python_only_transfer_forest",
+        "generated_at": datetime.utcnow().isoformat() + "Z",
     }
+
     return batch, {"TRANSFER_RF": metrics}
 
 
@@ -365,19 +344,18 @@ def load_pretrained_model(settings):
     from .models import GPRModel, NeuralNetModel, TimedTransferRFModel, ModelType
 
     if settings.model_type == ModelType.TRANSFER_RF and settings.transfer_learning and settings.round_number > 1:
-        timed_hpc_model_path = os.path.join(
+        transfer_model_path = os.path.join(
             settings.experiment_path,
             "Round1",
-            "transfer_timed_hpc_rf_model.pkl",
+            "transfer_rf_model.pkl",
         )
-        if os.path.exists(timed_hpc_model_path):
-            print(f"Loading timed-hpc transfer RF model from '{timed_hpc_model_path}'")
-            return TimedTransferRFModel.load_trained_model(timed_hpc_model_path)
-        print(
-            "Timed-hpc transfer RF artifact not found for warm-start; "
-            "falling back to local iterative TRANSFER_RF training."
-        )
-        return None
+        if not os.path.exists(transfer_model_path):
+            raise FileNotFoundError(
+                "Transfer RF warm-start artifact not found at "
+                f"'{transfer_model_path}'. Run Round 1 with --transfer-learning first."
+            )
+        print(f"Loading transfer RF model from '{transfer_model_path}'")
+        return TimedTransferRFModel.load_trained_model(transfer_model_path)
 
     if settings.transfer_model_folder is None:
         return None

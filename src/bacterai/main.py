@@ -106,7 +106,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument(
         "--transfer-learning",
         action="store_true",
-        help="Enable RF transfer-learning Round 1 generation using bundled timed-hpc source/target data",
+        help="Enable RF transfer-learning Round 1 generation using bundled transfer source/target data",
     )
     run.set_defaults(func=run_wrapper)
     

@@ -92,7 +92,7 @@ class _DummyRF:
 
 
 def test_timed_transfer_rf_save_and_load(temp_experiment_dir):
-    artifact_path = temp_experiment_dir / "transfer_timed_hpc_rf_model.pkl"
+    artifact_path = temp_experiment_dir / "transfer_rf_model.pkl"
     model = TimedTransferRFModel(classifier=_DummyRF(), feature_names=["f0", "f1"])
     model.save_trained_model(str(artifact_path))
 

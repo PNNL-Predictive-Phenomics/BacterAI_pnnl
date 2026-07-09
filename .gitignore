@@ -39,9 +39,9 @@ htmlcov/
 # Ignore all data directories by default
 **/data/
 
-# Keep data directories within timed-hpc
-!timed-hpc/**/data/
-!timed-hpc/**/data/**
+# Keep packaged transfer RF data
+!src/bacterai/data/
+!src/bacterai/data/**
 
 # Keep test fixture data for transfer RF integration tests
 !tests/test_rf_experiment/**/data/
