@@ -3,7 +3,7 @@
 
 import os
 import shutil
-from .models import GPRModel, NeuralNetModel, ModelType
+from .models import GPRModel, NeuralNetModel, RandomForestModel, ModelType
 
 
 def train_experiment_model(X_train, y_train, settings, new_round_folder, transfer_model):
@@ -30,11 +30,20 @@ def train_experiment_model(X_train, y_train, settings, new_round_folder, transfe
     """
     n_ingredients = len(X_train[0]) if X_train is not None and len(X_train) > 0 else None
     
+    
     if settings.model_type == ModelType.GPR:
         # Train GPR Model
         print("Training GPR model...")
         models_folder = os.path.join(new_round_folder, "gpr_model")
         model = GPRModel(models_folder)
+        model.train(X_train, y_train)
+        return model
+    
+    elif settings.model_type == ModelType.RF:
+        # Train RF Model
+        print("Training RF model...")
+        models_folder = os.path.join(new_round_folder, "rf_model")
+        model = RandomForestModel(models_folder)
         model.train(X_train, y_train)
         return model
         

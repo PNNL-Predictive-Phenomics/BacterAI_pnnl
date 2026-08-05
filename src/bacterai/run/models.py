@@ -8,11 +8,12 @@ import torch
 # from constants import *
 from ..ml import neural_networks as net
 from ..ml import gaussian_process as gpr
-
+from ..ml import random_forest as rf
 
 class ModelType(Enum):
     GPR = 0
     NEURAL_NET = 1
+    RF = 2
 
 
 class Model(ABC):
@@ -137,3 +138,102 @@ class NeuralNetModel(Model):
         if clip:
             predictions = np.clip(predictions, 0, 1)
         return predictions, variances
+
+
+class RandomForestModel(Model):
+    def __init__(self, model_path):
+        self.model = None
+        self.model_path = model_path
+        self.is_trained = False
+
+        # Use the enum name defined in your project
+        super().__init__(None, ModelType.RF)
+
+    @classmethod
+    def load_trained_models(cls, models_path):
+        """
+        Load a trained Random Forest model from models_path.
+        """
+
+        model_file = os.path.join(
+            models_path,
+            "random_forest_model.joblib"
+        )
+
+        if not os.path.exists(model_file):
+            raise FileNotFoundError(
+                f"Random Forest model not found: {model_file}"
+            )
+
+        obj = cls(models_path)
+        obj.model = joblib.load(model_file)
+        obj.is_trained = True
+
+        return obj
+
+    def check_path(self):
+        """
+        Create the model directory if it does not exist.
+        """
+
+        if not os.path.exists(self.model_path):
+            os.makedirs(self.model_path, exist_ok=True)
+
+    def train(self, X_train, y_train, **kwargs):
+        """
+        Train and save the Random Forest model.
+        """
+
+        self.check_path()
+
+        self.model = rf.train_new_RF(
+            X_train,
+            y_train,
+            self.model_path,
+            **kwargs
+        )
+
+        self.is_trained = True
+
+        return self.model
+
+    def evaluate(self, X, clip=True, n=1):
+        """
+        Generate Random Forest predictions.
+
+        Parameters
+        ----------
+        X : array-like
+            Input features.
+
+        clip : bool
+            Clip predictions to the range [0, 1].
+
+        n : int
+            Number of approximate predictive samples to generate.
+
+        Returns
+        -------
+        samples : numpy.ndarray
+            Predictions generated from individual trees.
+
+        variances : numpy.ndarray
+            Variance of tree predictions for each input row.
+        """
+
+        if not self.is_trained or self.model is None:
+            raise RuntimeError(
+                "Random Forest model needs to be trained "
+                "or loaded before evaluating."
+            )
+
+        samples, variances = rf.sample_RF(
+            model=self.model,
+            X=X,
+            n_samples=n
+        )
+
+        if clip:
+            samples = np.clip(samples, 0, 1)
+
+        return samples, variances
