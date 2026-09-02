@@ -81,7 +81,7 @@ def create_round1_experimental_design(settings, ingredients_pd, ingredients_list
     
     # Set up ingredients for experimental design
     ingredients_pd.loc[ingredients_pd.TYPE == "quantitative", "N_STATES"] = 3
-    total_runs = np.sum(ingredients_pd.astype({"N_STATES": "int64"})["N_STATES"])
+    # total_runs = np.sum(ingredients_pd.astype({"N_STATES": "int64"})["N_STATES"])
 
     if settings.batch_size < 40:
         # Use Plackett-Burman design
