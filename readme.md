@@ -255,7 +255,8 @@ The config file represents the main way to control the experiment.
 - Selects the predictive model
   - GPR is a form of Bayesian optimization and will work best for continuous variables and where the full kernel of a density distribution can be explored across the possible range of values of a variable
   - Bagged neural nets may work best when confronted with binary or ordinal factors or a mix of categorical and continuous variables
-- `0 = GPR (Gaussian process regression)`, `1 = NEURAL_NET`
+  - Random forest models may work best when the data have a hierarchical system of relationships
+- `0 = GPR (Gaussian process regression)`, `1 = NEURAL_NET`, `2 = RF (random forest)`
 - Default: `0`
 
 #### `direction`
