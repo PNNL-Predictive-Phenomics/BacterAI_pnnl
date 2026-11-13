@@ -105,10 +105,12 @@ def load_pretrained_model(settings):
     print(f"Loading pre-trained model from '{settings.transfer_model_folder}'")
     
     # Import here to avoid circular imports
-    from .models import GPRModel, NeuralNetModel, ModelType
+    from .models import GPRModel, NeuralNetModel, RandomForestModel, ModelType
     
     if settings.model_type == ModelType.GPR:
         return GPRModel.load_trained_models(settings.transfer_model_folder)
+    elif settings.model_type == ModelType.RF:
+        return RandomForestModel.load_trained_models(settings.transfer_model_folder)
     elif settings.model_type == ModelType.NEURAL_NET:
         return NeuralNetModel.load_trained_models(settings.transfer_model_folder)
     else:
