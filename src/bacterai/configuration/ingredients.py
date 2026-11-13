@@ -54,15 +54,6 @@ class IngredientsConfig:
         return reagent, conc, unit
 
     @staticmethod
-    def coerce_atoms(row: Dict[str, Any], col: str) -> int:
-        v = to_int_maybe(row.get(col))
-        if v is None:
-            return 0
-        if isinstance(v, float):
-            return int(round(v))
-        return int(v)
-
-    @staticmethod
     def ingredient_id_acronym(ingredient: str) -> str:
         base = ingredient.split("::")[-1]
         tokens = re.split(r"[^A-Za-z0-9]+", base)
@@ -137,10 +128,6 @@ class IngredientsConfig:
                 "SOURCE": source,
                 "SOURCE_CONC": source_conc,
                 "UNIT": unit,
-                "C_ATOMS": IngredientsConfig.coerce_atoms(r, "c_atoms"),
-                "N_ATOMS": IngredientsConfig.coerce_atoms(r, "n_atoms"),
-                "NA_ATOMS": IngredientsConfig.coerce_atoms(r, "na_atoms"),
-                "CL_ATOMS": IngredientsConfig.coerce_atoms(r, "cl_atoms"),
             }
             ingredients.append(out)
         return {"ingredients": ingredients}
@@ -161,10 +148,6 @@ class IngredientsConfig:
                 "SOURCE": clean_str(r.get("source")),
                 "SOURCE_CONC": to_float(r.get("source_conc")),
                 "UNIT": unit_normalize(r.get("unit")),
-                "C_ATOMS": int(to_int_maybe(r.get("c_atoms")) or 0),
-                "N_ATOMS": int(to_int_maybe(r.get("n_atoms")) or 0),
-                "NA_ATOMS": int(to_int_maybe(r.get("na_atoms")) or 0),
-                "CL_ATOMS": int(to_int_maybe(r.get("cl_atoms")) or 0),
             }
             ingredients.append(out)
         return {"ingredients": ingredients}
